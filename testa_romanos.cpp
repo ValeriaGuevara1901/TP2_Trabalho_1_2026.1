@@ -1,5 +1,5 @@
 ﻿// Copyright 2026 Valeria Guevara
-// Testes TDD - digitos simples, repeticao, notacao subtrativa canonica
+// Testes TDD - ate composicoes aditivas comuns
 
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
@@ -17,34 +17,39 @@ TEST_CASE("Teste 09 - III vale 3", "[repeticao_valida]") { REQUIRE(romanos_para_
 TEST_CASE("Teste 10 - XXX vale 30", "[repeticao_valida]") { REQUIRE(romanos_para_decimal("XXX") == 30); }
 TEST_CASE("Teste 11 - CCC vale 300", "[repeticao_valida]") { REQUIRE(romanos_para_decimal("CCC") == 300); }
 TEST_CASE("Teste 12 - MMM vale 3000", "[repeticao_valida]") { REQUIRE(romanos_para_decimal("MMM") == 3000); }
+TEST_CASE("Teste 13 - IV vale 4", "[subtrativa]") { REQUIRE(romanos_para_decimal("IV") == 4); }
+TEST_CASE("Teste 14 - IX vale 9", "[subtrativa]") { REQUIRE(romanos_para_decimal("IX") == 9); }
+TEST_CASE("Teste 15 - XL vale 40", "[subtrativa]") { REQUIRE(romanos_para_decimal("XL") == 40); }
+TEST_CASE("Teste 16 - XC vale 90", "[subtrativa]") { REQUIRE(romanos_para_decimal("XC") == 90); }
+TEST_CASE("Teste 17 - CD vale 400", "[subtrativa]") { REQUIRE(romanos_para_decimal("CD") == 400); }
+TEST_CASE("Teste 18 - CM vale 900", "[subtrativa]") { REQUIRE(romanos_para_decimal("CM") == 900); }
 
-// TESTE 13: IV deve retornar 4 (5 - 1 = 4)
-// Esta e a notacao subtrativa canonica; sem ela IV computaria como 5+1=6 (ERRADO)
-TEST_CASE("Teste 13 - IV vale 4 (subtrativa)", "[subtrativa]") {
-  REQUIRE(romanos_para_decimal("IV") == 4);
+// TESTE 19: VI deve retornar 6 (composicao aditiva simples)
+TEST_CASE("Teste 19 - VI vale 6", "[composicao]") {
+  REQUIRE(romanos_para_decimal("VI") == 6);
 }
 
-// TESTE 14: IX deve retornar 9 (10 - 1 = 9)
-TEST_CASE("Teste 14 - IX vale 9 (subtrativa)", "[subtrativa]") {
-  REQUIRE(romanos_para_decimal("IX") == 9);
+// TESTE 20: XI deve retornar 11
+TEST_CASE("Teste 20 - XI vale 11", "[composicao]") {
+  REQUIRE(romanos_para_decimal("XI") == 11);
 }
 
-// TESTE 15: XL deve retornar 40 (50 - 10 = 40)
-TEST_CASE("Teste 15 - XL vale 40 (subtrativa)", "[subtrativa]") {
-  REQUIRE(romanos_para_decimal("XL") == 40);
+// TESTE 21: XIV deve retornar 14 (10 + 4)
+TEST_CASE("Teste 21 - XIV vale 14", "[composicao]") {
+  REQUIRE(romanos_para_decimal("XIV") == 14);
 }
 
-// TESTE 16: XC deve retornar 90 (100 - 10 = 90)
-TEST_CASE("Teste 16 - XC vale 90 (subtrativa)", "[subtrativa]") {
-  REQUIRE(romanos_para_decimal("XC") == 90);
+// TESTE 22: XIX deve retornar 19 (10 + 9)
+TEST_CASE("Teste 22 - XIX vale 19", "[composicao]") {
+  REQUIRE(romanos_para_decimal("XIX") == 19);
 }
 
-// TESTE 17: CD deve retornar 400 (500 - 100 = 400)
-TEST_CASE("Teste 17 - CD vale 400 (subtrativa)", "[subtrativa]") {
-  REQUIRE(romanos_para_decimal("CD") == 400);
+// TESTE 23: XLII deve retornar 42 (40 + 2)
+TEST_CASE("Teste 23 - XLII vale 42", "[composicao]") {
+  REQUIRE(romanos_para_decimal("XLII") == 42);
 }
 
-// TESTE 18: CM deve retornar 900 (1000 - 100 = 900)
-TEST_CASE("Teste 18 - CM vale 900 (subtrativa)", "[subtrativa]") {
-  REQUIRE(romanos_para_decimal("CM") == 900);
+// TESTE 24: DCCC deve retornar 800 (500 + 300)
+TEST_CASE("Teste 24 - DCCC vale 800", "[composicao]") {
+  REQUIRE(romanos_para_decimal("DCCC") == 800);
 }
