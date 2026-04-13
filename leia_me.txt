@@ -1,1 +1,72 @@
-﻿make
+﻿=======================================================
+  Trabalho 1 - Conversao de Numeros Romanos (TDD)
+  Disciplina: Tecnicas de Programacao 2 - CIC0198
+  Universidade de Brasilia
+=======================================================
+
+PRE-REQUISITOS
+--------------
+Em Linux / WSL (Windows Subsystem for Linux):
+  sudo apt-get install g++ make gcov valgrind cppcheck python3
+
+COMPILACAO E EXECUCAO
+---------------------
+1. Compilar e executar os testes:
+     make
+
+2. Apenas compilar (sem rodar):
+     make compile
+
+3. Rodar apenas os testes (binario ja compilado):
+     make test
+
+VERIFICACAO DE COBERTURA (gcov)
+--------------------------------
+Gera relatorio de cobertura de codigo linha a linha:
+     make gcov
+Apos rodar, o arquivo romanos.cpp.gcov contera as anotacoes.
+Meta: >= 80% de cobertura por modulo.
+
+VERIFICADOR DINAMICO (Valgrind)
+---------------------------------
+Detecta vazamentos de memoria e uso incorreto de ponteiros:
+     make valgrind
+O relatorio sera salvo em valgrind.rpt no diretorio corrente.
+Inspecionar com:
+     cat valgrind.rpt
+
+VERIFICADOR ESTATICO (cppcheck)
+--------------------------------
+Detecta erros logicos e problemas de estilo em tempo de analise:
+     make cppcheck
+
+VERIFICADOR DE ESTILO (cpplint)
+---------------------------------
+Verifica conformidade com o Google C++ Style Guide:
+     make cpplint
+
+DEPURACAO (GDB)
+---------------
+Compila com simbolos de debug e abre o GDB:
+     make debug
+Dentro do GDB:
+     run              # executa
+     break funcao     # ponto de parada
+     next / step      # avancar linha a linha
+     print variavel   # inspecionar valor
+     quit             # sair
+
+LIMPEZA
+-------
+Remove binarios, objetos e arquivos de cobertura:
+     make clean
+
+ESTRUTURA DO PROJETO
+--------------------
+  romanos.hpp         declaracoes da funcao de conversao
+  romanos.cpp         implementacao (algoritmo round-trip)
+  testa_romanos.cpp   60 testes unitarios com Catch2 (TDD)
+  catch.hpp           framework Catch v2.2.1 (single header)
+  Makefile            automacao de compilacao e ferramentas
+  cpplint.py          verificador de estilo Google C++
+  leia_me.txt         este arquivo
