@@ -1,12 +1,13 @@
 ﻿// Copyright 2026 Valeria Guevara
-// Implementacao: soma simples com limite de valor
+// Implementacao: constantes nomeadas para limites
 
 #include "romanos.hpp"
 #include <cstring>
 
 namespace {
 
-const int kMaxValor = 3000;
+const int kMaxTamanho = 30;
+const int kMaxValor   = 3000;
 
 int valor_do_caractere(char c) {
   switch (c) {
@@ -26,7 +27,7 @@ int valor_do_caractere(char c) {
 int romanos_para_decimal(char const * num_romano) {
   if (num_romano == nullptr) return -1;
   int len = static_cast<int>(strlen(num_romano));
-  if (len == 0) return -1;
+  if (len == 0 || len > kMaxTamanho) return -1;
   int resultado = 0;
   for (int i = 0; i < len; i++) {
     int v = valor_do_caractere(num_romano[i]);
