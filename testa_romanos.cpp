@@ -1,5 +1,17 @@
 ﻿// Copyright 2026 Valeria Guevara
-// Testes TDD - subtrativas proibidas e caracteres invalidos
+// Testes unitarios para a funcao romanos_para_decimal usando Catch2.
+//
+// Metodologia TDD aplicada:
+//   - Teste 01-07:  Numeros de digito unico (I, V, X, L, C, D, M)
+//   - Teste 08-12:  Repeticao valida de I, X, C, M (2 e 3 vezes)
+//   - Teste 13-18:  Notacao subtrativa canonica (IV, IX, XL, XC, CD, CM)
+//   - Teste 19-24:  Composicao aditiva comum (VI, XI, LX, etc.)
+//   - Teste 25-28:  Numeros compostos e historicos
+//   - Teste 29-30:  Limites (1 e 3000)
+//   - Teste 31-36:  Invalidos por repeticao excessiva (XXXX, VV, LL, DD)
+//   - Teste 37-42:  Invalidos por subtracao proibida (VX, IIX, IC, LC)
+//   - Teste 43-47:  Invalidos por caracteres desconhecidos
+//   - Teste 48-60:  Casos adicionais para cobertura de 80%+
 
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
@@ -41,59 +53,81 @@ TEST_CASE("Teste 33 - LL invalido", "[invalido_repeticao]") { REQUIRE(romanos_pa
 TEST_CASE("Teste 34 - DD invalido", "[invalido_repeticao]") { REQUIRE(romanos_para_decimal("DD") == -1); }
 TEST_CASE("Teste 35 - IIII invalido", "[invalido_repeticao]") { REQUIRE(romanos_para_decimal("IIII") == -1); }
 TEST_CASE("Teste 36 - MMMM invalido", "[invalido_repeticao]") { REQUIRE(romanos_para_decimal("MMMM") == -1); }
+TEST_CASE("Teste 37 - VX invalido", "[invalido_subtrativa]") { REQUIRE(romanos_para_decimal("VX") == -1); }
+TEST_CASE("Teste 38 - IIX invalido", "[invalido_subtrativa]") { REQUIRE(romanos_para_decimal("IIX") == -1); }
+TEST_CASE("Teste 39 - IC invalido", "[invalido_subtrativa]") { REQUIRE(romanos_para_decimal("IC") == -1); }
+TEST_CASE("Teste 40 - LC invalido", "[invalido_subtrativa]") { REQUIRE(romanos_para_decimal("LC") == -1); }
+TEST_CASE("Teste 41 - IL invalido", "[invalido_subtrativa]") { REQUIRE(romanos_para_decimal("IL") == -1); }
+TEST_CASE("Teste 42 - DM invalido", "[invalido_subtrativa]") { REQUIRE(romanos_para_decimal("DM") == -1); }
+TEST_CASE("Teste 43 - string vazia invalida", "[invalido_caractere]") { REQUIRE(romanos_para_decimal("") == -1); }
+TEST_CASE("Teste 44 - A invalido", "[invalido_caractere]") { REQUIRE(romanos_para_decimal("A") == -1); }
+TEST_CASE("Teste 45 - espaco invalido", "[invalido_caractere]") { REQUIRE(romanos_para_decimal("X X") == -1); }
+TEST_CASE("Teste 46 - digito arabico invalido", "[invalido_caractere]") { REQUIRE(romanos_para_decimal("1") == -1); }
+TEST_CASE("Teste 47 - minusculas invalidas", "[invalido_caractere]") { REQUIRE(romanos_para_decimal("iv") == -1); }
 
-// TESTE 37: VX invalido - V nao e prefixo valido para subtracao antes de X
-// VX computaria como 5 (round-trip: 5 -> V != VX)
-TEST_CASE("Teste 37 - VX invalido (V antes de X proibido)", "[invalido_subtrativa]") {
-  REQUIRE(romanos_para_decimal("VX") == -1);
+// TESTE 48: MCMXCIX vale 1999
+// 1999 = M + CM + XC + IX = 1000 + 900 + 90 + 9
+TEST_CASE("Teste 48 - MCMXCIX vale 1999", "[cobertura]") {
+  REQUIRE(romanos_para_decimal("MCMXCIX") == 1999);
 }
 
-// TESTE 38: IIX invalido - subtracao dupla nao e canonica (8 = VIII)
-TEST_CASE("Teste 38 - IIX invalido (subtracao dupla)", "[invalido_subtrativa]") {
-  REQUIRE(romanos_para_decimal("IIX") == -1);
+// TESTE 49: CDXLIV vale 444 (tres subtrativas na mesma string)
+TEST_CASE("Teste 49 - CDXLIV vale 444", "[cobertura]") {
+  REQUIRE(romanos_para_decimal("CDXLIV") == 444);
 }
 
-// TESTE 39: IC invalido - I so pode preceder V ou X (99 = XCIX)
-TEST_CASE("Teste 39 - IC invalido (I antes de C)", "[invalido_subtrativa]") {
-  REQUIRE(romanos_para_decimal("IC") == -1);
+// TESTE 50: CMXCIX vale 999
+TEST_CASE("Teste 50 - CMXCIX vale 999", "[cobertura]") {
+  REQUIRE(romanos_para_decimal("CMXCIX") == 999);
 }
 
-// TESTE 40: LC invalido - L nao pode preceder C em subtracao (40 = XL)
-TEST_CASE("Teste 40 - LC invalido (L antes de C)", "[invalido_subtrativa]") {
-  REQUIRE(romanos_para_decimal("LC") == -1);
+// TESTE 51: DCCCLXXXVIII vale 888 (string de 12 simbolos)
+TEST_CASE("Teste 51 - DCCCLXXXVIII vale 888", "[cobertura]") {
+  REQUIRE(romanos_para_decimal("DCCCLXXXVIII") == 888);
 }
 
-// TESTE 41: IL invalido - I so pode preceder V ou X (49 = XLIX)
-TEST_CASE("Teste 41 - IL invalido (I antes de L)", "[invalido_subtrativa]") {
-  REQUIRE(romanos_para_decimal("IL") == -1);
+// TESTE 52: XLIV vale 44
+TEST_CASE("Teste 52 - XLIV vale 44", "[cobertura]") {
+  REQUIRE(romanos_para_decimal("XLIV") == 44);
 }
 
-// TESTE 42: DM invalido - D nao pode preceder M em subtracao (500 = D)
-TEST_CASE("Teste 42 - DM invalido (D antes de M)", "[invalido_subtrativa]") {
-  REQUIRE(romanos_para_decimal("DM") == -1);
+// TESTE 53: XCIX vale 99
+TEST_CASE("Teste 53 - XCIX vale 99", "[cobertura]") {
+  REQUIRE(romanos_para_decimal("XCIX") == 99);
 }
 
-// TESTE 43: string vazia deve retornar -1
-TEST_CASE("Teste 43 - string vazia invalida", "[invalido_caractere]") {
-  REQUIRE(romanos_para_decimal("") == -1);
+// TESTE 54: CCCXCIX vale 399
+TEST_CASE("Teste 54 - CCCXCIX vale 399", "[cobertura]") {
+  REQUIRE(romanos_para_decimal("CCCXCIX") == 399);
 }
 
-// TESTE 44: 'A' nao e simbolo romano; deve retornar -1
-TEST_CASE("Teste 44 - caractere A invalido", "[invalido_caractere]") {
-  REQUIRE(romanos_para_decimal("A") == -1);
+// TESTE 55: IM invalido (I so pode preceder V e X; 999 = CMXCIX)
+TEST_CASE("Teste 55 - IM invalido", "[invalido_subtrativa]") {
+  REQUIRE(romanos_para_decimal("IM") == -1);
 }
 
-// TESTE 45: espaco nao e simbolo romano valido
-TEST_CASE("Teste 45 - string com espaco invalida", "[invalido_caractere]") {
-  REQUIRE(romanos_para_decimal("X X") == -1);
+// TESTE 56: VL invalido (V nao pode preceder L; 45 = XLV)
+TEST_CASE("Teste 56 - VL invalido", "[invalido_subtrativa]") {
+  REQUIRE(romanos_para_decimal("VL") == -1);
 }
 
-// TESTE 46: digito arabico nao e aceito
-TEST_CASE("Teste 46 - digito arabico invalido", "[invalido_caractere]") {
-  REQUIRE(romanos_para_decimal("1") == -1);
+// TESTE 57: XM invalido (X so pode preceder L, C; 990 = CMXC)
+TEST_CASE("Teste 57 - XM invalido", "[invalido_subtrativa]") {
+  REQUIRE(romanos_para_decimal("XM") == -1);
 }
 
-// TESTE 47: minusculas nao sao aceitas (case-sensitive)
-TEST_CASE("Teste 47 - letras minusculas invalidas", "[invalido_caractere]") {
-  REQUIRE(romanos_para_decimal("iv") == -1);
+// TESTE 58: CCCC invalido (quatro C; 400 = CD)
+TEST_CASE("Teste 58 - CCCC invalido", "[invalido_repeticao]") {
+  REQUIRE(romanos_para_decimal("CCCC") == -1);
+}
+
+// TESTE 59: valor 3888 > 3000, deve retornar -1
+TEST_CASE("Teste 59 - MMMDCCCLXXXVIII invalido (>3000)", "[invalido_limite]") {
+  REQUIRE(romanos_para_decimal("MMMDCCCLXXXVIII") == -1);
+}
+
+// TESTE 60: MMCMLXXXVIII vale 2988
+// 2988 = MM + CM + LXXX + VIII = 2000 + 900 + 80 + 8
+TEST_CASE("Teste 60 - MMCMLXXXVIII vale 2988", "[cobertura]") {
+  REQUIRE(romanos_para_decimal("MMCMLXXXVIII") == 2988);
 }
