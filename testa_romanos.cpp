@@ -1,5 +1,5 @@
 ﻿// Copyright 2026 Valeria Guevara
-// Testes TDD - ate composicoes aditivas comuns
+// Testes TDD - ate numeros historicos com multiplas subtrativas
 
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
@@ -23,33 +23,33 @@ TEST_CASE("Teste 15 - XL vale 40", "[subtrativa]") { REQUIRE(romanos_para_decima
 TEST_CASE("Teste 16 - XC vale 90", "[subtrativa]") { REQUIRE(romanos_para_decimal("XC") == 90); }
 TEST_CASE("Teste 17 - CD vale 400", "[subtrativa]") { REQUIRE(romanos_para_decimal("CD") == 400); }
 TEST_CASE("Teste 18 - CM vale 900", "[subtrativa]") { REQUIRE(romanos_para_decimal("CM") == 900); }
+TEST_CASE("Teste 19 - VI vale 6", "[composicao]") { REQUIRE(romanos_para_decimal("VI") == 6); }
+TEST_CASE("Teste 20 - XI vale 11", "[composicao]") { REQUIRE(romanos_para_decimal("XI") == 11); }
+TEST_CASE("Teste 21 - XIV vale 14", "[composicao]") { REQUIRE(romanos_para_decimal("XIV") == 14); }
+TEST_CASE("Teste 22 - XIX vale 19", "[composicao]") { REQUIRE(romanos_para_decimal("XIX") == 19); }
+TEST_CASE("Teste 23 - XLII vale 42", "[composicao]") { REQUIRE(romanos_para_decimal("XLII") == 42); }
+TEST_CASE("Teste 24 - DCCC vale 800", "[composicao]") { REQUIRE(romanos_para_decimal("DCCC") == 800); }
 
-// TESTE 19: VI deve retornar 6 (composicao aditiva simples)
-TEST_CASE("Teste 19 - VI vale 6", "[composicao]") {
-  REQUIRE(romanos_para_decimal("VI") == 6);
+// TESTE 25: MCDXCII deve retornar 1492 (data do descobrimento)
+// 1492 = 1000 + 400 + 90 + 2 = M + CD + XC + II
+TEST_CASE("Teste 25 - MCDXCII vale 1492", "[historico]") {
+  REQUIRE(romanos_para_decimal("MCDXCII") == 1492);
 }
 
-// TESTE 20: XI deve retornar 11
-TEST_CASE("Teste 20 - XI vale 11", "[composicao]") {
-  REQUIRE(romanos_para_decimal("XI") == 11);
+// TESTE 26: MCMXLV deve retornar 1945 (fim da 2a guerra mundial)
+// 1945 = 1000 + 900 + 40 + 5 = M + CM + XL + V
+TEST_CASE("Teste 26 - MCMXLV vale 1945", "[historico]") {
+  REQUIRE(romanos_para_decimal("MCMXLV") == 1945);
 }
 
-// TESTE 21: XIV deve retornar 14 (10 + 4)
-TEST_CASE("Teste 21 - XIV vale 14", "[composicao]") {
-  REQUIRE(romanos_para_decimal("XIV") == 14);
+// TESTE 27: MMXXVI deve retornar 2026 (ano atual)
+// 2026 = 2000 + 20 + 6 = MM + XX + VI
+TEST_CASE("Teste 27 - MMXXVI vale 2026", "[historico]") {
+  REQUIRE(romanos_para_decimal("MMXXVI") == 2026);
 }
 
-// TESTE 22: XIX deve retornar 19 (10 + 9)
-TEST_CASE("Teste 22 - XIX vale 19", "[composicao]") {
-  REQUIRE(romanos_para_decimal("XIX") == 19);
-}
-
-// TESTE 23: XLII deve retornar 42 (40 + 2)
-TEST_CASE("Teste 23 - XLII vale 42", "[composicao]") {
-  REQUIRE(romanos_para_decimal("XLII") == 42);
-}
-
-// TESTE 24: DCCC deve retornar 800 (500 + 300)
-TEST_CASE("Teste 24 - DCCC vale 800", "[composicao]") {
-  REQUIRE(romanos_para_decimal("DCCC") == 800);
+// TESTE 28: MMCMXCIX deve retornar 2999
+// 2999 = 2000 + 900 + 90 + 9 = MM + CM + XC + IX
+TEST_CASE("Teste 28 - MMCMXCIX vale 2999", "[historico]") {
+  REQUIRE(romanos_para_decimal("MMCMXCIX") == 2999);
 }
