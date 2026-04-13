@@ -1,5 +1,5 @@
 ﻿// Copyright 2026 Valeria Guevara
-// Implementacao: preparar inclusoes para validacao completa
+// Implementacao: adicionar arabico_para_romano + validacao round-trip
 
 #include "romanos.hpp"
 #include <cstring>
@@ -7,10 +7,34 @@
 
 namespace {
 
-const int kMaxTamanho = 30;
-const int kMaxValor   = 3000;
+const int kMaxTamanho  = 30;
+const int kMaxValor    = 3000;
+const int kTamanhoTabela = 13;
 
-// Retorna o valor de um simbolo romano valido, ou -1 se invalido
+struct EntradaRomana {
+  int valor;
+  const char* simbolo;
+};
+
+const EntradaRomana kTabela[] = {
+  {1000, "M"}, {900, "CM"}, {500, "D"}, {400, "CD"},
+  {100,  "C"}, {90,  "XC"}, {50,  "L"}, {40,  "XL"},
+  {10,   "X"}, {9,   "IX"}, {5,   "V"}, {4,   "IV"},
+  {1,    "I"}
+};
+
+// Converte inteiro arabico para string romana canonica
+std::string arabico_para_romano(int num) {
+  std::string resultado;
+  for (int i = 0; i < kTamanhoTabela; i++) {
+    while (num >= kTabela[i].valor) {
+      resultado += kTabela[i].simbolo;
+      num -= kTabela[i].valor;
+    }
+  }
+  return resultado;
+}
+
 int valor_do_caractere(char c) {
   switch (c) {
     case 'I': return 1;
@@ -26,7 +50,6 @@ int valor_do_caractere(char c) {
 
 }  // namespace
 
-// Converte numero romano para arabico; retorna -1 se invalido
 int romanos_para_decimal(char const * num_romano) {
   if (num_romano == nullptr) return -1;
   int len = static_cast<int>(strlen(num_romano));
@@ -44,5 +67,7 @@ int romanos_para_decimal(char const * num_romano) {
     }
   }
   if (resultado < 1 || resultado > kMaxValor) return -1;
+  // Validacao por round-trip: rejeita formas nao-canonicas (XXXX, VV, LL...)
+  if (arabico_para_romano(resultado) != std::string(num_romano)) return -1;
   return resultado;
 }
