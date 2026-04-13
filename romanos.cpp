@@ -1,11 +1,13 @@
 ﻿// Copyright 2026 Valeria Guevara
-// Implementacao: todos os 7 digitos romanos basicos
+// Implementacao com namespace anonimo (Google Style)
 
 #include "romanos.hpp"
 #include <cstring>
 
+namespace {
+
 // Retorna o valor de um caractere romano valido, ou -1
-static int valor_char(char c) {
+int valor_do_caractere(char c) {
   switch (c) {
     case 'I': return 1;
     case 'V': return 5;
@@ -18,14 +20,16 @@ static int valor_char(char c) {
   }
 }
 
-// Converte numero romano para arabico (soma simples)
+}  // namespace
+
+// Converte numero romano para arabico
 int romanos_para_decimal(char const * num_romano) {
   if (num_romano == nullptr) return -1;
   int len = static_cast<int>(strlen(num_romano));
   if (len == 0) return -1;
   int resultado = 0;
   for (int i = 0; i < len; i++) {
-    int v = valor_char(num_romano[i]);
+    int v = valor_do_caractere(num_romano[i]);
     if (v == -1) return -1;
     resultado += v;
   }
