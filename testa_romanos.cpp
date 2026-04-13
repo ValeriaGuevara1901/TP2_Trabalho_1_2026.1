@@ -1,5 +1,5 @@
 ﻿// Copyright 2026 Valeria Guevara
-// Testes TDD - ate numeros historicos com multiplas subtrativas
+// Testes TDD - limites e invalidos por repeticao excessiva
 
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
@@ -29,27 +29,48 @@ TEST_CASE("Teste 21 - XIV vale 14", "[composicao]") { REQUIRE(romanos_para_decim
 TEST_CASE("Teste 22 - XIX vale 19", "[composicao]") { REQUIRE(romanos_para_decimal("XIX") == 19); }
 TEST_CASE("Teste 23 - XLII vale 42", "[composicao]") { REQUIRE(romanos_para_decimal("XLII") == 42); }
 TEST_CASE("Teste 24 - DCCC vale 800", "[composicao]") { REQUIRE(romanos_para_decimal("DCCC") == 800); }
+TEST_CASE("Teste 25 - MCDXCII vale 1492", "[historico]") { REQUIRE(romanos_para_decimal("MCDXCII") == 1492); }
+TEST_CASE("Teste 26 - MCMXLV vale 1945", "[historico]") { REQUIRE(romanos_para_decimal("MCMXLV") == 1945); }
+TEST_CASE("Teste 27 - MMXXVI vale 2026", "[historico]") { REQUIRE(romanos_para_decimal("MMXXVI") == 2026); }
+TEST_CASE("Teste 28 - MMCMXCIX vale 2999", "[historico]") { REQUIRE(romanos_para_decimal("MMCMXCIX") == 2999); }
 
-// TESTE 25: MCDXCII deve retornar 1492 (data do descobrimento)
-// 1492 = 1000 + 400 + 90 + 2 = M + CD + XC + II
-TEST_CASE("Teste 25 - MCDXCII vale 1492", "[historico]") {
-  REQUIRE(romanos_para_decimal("MCDXCII") == 1492);
+// TESTE 29: Limite inferior - I deve retornar 1
+TEST_CASE("Teste 29 - I limite inferior (1)", "[limites]") {
+  REQUIRE(romanos_para_decimal("I") == 1);
 }
 
-// TESTE 26: MCMXLV deve retornar 1945 (fim da 2a guerra mundial)
-// 1945 = 1000 + 900 + 40 + 5 = M + CM + XL + V
-TEST_CASE("Teste 26 - MCMXLV vale 1945", "[historico]") {
-  REQUIRE(romanos_para_decimal("MCMXLV") == 1945);
+// TESTE 30: Limite superior - MMM deve retornar 3000
+TEST_CASE("Teste 30 - MMM limite superior (3000)", "[limites]") {
+  REQUIRE(romanos_para_decimal("MMM") == 3000);
 }
 
-// TESTE 27: MMXXVI deve retornar 2026 (ano atual)
-// 2026 = 2000 + 20 + 6 = MM + XX + VI
-TEST_CASE("Teste 27 - MMXXVI vale 2026", "[historico]") {
-  REQUIRE(romanos_para_decimal("MMXXVI") == 2026);
+// TESTE 31: XXXX invalido - quatro X equivalem a 40, mas a forma canonica e XL
+// Esperado: -1 pois XXXX nao e forma canonica
+TEST_CASE("Teste 31 - XXXX invalido (4 X)", "[invalido_repeticao]") {
+  REQUIRE(romanos_para_decimal("XXXX") == -1);
 }
 
-// TESTE 28: MMCMXCIX deve retornar 2999
-// 2999 = 2000 + 900 + 90 + 9 = MM + CM + XC + IX
-TEST_CASE("Teste 28 - MMCMXCIX vale 2999", "[historico]") {
-  REQUIRE(romanos_para_decimal("MMCMXCIX") == 2999);
+// TESTE 32: VV invalido - V nao pode ser repetido (10 se escreve X)
+TEST_CASE("Teste 32 - VV invalido (V repetido)", "[invalido_repeticao]") {
+  REQUIRE(romanos_para_decimal("VV") == -1);
+}
+
+// TESTE 33: LL invalido - L nao pode ser repetido (100 se escreve C)
+TEST_CASE("Teste 33 - LL invalido (L repetido)", "[invalido_repeticao]") {
+  REQUIRE(romanos_para_decimal("LL") == -1);
+}
+
+// TESTE 34: DD invalido - D nao pode ser repetido (1000 se escreve M)
+TEST_CASE("Teste 34 - DD invalido (D repetido)", "[invalido_repeticao]") {
+  REQUIRE(romanos_para_decimal("DD") == -1);
+}
+
+// TESTE 35: IIII invalido - quatro I equivalem a 4, mas a forma canonica e IV
+TEST_CASE("Teste 35 - IIII invalido (4 I)", "[invalido_repeticao]") {
+  REQUIRE(romanos_para_decimal("IIII") == -1);
+}
+
+// TESTE 36: MMMM invalido - valor seria 4000, excede o limite de 3000
+TEST_CASE("Teste 36 - MMMM invalido (valor 4000 > 3000)", "[invalido_repeticao]") {
+  REQUIRE(romanos_para_decimal("MMMM") == -1);
 }
