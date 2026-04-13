@@ -1,5 +1,5 @@
 ﻿// Copyright 2026 Valeria Guevara
-// Testes TDD - limites e invalidos por repeticao excessiva
+// Testes TDD - subtrativas proibidas e caracteres invalidos
 
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
@@ -33,44 +33,67 @@ TEST_CASE("Teste 25 - MCDXCII vale 1492", "[historico]") { REQUIRE(romanos_para_
 TEST_CASE("Teste 26 - MCMXLV vale 1945", "[historico]") { REQUIRE(romanos_para_decimal("MCMXLV") == 1945); }
 TEST_CASE("Teste 27 - MMXXVI vale 2026", "[historico]") { REQUIRE(romanos_para_decimal("MMXXVI") == 2026); }
 TEST_CASE("Teste 28 - MMCMXCIX vale 2999", "[historico]") { REQUIRE(romanos_para_decimal("MMCMXCIX") == 2999); }
+TEST_CASE("Teste 29 - I limite inferior", "[limites]") { REQUIRE(romanos_para_decimal("I") == 1); }
+TEST_CASE("Teste 30 - MMM limite superior", "[limites]") { REQUIRE(romanos_para_decimal("MMM") == 3000); }
+TEST_CASE("Teste 31 - XXXX invalido", "[invalido_repeticao]") { REQUIRE(romanos_para_decimal("XXXX") == -1); }
+TEST_CASE("Teste 32 - VV invalido", "[invalido_repeticao]") { REQUIRE(romanos_para_decimal("VV") == -1); }
+TEST_CASE("Teste 33 - LL invalido", "[invalido_repeticao]") { REQUIRE(romanos_para_decimal("LL") == -1); }
+TEST_CASE("Teste 34 - DD invalido", "[invalido_repeticao]") { REQUIRE(romanos_para_decimal("DD") == -1); }
+TEST_CASE("Teste 35 - IIII invalido", "[invalido_repeticao]") { REQUIRE(romanos_para_decimal("IIII") == -1); }
+TEST_CASE("Teste 36 - MMMM invalido", "[invalido_repeticao]") { REQUIRE(romanos_para_decimal("MMMM") == -1); }
 
-// TESTE 29: Limite inferior - I deve retornar 1
-TEST_CASE("Teste 29 - I limite inferior (1)", "[limites]") {
-  REQUIRE(romanos_para_decimal("I") == 1);
+// TESTE 37: VX invalido - V nao e prefixo valido para subtracao antes de X
+// VX computaria como 5 (round-trip: 5 -> V != VX)
+TEST_CASE("Teste 37 - VX invalido (V antes de X proibido)", "[invalido_subtrativa]") {
+  REQUIRE(romanos_para_decimal("VX") == -1);
 }
 
-// TESTE 30: Limite superior - MMM deve retornar 3000
-TEST_CASE("Teste 30 - MMM limite superior (3000)", "[limites]") {
-  REQUIRE(romanos_para_decimal("MMM") == 3000);
+// TESTE 38: IIX invalido - subtracao dupla nao e canonica (8 = VIII)
+TEST_CASE("Teste 38 - IIX invalido (subtracao dupla)", "[invalido_subtrativa]") {
+  REQUIRE(romanos_para_decimal("IIX") == -1);
 }
 
-// TESTE 31: XXXX invalido - quatro X equivalem a 40, mas a forma canonica e XL
-// Esperado: -1 pois XXXX nao e forma canonica
-TEST_CASE("Teste 31 - XXXX invalido (4 X)", "[invalido_repeticao]") {
-  REQUIRE(romanos_para_decimal("XXXX") == -1);
+// TESTE 39: IC invalido - I so pode preceder V ou X (99 = XCIX)
+TEST_CASE("Teste 39 - IC invalido (I antes de C)", "[invalido_subtrativa]") {
+  REQUIRE(romanos_para_decimal("IC") == -1);
 }
 
-// TESTE 32: VV invalido - V nao pode ser repetido (10 se escreve X)
-TEST_CASE("Teste 32 - VV invalido (V repetido)", "[invalido_repeticao]") {
-  REQUIRE(romanos_para_decimal("VV") == -1);
+// TESTE 40: LC invalido - L nao pode preceder C em subtracao (40 = XL)
+TEST_CASE("Teste 40 - LC invalido (L antes de C)", "[invalido_subtrativa]") {
+  REQUIRE(romanos_para_decimal("LC") == -1);
 }
 
-// TESTE 33: LL invalido - L nao pode ser repetido (100 se escreve C)
-TEST_CASE("Teste 33 - LL invalido (L repetido)", "[invalido_repeticao]") {
-  REQUIRE(romanos_para_decimal("LL") == -1);
+// TESTE 41: IL invalido - I so pode preceder V ou X (49 = XLIX)
+TEST_CASE("Teste 41 - IL invalido (I antes de L)", "[invalido_subtrativa]") {
+  REQUIRE(romanos_para_decimal("IL") == -1);
 }
 
-// TESTE 34: DD invalido - D nao pode ser repetido (1000 se escreve M)
-TEST_CASE("Teste 34 - DD invalido (D repetido)", "[invalido_repeticao]") {
-  REQUIRE(romanos_para_decimal("DD") == -1);
+// TESTE 42: DM invalido - D nao pode preceder M em subtracao (500 = D)
+TEST_CASE("Teste 42 - DM invalido (D antes de M)", "[invalido_subtrativa]") {
+  REQUIRE(romanos_para_decimal("DM") == -1);
 }
 
-// TESTE 35: IIII invalido - quatro I equivalem a 4, mas a forma canonica e IV
-TEST_CASE("Teste 35 - IIII invalido (4 I)", "[invalido_repeticao]") {
-  REQUIRE(romanos_para_decimal("IIII") == -1);
+// TESTE 43: string vazia deve retornar -1
+TEST_CASE("Teste 43 - string vazia invalida", "[invalido_caractere]") {
+  REQUIRE(romanos_para_decimal("") == -1);
 }
 
-// TESTE 36: MMMM invalido - valor seria 4000, excede o limite de 3000
-TEST_CASE("Teste 36 - MMMM invalido (valor 4000 > 3000)", "[invalido_repeticao]") {
-  REQUIRE(romanos_para_decimal("MMMM") == -1);
+// TESTE 44: 'A' nao e simbolo romano; deve retornar -1
+TEST_CASE("Teste 44 - caractere A invalido", "[invalido_caractere]") {
+  REQUIRE(romanos_para_decimal("A") == -1);
+}
+
+// TESTE 45: espaco nao e simbolo romano valido
+TEST_CASE("Teste 45 - string com espaco invalida", "[invalido_caractere]") {
+  REQUIRE(romanos_para_decimal("X X") == -1);
+}
+
+// TESTE 46: digito arabico nao e aceito
+TEST_CASE("Teste 46 - digito arabico invalido", "[invalido_caractere]") {
+  REQUIRE(romanos_para_decimal("1") == -1);
+}
+
+// TESTE 47: minusculas nao sao aceitas (case-sensitive)
+TEST_CASE("Teste 47 - letras minusculas invalidas", "[invalido_caractere]") {
+  REQUIRE(romanos_para_decimal("iv") == -1);
 }
