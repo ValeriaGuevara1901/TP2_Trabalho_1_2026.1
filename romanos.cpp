@@ -1,5 +1,5 @@
 ﻿// Copyright 2026 Valeria Guevara
-// Implementacao: constantes nomeadas para limites
+// Implementacao: notacao subtrativa (menor antes de maior)
 
 #include "romanos.hpp"
 #include <cstring>
@@ -30,9 +30,16 @@ int romanos_para_decimal(char const * num_romano) {
   if (len == 0 || len > kMaxTamanho) return -1;
   int resultado = 0;
   for (int i = 0; i < len; i++) {
-    int v = valor_do_caractere(num_romano[i]);
-    if (v == -1) return -1;
-    resultado += v;
+    int atual = valor_do_caractere(num_romano[i]);
+    if (atual == -1) return -1;
+    int proximo = (i + 1 < len) ? valor_do_caractere(num_romano[i + 1]) : 0;
+    // Notacao subtrativa: se atual < proximo, subtrai o par
+    if (atual < proximo) {
+      resultado += proximo - atual;
+      i++;
+    } else {
+      resultado += atual;
+    }
   }
   if (resultado < 1 || resultado > kMaxValor) return -1;
   return resultado;
