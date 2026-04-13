@@ -1,12 +1,13 @@
 ﻿// Copyright 2026 Valeria Guevara
-// Implementacao com namespace anonimo (Google Style)
+// Implementacao: soma simples com limite de valor
 
 #include "romanos.hpp"
 #include <cstring>
 
 namespace {
 
-// Retorna o valor de um caractere romano valido, ou -1
+const int kMaxValor = 3000;
+
 int valor_do_caractere(char c) {
   switch (c) {
     case 'I': return 1;
@@ -22,7 +23,6 @@ int valor_do_caractere(char c) {
 
 }  // namespace
 
-// Converte numero romano para arabico
 int romanos_para_decimal(char const * num_romano) {
   if (num_romano == nullptr) return -1;
   int len = static_cast<int>(strlen(num_romano));
@@ -33,5 +33,6 @@ int romanos_para_decimal(char const * num_romano) {
     if (v == -1) return -1;
     resultado += v;
   }
+  if (resultado < 1 || resultado > kMaxValor) return -1;
   return resultado;
 }
