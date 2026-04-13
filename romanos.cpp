@@ -1,5 +1,5 @@
 ﻿// Copyright 2026 Valeria Guevara
-// Implementacao: notacao subtrativa (menor antes de maior)
+// Implementacao: subtrativa + comentarios claros no laco
 
 #include "romanos.hpp"
 #include <cstring>
@@ -9,6 +9,7 @@ namespace {
 const int kMaxTamanho = 30;
 const int kMaxValor   = 3000;
 
+// Retorna o valor numerico de um simbolo romano, ou -1 se invalido
 int valor_do_caractere(char c) {
   switch (c) {
     case 'I': return 1;
@@ -24,6 +25,7 @@ int valor_do_caractere(char c) {
 
 }  // namespace
 
+// Converte string romana para inteiro arabico; retorna -1 se invalido
 int romanos_para_decimal(char const * num_romano) {
   if (num_romano == nullptr) return -1;
   int len = static_cast<int>(strlen(num_romano));
@@ -31,12 +33,12 @@ int romanos_para_decimal(char const * num_romano) {
   int resultado = 0;
   for (int i = 0; i < len; i++) {
     int atual = valor_do_caractere(num_romano[i]);
-    if (atual == -1) return -1;
+    if (atual == -1) return -1;  // caractere desconhecido
+    // Olha o proximo caractere para detectar par subtrativo
     int proximo = (i + 1 < len) ? valor_do_caractere(num_romano[i + 1]) : 0;
-    // Notacao subtrativa: se atual < proximo, subtrai o par
     if (atual < proximo) {
-      resultado += proximo - atual;
-      i++;
+      resultado += proximo - atual;  // ex: IV = 5 - 1 = 4
+      i++;                           // consome o par inteiro
     } else {
       resultado += atual;
     }
