@@ -45,4 +45,3 @@ O foco principal é a aplicação correta do TDD
 Testes devem cobrir casos válidos e inválidos
 Código deve ser limpo e refatorado continuamente
 
-Se quiser, posso te ajudar a montar o Makefile ou já criar a estrutura inicial do projeto 👍
