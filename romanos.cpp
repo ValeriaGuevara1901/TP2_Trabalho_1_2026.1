@@ -1,5 +1,5 @@
 ﻿// Copyright 2026 Valeria Guevara
-// Implementacao: subtrativa + comentarios claros no laco
+// Implementacao: algoritmo completo de soma/subtracao corretamente documentado
 
 #include "romanos.hpp"
 #include <cstring>
@@ -9,7 +9,7 @@ namespace {
 const int kMaxTamanho = 30;
 const int kMaxValor   = 3000;
 
-// Retorna o valor numerico de um simbolo romano, ou -1 se invalido
+// Retorna o valor de um simbolo romano valido, ou -1 se invalido
 int valor_do_caractere(char c) {
   switch (c) {
     case 'I': return 1;
@@ -25,7 +25,11 @@ int valor_do_caractere(char c) {
 
 }  // namespace
 
-// Converte string romana para inteiro arabico; retorna -1 se invalido
+// Converte numero romano para arabico.
+// Algoritmo: percorre da esquerda para direita;
+//   se simbolo atual < proximo -> subtracao (IV=4, IX=9, etc.)
+//   caso contrario -> adicao
+// Retorna -1 para entradas invalidas.
 int romanos_para_decimal(char const * num_romano) {
   if (num_romano == nullptr) return -1;
   int len = static_cast<int>(strlen(num_romano));
@@ -33,12 +37,11 @@ int romanos_para_decimal(char const * num_romano) {
   int resultado = 0;
   for (int i = 0; i < len; i++) {
     int atual = valor_do_caractere(num_romano[i]);
-    if (atual == -1) return -1;  // caractere desconhecido
-    // Olha o proximo caractere para detectar par subtrativo
+    if (atual == -1) return -1;
     int proximo = (i + 1 < len) ? valor_do_caractere(num_romano[i + 1]) : 0;
     if (atual < proximo) {
-      resultado += proximo - atual;  // ex: IV = 5 - 1 = 4
-      i++;                           // consome o par inteiro
+      resultado += proximo - atual;
+      i++;
     } else {
       resultado += atual;
     }
