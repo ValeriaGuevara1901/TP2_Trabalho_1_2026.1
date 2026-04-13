@@ -1,8 +1,9 @@
 ﻿// Copyright 2026 Valeria Guevara
-// Implementacao: algoritmo completo de soma/subtracao corretamente documentado
+// Implementacao: preparar inclusoes para validacao completa
 
 #include "romanos.hpp"
 #include <cstring>
+#include <string>
 
 namespace {
 
@@ -25,11 +26,7 @@ int valor_do_caractere(char c) {
 
 }  // namespace
 
-// Converte numero romano para arabico.
-// Algoritmo: percorre da esquerda para direita;
-//   se simbolo atual < proximo -> subtracao (IV=4, IX=9, etc.)
-//   caso contrario -> adicao
-// Retorna -1 para entradas invalidas.
+// Converte numero romano para arabico; retorna -1 se invalido
 int romanos_para_decimal(char const * num_romano) {
   if (num_romano == nullptr) return -1;
   int len = static_cast<int>(strlen(num_romano));
