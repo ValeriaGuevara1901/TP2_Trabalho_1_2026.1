@@ -5,4 +5,9 @@
 #include "catch.hpp"
 #include "romanos.hpp"
 
-// Testes serao adicionados progressivamente via TDD
+// TESTE 01: I deve retornar 1
+// Objetivo: verificar o numeral romano mais simples
+// Esperado: passa quando romanos_para_decimal("I") == 1
+TEST_CASE("Teste 01 - I vale 1", "[digito_unico]") {
+  REQUIRE(romanos_para_decimal("I") == 1);
+}
