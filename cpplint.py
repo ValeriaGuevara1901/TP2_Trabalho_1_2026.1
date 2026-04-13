@@ -1,12852 +1,6244 @@
-/*
- *  Catch v2.2.1
- *  Generated: 2018-03-11 12:01:31.654719
- *  ----------------------------------------------------------
- *  This file has been merged from multiple headers. Please don't edit it directly
- *  Copyright (c) 2018 Two Blue Cubes Ltd. All rights reserved.
- *
- *  Distributed under the Boost Software License, Version 1.0. (See accompanying
- *  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
- */
-#ifndef TWOBLUECUBES_SINGLE_INCLUDE_CATCH_HPP_INCLUDED
-#define TWOBLUECUBES_SINGLE_INCLUDE_CATCH_HPP_INCLUDED
-// start catch.hpp
-
-
-#define CATCH_VERSION_MAJOR 2
-#define CATCH_VERSION_MINOR 2
-#define CATCH_VERSION_PATCH 1
-
-#ifdef __clang__
-#    pragma clang system_header
-#elif defined __GNUC__
-#    pragma GCC system_header
-#endif
-
-// start catch_suppress_warnings.h
-
-#ifdef __clang__
-#   ifdef __ICC // icpc defines the __clang__ macro
-#       pragma warning(push)
-#       pragma warning(disable: 161 1682)
-#   else // __ICC
-#       pragma clang diagnostic ignored "-Wunused-variable"
-#       pragma clang diagnostic push
-#       pragma clang diagnostic ignored "-Wpadded"
-#       pragma clang diagnostic ignored "-Wswitch-enum"
-#       pragma clang diagnostic ignored "-Wcovered-switch-default"
-#    endif
-#elif defined __GNUC__
-#    pragma GCC diagnostic ignored "-Wunused-variable"
-#    pragma GCC diagnostic ignored "-Wparentheses"
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wpadded"
-#endif
-// end catch_suppress_warnings.h
-#if defined(CATCH_CONFIG_MAIN) || defined(CATCH_CONFIG_RUNNER)
-#  define CATCH_IMPL
-#  define CATCH_CONFIG_ALL_PARTS
-#endif
-
-// In the impl file, we want to have access to all parts of the headers
-// Can also be used to sanely support PCHs
-#if defined(CATCH_CONFIG_ALL_PARTS)
-#  define CATCH_CONFIG_EXTERNAL_INTERFACES
-#  if defined(CATCH_CONFIG_DISABLE_MATCHERS)
-#    undef CATCH_CONFIG_DISABLE_MATCHERS
-#  endif
-#  define CATCH_CONFIG_ENABLE_CHRONO_STRINGMAKER
-#endif
-
-#if !defined(CATCH_CONFIG_IMPL_ONLY)
-// start catch_platform.h
-
-#ifdef __APPLE__
-# include <TargetConditionals.h>
-# if TARGET_OS_OSX == 1
-#  define CATCH_PLATFORM_MAC
-# elif TARGET_OS_IPHONE == 1
-#  define CATCH_PLATFORM_IPHONE
-# endif
-
-#elif defined(linux) || defined(__linux) || defined(__linux__)
-#  define CATCH_PLATFORM_LINUX
-
-#elif defined(WIN32) || defined(__WIN32__) || defined(_WIN32) || defined(_MSC_VER)
-#  define CATCH_PLATFORM_WINDOWS
-#endif
-
-// end catch_platform.h
-
-#ifdef CATCH_IMPL
-#  ifndef CLARA_CONFIG_MAIN
-#    define CLARA_CONFIG_MAIN_NOT_DEFINED
-#    define CLARA_CONFIG_MAIN
-#  endif
-#endif
-
-// start catch_user_interfaces.h
-
-namespace Catch {
-    unsigned int rngSeed();
-}
-
-// end catch_user_interfaces.h
-// start catch_tag_alias_autoregistrar.h
-
-// start catch_common.h
-
-// start catch_compiler_capabilities.h
-
-// Detect a number of compiler features - by compiler
-// The following features are defined:
-//
-// CATCH_CONFIG_COUNTER : is the __COUNTER__ macro supported?
-// CATCH_CONFIG_WINDOWS_SEH : is Windows SEH supported?
-// CATCH_CONFIG_POSIX_SIGNALS : are POSIX signals supported?
-// ****************
-// Note to maintainers: if new toggles are added please document them
-// in configuration.md, too
-// ****************
-
-// In general each macro has a _NO_<feature name> form
-// (e.g. CATCH_CONFIG_NO_POSIX_SIGNALS) which disables the feature.
-// Many features, at point of detection, define an _INTERNAL_ macro, so they
-// can be combined, en-mass, with the _NO_ forms later.
-
-#ifdef __cplusplus
-
-#  if __cplusplus >= 201402L
-#    define CATCH_CPP14_OR_GREATER
-#  endif
-
-#  if __cplusplus >= 201703L
-#    define CATCH_CPP17_OR_GREATER
-#  endif
-
-#endif
-
-#if defined(CATCH_CPP17_OR_GREATER)
-#  define CATCH_INTERNAL_CONFIG_CPP17_UNCAUGHT_EXCEPTIONS
-#endif
-
-#ifdef __clang__
-
-#       define CATCH_INTERNAL_SUPPRESS_GLOBALS_WARNINGS \
-            _Pragma( "clang diagnostic push" ) \
-            _Pragma( "clang diagnostic ignored \"-Wexit-time-destructors\"" ) \
-            _Pragma( "clang diagnostic ignored \"-Wglobal-constructors\"")
-#       define CATCH_INTERNAL_UNSUPPRESS_GLOBALS_WARNINGS \
-            _Pragma( "clang diagnostic pop" )
-
-#       define CATCH_INTERNAL_SUPPRESS_PARENTHESES_WARNINGS \
-            _Pragma( "clang diagnostic push" ) \
-            _Pragma( "clang diagnostic ignored \"-Wparentheses\"" )
-#       define CATCH_INTERNAL_UNSUPPRESS_PARENTHESES_WARNINGS \
-            _Pragma( "clang diagnostic pop" )
-
-#endif // __clang__
-
-////////////////////////////////////////////////////////////////////////////////
-// Assume that non-Windows platforms support posix signals by default
-#if !defined(CATCH_PLATFORM_WINDOWS)
-    #define CATCH_INTERNAL_CONFIG_POSIX_SIGNALS
-#endif
-
-////////////////////////////////////////////////////////////////////////////////
-// We know some environments not to support full POSIX signals
-#if defined(__CYGWIN__) || defined(__QNX__) || defined(__EMSCRIPTEN__) || defined(__DJGPP__)
-    #define CATCH_INTERNAL_CONFIG_NO_POSIX_SIGNALS
-#endif
-
-#ifdef __OS400__
-#       define CATCH_INTERNAL_CONFIG_NO_POSIX_SIGNALS
-#       define CATCH_CONFIG_COLOUR_NONE
-#endif
-
-////////////////////////////////////////////////////////////////////////////////
-// Cygwin
-#ifdef __CYGWIN__
-
-// Required for some versions of Cygwin to declare gettimeofday
-// see: http://stackoverflow.com/questions/36901803/gettimeofday-not-declared-in-this-scope-cygwin
-#   define _BSD_SOURCE
-
-#endif // __CYGWIN__
-
-////////////////////////////////////////////////////////////////////////////////
-// Visual C++
-#ifdef _MSC_VER
-
-#  if _MSC_VER >= 1900 // Visual Studio 2015 or newer
-#    define CATCH_INTERNAL_CONFIG_CPP17_UNCAUGHT_EXCEPTIONS
-#  endif
-
-// Universal Windows platform does not support SEH
-// Or console colours (or console at all...)
-#  if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
-#    define CATCH_CONFIG_COLOUR_NONE
-#  else
-#    define CATCH_INTERNAL_CONFIG_WINDOWS_SEH
-#  endif
-
-#endif // _MSC_VER
-
-////////////////////////////////////////////////////////////////////////////////
-
-// DJGPP
-#ifdef __DJGPP__
-#  define CATCH_INTERNAL_CONFIG_NO_WCHAR
-#endif // __DJGPP__
-
-////////////////////////////////////////////////////////////////////////////////
-
-// Use of __COUNTER__ is suppressed during code analysis in
-// CLion/AppCode 2017.2.x and former, because __COUNTER__ is not properly
-// handled by it.
-// Otherwise all supported compilers support COUNTER macro,
-// but user still might want to turn it off
-#if ( !defined(__JETBRAINS_IDE__) || __JETBRAINS_IDE__ >= 20170300L )
-    #define CATCH_INTERNAL_CONFIG_COUNTER
-#endif
-
-#if defined(CATCH_INTERNAL_CONFIG_COUNTER) && !defined(CATCH_CONFIG_NO_COUNTER) && !defined(CATCH_CONFIG_COUNTER)
-#   define CATCH_CONFIG_COUNTER
-#endif
-#if defined(CATCH_INTERNAL_CONFIG_WINDOWS_SEH) && !defined(CATCH_CONFIG_NO_WINDOWS_SEH) && !defined(CATCH_CONFIG_WINDOWS_SEH)
-#   define CATCH_CONFIG_WINDOWS_SEH
-#endif
-// This is set by default, because we assume that unix compilers are posix-signal-compatible by default.
-#if defined(CATCH_INTERNAL_CONFIG_POSIX_SIGNALS) && !defined(CATCH_INTERNAL_CONFIG_NO_POSIX_SIGNALS) && !defined(CATCH_CONFIG_NO_POSIX_SIGNALS) && !defined(CATCH_CONFIG_POSIX_SIGNALS)
-#   define CATCH_CONFIG_POSIX_SIGNALS
-#endif
-// This is set by default, because we assume that compilers with no wchar_t support are just rare exceptions.
-#if !defined(CATCH_INTERNAL_CONFIG_NO_WCHAR) && !defined(CATCH_CONFIG_NO_WCHAR) && !defined(CATCH_CONFIG_WCHAR)
-#   define CATCH_CONFIG_WCHAR
-#endif
-
-#if defined(CATCH_INTERNAL_CONFIG_CPP17_UNCAUGHT_EXCEPTIONS) && !defined(CATCH_CONFIG_NO_CPP17_UNCAUGHT_EXCEPTIONS) && !defined(CATCH_CONFIG_CPP17_UNCAUGHT_EXCEPTIONS)
-#  define CATCH_CONFIG_CPP17_UNCAUGHT_EXCEPTIONS
-#endif
-
-#if !defined(CATCH_INTERNAL_SUPPRESS_PARENTHESES_WARNINGS)
-#   define CATCH_INTERNAL_SUPPRESS_PARENTHESES_WARNINGS
-#   define CATCH_INTERNAL_UNSUPPRESS_PARENTHESES_WARNINGS
-#endif
-#if !defined(CATCH_INTERNAL_SUPPRESS_GLOBALS_WARNINGS)
-#   define CATCH_INTERNAL_SUPPRESS_GLOBALS_WARNINGS
-#   define CATCH_INTERNAL_UNSUPPRESS_GLOBALS_WARNINGS
-#endif
-
-// end catch_compiler_capabilities.h
-#define INTERNAL_CATCH_UNIQUE_NAME_LINE2( name, line ) name##line
-#define INTERNAL_CATCH_UNIQUE_NAME_LINE( name, line ) INTERNAL_CATCH_UNIQUE_NAME_LINE2( name, line )
-#ifdef CATCH_CONFIG_COUNTER
-#  define INTERNAL_CATCH_UNIQUE_NAME( name ) INTERNAL_CATCH_UNIQUE_NAME_LINE( name, __COUNTER__ )
-#else
-#  define INTERNAL_CATCH_UNIQUE_NAME( name ) INTERNAL_CATCH_UNIQUE_NAME_LINE( name, __LINE__ )
-#endif
-
-#include <iosfwd>
-#include <string>
-#include <cstdint>
-
-namespace Catch {
-
-    struct CaseSensitive { enum Choice {
-        Yes,
-        No
-    }; };
-
-    class NonCopyable {
-        NonCopyable( NonCopyable const& )              = delete;
-        NonCopyable( NonCopyable && )                  = delete;
-        NonCopyable& operator = ( NonCopyable const& ) = delete;
-        NonCopyable& operator = ( NonCopyable && )     = delete;
-
-    protected:
-        NonCopyable();
-        virtual ~NonCopyable();
-    };
-
-    struct SourceLineInfo {
-
-        SourceLineInfo() = delete;
-        SourceLineInfo( char const* _file, std::size_t _line ) noexcept
-        :   file( _file ),
-            line( _line )
-        {}
-
-        SourceLineInfo( SourceLineInfo const& other )        = default;
-        SourceLineInfo( SourceLineInfo && )                  = default;
-        SourceLineInfo& operator = ( SourceLineInfo const& ) = default;
-        SourceLineInfo& operator = ( SourceLineInfo && )     = default;
-
-        bool empty() const noexcept;
-        bool operator == ( SourceLineInfo const& other ) const noexcept;
-        bool operator < ( SourceLineInfo const& other ) const noexcept;
-
-        char const* file;
-        std::size_t line;
-    };
-
-    std::ostream& operator << ( std::ostream& os, SourceLineInfo const& info );
-
-    // Use this in variadic streaming macros to allow
-    //    >> +StreamEndStop
-    // as well as
-    //    >> stuff +StreamEndStop
-    struct StreamEndStop {
-        std::string operator+() const;
-    };
-    template<typename T>
-    T const& operator + ( T const& value, StreamEndStop ) {
-        return value;
-    }
-}
-
-#define CATCH_INTERNAL_LINEINFO \
-    ::Catch::SourceLineInfo( __FILE__, static_cast<std::size_t>( __LINE__ ) )
-
-// end catch_common.h
-namespace Catch {
-
-    struct RegistrarForTagAliases {
-        RegistrarForTagAliases( char const* alias, char const* tag, SourceLineInfo const& lineInfo );
-    };
-
-} // end namespace Catch
-
-#define CATCH_REGISTER_TAG_ALIAS( alias, spec ) \
-    CATCH_INTERNAL_SUPPRESS_GLOBALS_WARNINGS \
-    namespace{ Catch::RegistrarForTagAliases INTERNAL_CATCH_UNIQUE_NAME( AutoRegisterTagAlias )( alias, spec, CATCH_INTERNAL_LINEINFO ); } \
-    CATCH_INTERNAL_UNSUPPRESS_GLOBALS_WARNINGS
-
-// end catch_tag_alias_autoregistrar.h
-// start catch_test_registry.h
-
-// start catch_interfaces_testcase.h
-
-#include <vector>
-#include <memory>
-
-namespace Catch {
-
-    class TestSpec;
-
-    struct ITestInvoker {
-        virtual void invoke () const = 0;
-        virtual ~ITestInvoker();
-    };
-
-    using ITestCasePtr = std::shared_ptr<ITestInvoker>;
-
-    class TestCase;
-    struct IConfig;
-
-    struct ITestCaseRegistry {
-        virtual ~ITestCaseRegistry();
-        virtual std::vector<TestCase> const& getAllTests() const = 0;
-        virtual std::vector<TestCase> const& getAllTestsSorted( IConfig const& config ) const = 0;
-    };
-
-    bool matchTest( TestCase const& testCase, TestSpec const& testSpec, IConfig const& config );
-    std::vector<TestCase> filterTests( std::vector<TestCase> const& testCases, TestSpec const& testSpec, IConfig const& config );
-    std::vector<TestCase> const& getAllTestCasesSorted( IConfig const& config );
-
-}
-
-// end catch_interfaces_testcase.h
-// start catch_stringref.h
-
-#include <cstddef>
-#include <string>
-#include <iosfwd>
-
-namespace Catch {
-
-    class StringData;
-
-    /// A non-owning string class (similar to the forthcoming std::string_view)
-    /// Note that, because a StringRef may be a substring of another string,
-    /// it may not be null terminated. c_str() must return a null terminated
-    /// string, however, and so the StringRef will internally take ownership
-    /// (taking a copy), if necessary. In theory this ownership is not externally
-    /// visible - but it does mean (substring) StringRefs should not be shared between
-    /// threads.
-    class StringRef {
-    public:
-        using size_type = std::size_t;
-
-    private:
-        friend struct StringRefTestAccess;
-
-        char const* m_start;
-        size_type m_size;
-
-        char* m_data = nullptr;
-
-        void takeOwnership();
-
-        static constexpr char const* const s_empty = "";
-
-    public: // construction/ assignment
-        StringRef() noexcept
-        :   StringRef( s_empty, 0 )
-        {}
-
-        StringRef( StringRef const& other ) noexcept
-        :   m_start( other.m_start ),
-            m_size( other.m_size )
-        {}
-
-        StringRef( StringRef&& other ) noexcept
-        :   m_start( other.m_start ),
-            m_size( other.m_size ),
-            m_data( other.m_data )
-        {
-            other.m_data = nullptr;
-        }
-
-        StringRef( char const* rawChars ) noexcept;
-
-        StringRef( char const* rawChars, size_type size ) noexcept
-        :   m_start( rawChars ),
-            m_size( size )
-        {}
-
-        StringRef( std::string const& stdString ) noexcept
-        :   m_start( stdString.c_str() ),
-            m_size( stdString.size() )
-        {}
-
-        ~StringRef() noexcept {
-            delete[] m_data;
-        }
-
-        auto operator = ( StringRef const &other ) noexcept -> StringRef& {
-            delete[] m_data;
-            m_data = nullptr;
-            m_start = other.m_start;
-            m_size = other.m_size;
-            return *this;
-        }
-
-        operator std::string() const;
-
-        void swap( StringRef& other ) noexcept;
-
-    public: // operators
-        auto operator == ( StringRef const& other ) const noexcept -> bool;
-        auto operator != ( StringRef const& other ) const noexcept -> bool;
-
-        auto operator[] ( size_type index ) const noexcept -> char;
-
-    public: // named queries
-        auto empty() const noexcept -> bool {
-            return m_size == 0;
-        }
-        auto size() const noexcept -> size_type {
-            return m_size;
-        }
-
-        auto numberOfCharacters() const noexcept -> size_type;
-        auto c_str() const -> char const*;
-
-    public: // substrings and searches
-        auto substr( size_type start, size_type size ) const noexcept -> StringRef;
-
-        // Returns the current start pointer.
-        // Note that the pointer can change when if the StringRef is a substring
-        auto currentData() const noexcept -> char const*;
-
-    private: // ownership queries - may not be consistent between calls
-        auto isOwned() const noexcept -> bool;
-        auto isSubstring() const noexcept -> bool;
-    };
-
-    auto operator + ( StringRef const& lhs, StringRef const& rhs ) -> std::string;
-    auto operator + ( StringRef const& lhs, char const* rhs ) -> std::string;
-    auto operator + ( char const* lhs, StringRef const& rhs ) -> std::string;
-
-    auto operator += ( std::string& lhs, StringRef const& sr ) -> std::string&;
-    auto operator << ( std::ostream& os, StringRef const& sr ) -> std::ostream&;
-
-    inline auto operator "" _sr( char const* rawChars, std::size_t size ) noexcept -> StringRef {
-        return StringRef( rawChars, size );
-    }
-
-} // namespace Catch
-
-// end catch_stringref.h
-namespace Catch {
-
-template<typename C>
-class TestInvokerAsMethod : public ITestInvoker {
-    void (C::*m_testAsMethod)();
-public:
-    TestInvokerAsMethod( void (C::*testAsMethod)() ) noexcept : m_testAsMethod( testAsMethod ) {}
-
-    void invoke() const override {
-        C obj;
-        (obj.*m_testAsMethod)();
-    }
-};
-
-auto makeTestInvoker( void(*testAsFunction)() ) noexcept -> ITestInvoker*;
-
-template<typename C>
-auto makeTestInvoker( void (C::*testAsMethod)() ) noexcept -> ITestInvoker* {
-    return new(std::nothrow) TestInvokerAsMethod<C>( testAsMethod );
-}
-
-struct NameAndTags {
-    NameAndTags( StringRef const& name_ = StringRef(), StringRef const& tags_ = StringRef() ) noexcept;
-    StringRef name;
-    StringRef tags;
-};
-
-struct AutoReg : NonCopyable {
-    AutoReg( ITestInvoker* invoker, SourceLineInfo const& lineInfo, StringRef const& classOrMethod, NameAndTags const& nameAndTags ) noexcept;
-    ~AutoReg();
-};
-
-} // end namespace Catch
-
-#if defined(CATCH_CONFIG_DISABLE)
-    #define INTERNAL_CATCH_TESTCASE_NO_REGISTRATION( TestName, ... ) \
-        static void TestName()
-    #define INTERNAL_CATCH_TESTCASE_METHOD_NO_REGISTRATION( TestName, ClassName, ... ) \
-        namespace{                        \
-            struct TestName : ClassName { \
-                void test();              \
-            };                            \
-        }                                 \
-        void TestName::test()
-
-#endif
-
-    ///////////////////////////////////////////////////////////////////////////////
-    #define INTERNAL_CATCH_TESTCASE2( TestName, ... ) \
-        static void TestName(); \
-        CATCH_INTERNAL_SUPPRESS_GLOBALS_WARNINGS \
-        namespace{ Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar )( Catch::makeTestInvoker( &TestName ), CATCH_INTERNAL_LINEINFO, "", Catch::NameAndTags{ __VA_ARGS__ } ); } /* NOLINT */ \
-        CATCH_INTERNAL_UNSUPPRESS_GLOBALS_WARNINGS \
-        static void TestName()
-    #define INTERNAL_CATCH_TESTCASE( ... ) \
-        INTERNAL_CATCH_TESTCASE2( INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ), __VA_ARGS__ )
-
-    ///////////////////////////////////////////////////////////////////////////////
-    #define INTERNAL_CATCH_METHOD_AS_TEST_CASE( QualifiedMethod, ... ) \
-        CATCH_INTERNAL_SUPPRESS_GLOBALS_WARNINGS \
-        namespace{ Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar )( Catch::makeTestInvoker( &QualifiedMethod ), CATCH_INTERNAL_LINEINFO, "&" #QualifiedMethod, Catch::NameAndTags{ __VA_ARGS__ } ); } /* NOLINT */ \
-        CATCH_INTERNAL_UNSUPPRESS_GLOBALS_WARNINGS
-
-    ///////////////////////////////////////////////////////////////////////////////
-    #define INTERNAL_CATCH_TEST_CASE_METHOD2( TestName, ClassName, ... )\
-        CATCH_INTERNAL_SUPPRESS_GLOBALS_WARNINGS \
-        namespace{ \
-            struct TestName : ClassName{ \
-                void test(); \
-            }; \
-            Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( Catch::makeTestInvoker( &TestName::test ), CATCH_INTERNAL_LINEINFO, #ClassName, Catch::NameAndTags{ __VA_ARGS__ } ); /* NOLINT */ \
-        } \
-        CATCH_INTERNAL_UNSUPPRESS_GLOBALS_WARNINGS \
-        void TestName::test()
-    #define INTERNAL_CATCH_TEST_CASE_METHOD( ClassName, ... ) \
-        INTERNAL_CATCH_TEST_CASE_METHOD2( INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ), ClassName, __VA_ARGS__ )
-
-    ///////////////////////////////////////////////////////////////////////////////
-    #define INTERNAL_CATCH_REGISTER_TESTCASE( Function, ... ) \
-        CATCH_INTERNAL_SUPPRESS_GLOBALS_WARNINGS \
-        Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar )( Catch::makeTestInvoker( Function ), CATCH_INTERNAL_LINEINFO, "", Catch::NameAndTags{ __VA_ARGS__ } ); /* NOLINT */ \
-        CATCH_INTERNAL_UNSUPPRESS_GLOBALS_WARNINGS
-
-// end catch_test_registry.h
-// start catch_capture.hpp
-
-// start catch_assertionhandler.h
-
-// start catch_assertioninfo.h
-
-// start catch_result_type.h
-
-namespace Catch {
-
-    // ResultWas::OfType enum
-    struct ResultWas { enum OfType {
-        Unknown = -1,
-        Ok = 0,
-        Info = 1,
-        Warning = 2,
-
-        FailureBit = 0x10,
-
-        ExpressionFailed = FailureBit | 1,
-        ExplicitFailure = FailureBit | 2,
-
-        Exception = 0x100 | FailureBit,
-
-        ThrewException = Exception | 1,
-        DidntThrowException = Exception | 2,
-
-        FatalErrorCondition = 0x200 | FailureBit
-
-    }; };
-
-    bool isOk( ResultWas::OfType resultType );
-    bool isJustInfo( int flags );
-
-    // ResultDisposition::Flags enum
-    struct ResultDisposition { enum Flags {
-        Normal = 0x01,
-
-        ContinueOnFailure = 0x02,   // Failures fail test, but execution continues
-        FalseTest = 0x04,           // Prefix expression with !
-        SuppressFail = 0x08         // Failures are reported but do not fail the test
-    }; };
-
-    ResultDisposition::Flags operator | ( ResultDisposition::Flags lhs, ResultDisposition::Flags rhs );
-
-    bool shouldContinueOnFailure( int flags );
-    inline bool isFalseTest( int flags ) { return ( flags & ResultDisposition::FalseTest ) != 0; }
-    bool shouldSuppressFailure( int flags );
-
-} // end namespace Catch
-
-// end catch_result_type.h
-namespace Catch {
-
-    struct AssertionInfo
-    {
-        StringRef macroName;
-        SourceLineInfo lineInfo;
-        StringRef capturedExpression;
-        ResultDisposition::Flags resultDisposition;
-
-        // We want to delete this constructor but a compiler bug in 4.8 means
-        // the struct is then treated as non-aggregate
-        //AssertionInfo() = delete;
-    };
-
-} // end namespace Catch
-
-// end catch_assertioninfo.h
-// start catch_decomposer.h
-
-// start catch_tostring.h
-
-#include <vector>
-#include <cstddef>
-#include <type_traits>
-#include <string>
-// start catch_stream.h
-
-#include <iosfwd>
-#include <cstddef>
-#include <ostream>
-
-namespace Catch {
-
-    std::ostream& cout();
-    std::ostream& cerr();
-    std::ostream& clog();
-
-    class StringRef;
-
-    struct IStream {
-        virtual ~IStream();
-        virtual std::ostream& stream() const = 0;
-    };
-
-    auto makeStream( StringRef const &filename ) -> IStream const*;
-
-    class ReusableStringStream {
-        std::size_t m_index;
-        std::ostream* m_oss;
-    public:
-        ReusableStringStream();
-        ~ReusableStringStream();
-
-        auto str() const -> std::string;
-
-        template<typename T>
-        auto operator << ( T const& value ) -> ReusableStringStream& {
-            *m_oss << value;
-            return *this;
-        }
-        auto get() -> std::ostream& { return *m_oss; }
-
-        static void cleanup();
-    };
-}
-
-// end catch_stream.h
-
-#ifdef __OBJC__
-// start catch_objc_arc.hpp
-
-#import <Foundation/Foundation.h>
-
-#ifdef __has_feature
-#define CATCH_ARC_ENABLED __has_feature(objc_arc)
-#else
-#define CATCH_ARC_ENABLED 0
-#endif
-
-void arcSafeRelease( NSObject* obj );
-id performOptionalSelector( id obj, SEL sel );
-
-#if !CATCH_ARC_ENABLED
-inline void arcSafeRelease( NSObject* obj ) {
-    [obj release];
-}
-inline id performOptionalSelector( id obj, SEL sel ) {
-    if( [obj respondsToSelector: sel] )
-        return [obj performSelector: sel];
-    return nil;
-}
-#define CATCH_UNSAFE_UNRETAINED
-#define CATCH_ARC_STRONG
-#else
-inline void arcSafeRelease( NSObject* ){}
-inline id performOptionalSelector( id obj, SEL sel ) {
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-#endif
-    if( [obj respondsToSelector: sel] )
-        return [obj performSelector: sel];
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-    return nil;
-}
-#define CATCH_UNSAFE_UNRETAINED __unsafe_unretained
-#define CATCH_ARC_STRONG __strong
-#endif
-
-// end catch_objc_arc.hpp
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4180) // We attempt to stream a function (address) by const&, which MSVC complains about but is harmless
-#endif
-
-// We need a dummy global operator<< so we can bring it into Catch namespace later
-struct Catch_global_namespace_dummy {};
-std::ostream& operator<<(std::ostream&, Catch_global_namespace_dummy);
-
-namespace Catch {
-    // Bring in operator<< from global namespace into Catch namespace
-    using ::operator<<;
-
-    namespace Detail {
-
-        extern const std::string unprintableString;
-
-        std::string rawMemoryToString( const void *object, std::size_t size );
-
-        template<typename T>
-        std::string rawMemoryToString( const T& object ) {
-          return rawMemoryToString( &object, sizeof(object) );
-        }
-
-        template<typename T>
-        class IsStreamInsertable {
-            template<typename SS, typename TT>
-            static auto test(int)
-                -> decltype(std::declval<SS&>() << std::declval<TT>(), std::true_type());
-
-            template<typename, typename>
-            static auto test(...)->std::false_type;
-
-        public:
-            static const bool value = decltype(test<std::ostream, const T&>(0))::value;
-        };
-
-        template<typename E>
-        std::string convertUnknownEnumToString( E e );
-
-        template<typename T>
-        typename std::enable_if<!std::is_enum<T>::value, std::string>::type convertUnstreamable( T const& value ) {
-#if !defined(CATCH_CONFIG_FALLBACK_STRINGIFIER)
-            (void)value;
-            return Detail::unprintableString;
-#else
-            return CATCH_CONFIG_FALLBACK_STRINGIFIER(value);
-#endif
-        }
-        template<typename T>
-        typename std::enable_if<std::is_enum<T>::value, std::string>::type convertUnstreamable( T const& value ) {
-            return convertUnknownEnumToString( value );
-        }
-
-    } // namespace Detail
-
-    // If we decide for C++14, change these to enable_if_ts
-    template <typename T, typename = void>
-    struct StringMaker {
-        template <typename Fake = T>
-        static
-        typename std::enable_if<::Catch::Detail::IsStreamInsertable<Fake>::value, std::string>::type
-            convert(const Fake& value) {
-                ReusableStringStream rss;
-                rss << value;
-                return rss.str();
-        }
-
-        template <typename Fake = T>
-        static
-        typename std::enable_if<!::Catch::Detail::IsStreamInsertable<Fake>::value, std::string>::type
-            convert( const Fake& value ) {
-                return Detail::convertUnstreamable( value );
-        }
-    };
-
-    namespace Detail {
-
-        // This function dispatches all stringification requests inside of Catch.
-        // Should be preferably called fully qualified, like ::Catch::Detail::stringify
-        template <typename T>
-        std::string stringify(const T& e) {
-            return ::Catch::StringMaker<typename std::remove_cv<typename std::remove_reference<T>::type>::type>::convert(e);
-        }
-
-        template<typename E>
-        std::string convertUnknownEnumToString( E e ) {
-            return ::Catch::Detail::stringify(static_cast<typename std::underlying_type<E>::type>(e));
-        }
-
-    } // namespace Detail
-
-    // Some predefined specializations
-
-    template<>
-    struct StringMaker<std::string> {
-        static std::string convert(const std::string& str);
-    };
-#ifdef CATCH_CONFIG_WCHAR
-    template<>
-    struct StringMaker<std::wstring> {
-        static std::string convert(const std::wstring& wstr);
-    };
-#endif
-
-    template<>
-    struct StringMaker<char const *> {
-        static std::string convert(char const * str);
-    };
-    template<>
-    struct StringMaker<char *> {
-        static std::string convert(char * str);
-    };
-#ifdef CATCH_CONFIG_WCHAR
-    template<>
-    struct StringMaker<wchar_t const *> {
-        static std::string convert(wchar_t const * str);
-    };
-    template<>
-    struct StringMaker<wchar_t *> {
-        static std::string convert(wchar_t * str);
-    };
-#endif
-
-    template<int SZ>
-    struct StringMaker<char[SZ]> {
-        static std::string convert(const char* str) {
-            return ::Catch::Detail::stringify(std::string{ str });
-        }
-    };
-    template<int SZ>
-    struct StringMaker<signed char[SZ]> {
-        static std::string convert(const char* str) {
-            return ::Catch::Detail::stringify(std::string{ str });
-        }
-    };
-    template<int SZ>
-    struct StringMaker<unsigned char[SZ]> {
-        static std::string convert(const char* str) {
-            return ::Catch::Detail::stringify(std::string{ str });
-        }
-    };
-
-    template<>
-    struct StringMaker<int> {
-        static std::string convert(int value);
-    };
-    template<>
-    struct StringMaker<long> {
-        static std::string convert(long value);
-    };
-    template<>
-    struct StringMaker<long long> {
-        static std::string convert(long long value);
-    };
-    template<>
-    struct StringMaker<unsigned int> {
-        static std::string convert(unsigned int value);
-    };
-    template<>
-    struct StringMaker<unsigned long> {
-        static std::string convert(unsigned long value);
-    };
-    template<>
-    struct StringMaker<unsigned long long> {
-        static std::string convert(unsigned long long value);
-    };
-
-    template<>
-    struct StringMaker<bool> {
-        static std::string convert(bool b);
-    };
-
-    template<>
-    struct StringMaker<char> {
-        static std::string convert(char c);
-    };
-    template<>
-    struct StringMaker<signed char> {
-        static std::string convert(signed char c);
-    };
-    template<>
-    struct StringMaker<unsigned char> {
-        static std::string convert(unsigned char c);
-    };
-
-    template<>
-    struct StringMaker<std::nullptr_t> {
-        static std::string convert(std::nullptr_t);
-    };
-
-    template<>
-    struct StringMaker<float> {
-        static std::string convert(float value);
-    };
-    template<>
-    struct StringMaker<double> {
-        static std::string convert(double value);
-    };
-
-    template <typename T>
-    struct StringMaker<T*> {
-        template <typename U>
-        static std::string convert(U* p) {
-            if (p) {
-                return ::Catch::Detail::rawMemoryToString(p);
-            } else {
-                return "nullptr";
-            }
-        }
-    };
-
-    template <typename R, typename C>
-    struct StringMaker<R C::*> {
-        static std::string convert(R C::* p) {
-            if (p) {
-                return ::Catch::Detail::rawMemoryToString(p);
-            } else {
-                return "nullptr";
-            }
-        }
-    };
-
-    namespace Detail {
-        template<typename InputIterator>
-        std::string rangeToString(InputIterator first, InputIterator last) {
-            ReusableStringStream rss;
-            rss << "{ ";
-            if (first != last) {
-                rss << ::Catch::Detail::stringify(*first);
-                for (++first; first != last; ++first)
-                    rss << ", " << ::Catch::Detail::stringify(*first);
-            }
-            rss << " }";
-            return rss.str();
-        }
-    }
-
-#ifdef __OBJC__
-    template<>
-    struct StringMaker<NSString*> {
-        static std::string convert(NSString * nsstring) {
-            if (!nsstring)
-                return "nil";
-            return std::string("@") + [nsstring UTF8String];
-        }
-    };
-    template<>
-    struct StringMaker<NSObject*> {
-        static std::string convert(NSObject* nsObject) {
-            return ::Catch::Detail::stringify([nsObject description]);
-        }
-
-    };
-    namespace Detail {
-        inline std::string stringify( NSString* nsstring ) {
-            return StringMaker<NSString*>::convert( nsstring );
-        }
-
-    } // namespace Detail
-#endif // __OBJC__
-
-} // namespace Catch
-
-//////////////////////////////////////////////////////
-// Separate std-lib types stringification, so it can be selectively enabled
-// This means that we do not bring in
-
-#if defined(CATCH_CONFIG_ENABLE_ALL_STRINGMAKERS)
-#  define CATCH_CONFIG_ENABLE_PAIR_STRINGMAKER
-#  define CATCH_CONFIG_ENABLE_TUPLE_STRINGMAKER
-#  define CATCH_CONFIG_ENABLE_CHRONO_STRINGMAKER
-#endif
-
-// Separate std::pair specialization
-#if defined(CATCH_CONFIG_ENABLE_PAIR_STRINGMAKER)
-#include <utility>
-namespace Catch {
-    template<typename T1, typename T2>
-    struct StringMaker<std::pair<T1, T2> > {
-        static std::string convert(const std::pair<T1, T2>& pair) {
-            ReusableStringStream rss;
-            rss << "{ "
-                << ::Catch::Detail::stringify(pair.first)
-                << ", "
-                << ::Catch::Detail::stringify(pair.second)
-                << " }";
-            return rss.str();
-        }
-    };
-}
-#endif // CATCH_CONFIG_ENABLE_PAIR_STRINGMAKER
-
-// Separate std::tuple specialization
-#if defined(CATCH_CONFIG_ENABLE_TUPLE_STRINGMAKER)
-#include <tuple>
-namespace Catch {
-    namespace Detail {
-        template<
-            typename Tuple,
-            std::size_t N = 0,
-            bool = (N < std::tuple_size<Tuple>::value)
-            >
-            struct TupleElementPrinter {
-            static void print(const Tuple& tuple, std::ostream& os) {
-                os << (N ? ", " : " ")
-                    << ::Catch::Detail::stringify(std::get<N>(tuple));
-                TupleElementPrinter<Tuple, N + 1>::print(tuple, os);
-            }
-        };
-
-        template<
-            typename Tuple,
-            std::size_t N
-        >
-            struct TupleElementPrinter<Tuple, N, false> {
-            static void print(const Tuple&, std::ostream&) {}
-        };
-
-    }
-
-    template<typename ...Types>
-    struct StringMaker<std::tuple<Types...>> {
-        static std::string convert(const std::tuple<Types...>& tuple) {
-            ReusableStringStream rss;
-            rss << '{';
-            Detail::TupleElementPrinter<std::tuple<Types...>>::print(tuple, rss.get());
-            rss << " }";
-            return rss.str();
-        }
-    };
-}
-#endif // CATCH_CONFIG_ENABLE_TUPLE_STRINGMAKER
-
-namespace Catch {
-    struct not_this_one {}; // Tag type for detecting which begin/ end are being selected
-
-    // Import begin/ end from std here so they are considered alongside the fallback (...) overloads in this namespace
-    using std::begin;
-    using std::end;
-
-    not_this_one begin( ... );
-    not_this_one end( ... );
-
-    template <typename T>
-    struct is_range {
-        static const bool value =
-            !std::is_same<decltype(begin(std::declval<T>())), not_this_one>::value &&
-            !std::is_same<decltype(end(std::declval<T>())), not_this_one>::value;
-    };
-
-    template<typename Range>
-    std::string rangeToString( Range const& range ) {
-        return ::Catch::Detail::rangeToString( begin( range ), end( range ) );
-    }
-
-    // Handle vector<bool> specially
-    template<typename Allocator>
-    std::string rangeToString( std::vector<bool, Allocator> const& v ) {
-        ReusableStringStream rss;
-        rss << "{ ";
-        bool first = true;
-        for( bool b : v ) {
-            if( first )
-                first = false;
-            else
-                rss << ", ";
-            rss << ::Catch::Detail::stringify( b );
-        }
-        rss << " }";
-        return rss.str();
-    }
-
-    template<typename R>
-    struct StringMaker<R, typename std::enable_if<is_range<R>::value && !::Catch::Detail::IsStreamInsertable<R>::value>::type> {
-        static std::string convert( R const& range ) {
-            return rangeToString( range );
-        }
-    };
-
-    template <typename T, int SZ>
-    struct StringMaker<T[SZ]> {
-        static std::string convert(T const(&arr)[SZ]) {
-            return rangeToString(arr);
-        }
-    };
-
-} // namespace Catch
-
-// Separate std::chrono::duration specialization
-#if defined(CATCH_CONFIG_ENABLE_CHRONO_STRINGMAKER)
-#include <ctime>
-#include <ratio>
-#include <chrono>
-
-namespace Catch {
-
-template <class Ratio>
-struct ratio_string {
-    static std::string symbol();
-};
-
-template <class Ratio>
-std::string ratio_string<Ratio>::symbol() {
-    Catch::ReusableStringStream rss;
-    rss << '[' << Ratio::num << '/'
-        << Ratio::den << ']';
-    return rss.str();
-}
-template <>
-struct ratio_string<std::atto> {
-    static std::string symbol();
-};
-template <>
-struct ratio_string<std::femto> {
-    static std::string symbol();
-};
-template <>
-struct ratio_string<std::pico> {
-    static std::string symbol();
-};
-template <>
-struct ratio_string<std::nano> {
-    static std::string symbol();
-};
-template <>
-struct ratio_string<std::micro> {
-    static std::string symbol();
-};
-template <>
-struct ratio_string<std::milli> {
-    static std::string symbol();
-};
-
-    ////////////
-    // std::chrono::duration specializations
-    template<typename Value, typename Ratio>
-    struct StringMaker<std::chrono::duration<Value, Ratio>> {
-        static std::string convert(std::chrono::duration<Value, Ratio> const& duration) {
-            ReusableStringStream rss;
-            rss << duration.count() << ' ' << ratio_string<Ratio>::symbol() << 's';
-            return rss.str();
-        }
-    };
-    template<typename Value>
-    struct StringMaker<std::chrono::duration<Value, std::ratio<1>>> {
-        static std::string convert(std::chrono::duration<Value, std::ratio<1>> const& duration) {
-            ReusableStringStream rss;
-            rss << duration.count() << " s";
-            return rss.str();
-        }
-    };
-    template<typename Value>
-    struct StringMaker<std::chrono::duration<Value, std::ratio<60>>> {
-        static std::string convert(std::chrono::duration<Value, std::ratio<60>> const& duration) {
-            ReusableStringStream rss;
-            rss << duration.count() << " m";
-            return rss.str();
-        }
-    };
-    template<typename Value>
-    struct StringMaker<std::chrono::duration<Value, std::ratio<3600>>> {
-        static std::string convert(std::chrono::duration<Value, std::ratio<3600>> const& duration) {
-            ReusableStringStream rss;
-            rss << duration.count() << " h";
-            return rss.str();
-        }
-    };
-
-    ////////////
-    // std::chrono::time_point specialization
-    // Generic time_point cannot be specialized, only std::chrono::time_point<system_clock>
-    template<typename Clock, typename Duration>
-    struct StringMaker<std::chrono::time_point<Clock, Duration>> {
-        static std::string convert(std::chrono::time_point<Clock, Duration> const& time_point) {
-            return ::Catch::Detail::stringify(time_point.time_since_epoch()) + " since epoch";
-        }
-    };
-    // std::chrono::time_point<system_clock> specialization
-    template<typename Duration>
-    struct StringMaker<std::chrono::time_point<std::chrono::system_clock, Duration>> {
-        static std::string convert(std::chrono::time_point<std::chrono::system_clock, Duration> const& time_point) {
-            auto converted = std::chrono::system_clock::to_time_t(time_point);
-
-#ifdef _MSC_VER
-            std::tm timeInfo = {};
-            gmtime_s(&timeInfo, &converted);
-#else
-            std::tm* timeInfo = std::gmtime(&converted);
-#endif
-
-            auto const timeStampSize = sizeof("2017-01-16T17:06:45Z");
-            char timeStamp[timeStampSize];
-            const char * const fmt = "%Y-%m-%dT%H:%M:%SZ";
-
-#ifdef _MSC_VER
-            std::strftime(timeStamp, timeStampSize, fmt, &timeInfo);
-#else
-            std::strftime(timeStamp, timeStampSize, fmt, timeInfo);
-#endif
-            return std::string(timeStamp);
-        }
-    };
-}
-#endif // CATCH_CONFIG_ENABLE_CHRONO_STRINGMAKER
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-// end catch_tostring.h
-#include <iosfwd>
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4389) // '==' : signed/unsigned mismatch
-#pragma warning(disable:4018) // more "signed/unsigned mismatch"
-#pragma warning(disable:4312) // Converting int to T* using reinterpret_cast (issue on x64 platform)
-#pragma warning(disable:4180) // qualifier applied to function type has no meaning
-#endif
-
-namespace Catch {
-
-    struct ITransientExpression {
-        auto isBinaryExpression() const -> bool { return m_isBinaryExpression; }
-        auto getResult() const -> bool { return m_result; }
-        virtual void streamReconstructedExpression( std::ostream &os ) const = 0;
-
-        ITransientExpression( bool isBinaryExpression, bool result )
-        :   m_isBinaryExpression( isBinaryExpression ),
-            m_result( result )
-        {}
-
-        // We don't actually need a virtual destructor, but many static analysers
-        // complain if it's not here :-(
-        virtual ~ITransientExpression();
-
-        bool m_isBinaryExpression;
-        bool m_result;
-
-    };
-
-    void formatReconstructedExpression( std::ostream &os, std::string const& lhs, StringRef op, std::string const& rhs );
-
-    template<typename LhsT, typename RhsT>
-    class BinaryExpr  : public ITransientExpression {
-        LhsT m_lhs;
-        StringRef m_op;
-        RhsT m_rhs;
-
-        void streamReconstructedExpression( std::ostream &os ) const override {
-            formatReconstructedExpression
-                    ( os, Catch::Detail::stringify( m_lhs ), m_op, Catch::Detail::stringify( m_rhs ) );
-        }
-
-    public:
-        BinaryExpr( bool comparisonResult, LhsT lhs, StringRef op, RhsT rhs )
-        :   ITransientExpression{ true, comparisonResult },
-            m_lhs( lhs ),
-            m_op( op ),
-            m_rhs( rhs )
-        {}
-    };
-
-    template<typename LhsT>
-    class UnaryExpr : public ITransientExpression {
-        LhsT m_lhs;
-
-        void streamReconstructedExpression( std::ostream &os ) const override {
-            os << Catch::Detail::stringify( m_lhs );
-        }
-
-    public:
-        explicit UnaryExpr( LhsT lhs )
-        :   ITransientExpression{ false, lhs ? true : false },
-            m_lhs( lhs )
-        {}
-    };
-
-    // Specialised comparison functions to handle equality comparisons between ints and pointers (NULL deduces as an int)
-    template<typename LhsT, typename RhsT>
-    auto compareEqual( LhsT const& lhs, RhsT const& rhs ) -> bool { return static_cast<bool>(lhs == rhs); }
-    template<typename T>
-    auto compareEqual( T* const& lhs, int rhs ) -> bool { return lhs == reinterpret_cast<void const*>( rhs ); }
-    template<typename T>
-    auto compareEqual( T* const& lhs, long rhs ) -> bool { return lhs == reinterpret_cast<void const*>( rhs ); }
-    template<typename T>
-    auto compareEqual( int lhs, T* const& rhs ) -> bool { return reinterpret_cast<void const*>( lhs ) == rhs; }
-    template<typename T>
-    auto compareEqual( long lhs, T* const& rhs ) -> bool { return reinterpret_cast<void const*>( lhs ) == rhs; }
-
-    template<typename LhsT, typename RhsT>
-    auto compareNotEqual( LhsT const& lhs, RhsT&& rhs ) -> bool { return static_cast<bool>(lhs != rhs); }
-    template<typename T>
-    auto compareNotEqual( T* const& lhs, int rhs ) -> bool { return lhs != reinterpret_cast<void const*>( rhs ); }
-    template<typename T>
-    auto compareNotEqual( T* const& lhs, long rhs ) -> bool { return lhs != reinterpret_cast<void const*>( rhs ); }
-    template<typename T>
-    auto compareNotEqual( int lhs, T* const& rhs ) -> bool { return reinterpret_cast<void const*>( lhs ) != rhs; }
-    template<typename T>
-    auto compareNotEqual( long lhs, T* const& rhs ) -> bool { return reinterpret_cast<void const*>( lhs ) != rhs; }
-
-    template<typename LhsT>
-    class ExprLhs {
-        LhsT m_lhs;
-    public:
-        explicit ExprLhs( LhsT lhs ) : m_lhs( lhs ) {}
-
-        template<typename RhsT>
-        auto operator == ( RhsT const& rhs ) -> BinaryExpr<LhsT, RhsT const&> const {
-            return { compareEqual( m_lhs, rhs ), m_lhs, "==", rhs };
-        }
-        auto operator == ( bool rhs ) -> BinaryExpr<LhsT, bool> const {
-            return { m_lhs == rhs, m_lhs, "==", rhs };
-        }
-
-        template<typename RhsT>
-        auto operator != ( RhsT const& rhs ) -> BinaryExpr<LhsT, RhsT const&> const {
-            return { compareNotEqual( m_lhs, rhs ), m_lhs, "!=", rhs };
-        }
-        auto operator != ( bool rhs ) -> BinaryExpr<LhsT, bool> const {
-            return { m_lhs != rhs, m_lhs, "!=", rhs };
-        }
-
-        template<typename RhsT>
-        auto operator > ( RhsT const& rhs ) -> BinaryExpr<LhsT, RhsT const&> const {
-            return { static_cast<bool>(m_lhs > rhs), m_lhs, ">", rhs };
-        }
-        template<typename RhsT>
-        auto operator < ( RhsT const& rhs ) -> BinaryExpr<LhsT, RhsT const&> const {
-            return { static_cast<bool>(m_lhs < rhs), m_lhs, "<", rhs };
-        }
-        template<typename RhsT>
-        auto operator >= ( RhsT const& rhs ) -> BinaryExpr<LhsT, RhsT const&> const {
-            return { static_cast<bool>(m_lhs >= rhs), m_lhs, ">=", rhs };
-        }
-        template<typename RhsT>
-        auto operator <= ( RhsT const& rhs ) -> BinaryExpr<LhsT, RhsT const&> const {
-            return { static_cast<bool>(m_lhs <= rhs), m_lhs, "<=", rhs };
-        }
-
-        auto makeUnaryExpr() const -> UnaryExpr<LhsT> {
-            return UnaryExpr<LhsT>{ m_lhs };
-        }
-    };
-
-    void handleExpression( ITransientExpression const& expr );
-
-    template<typename T>
-    void handleExpression( ExprLhs<T> const& expr ) {
-        handleExpression( expr.makeUnaryExpr() );
-    }
-
-    struct Decomposer {
-        template<typename T>
-        auto operator <= ( T const& lhs ) -> ExprLhs<T const&> {
-            return ExprLhs<T const&>{ lhs };
-        }
-
-        auto operator <=( bool value ) -> ExprLhs<bool> {
-            return ExprLhs<bool>{ value };
-        }
-    };
-
-} // end namespace Catch
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-// end catch_decomposer.h
-// start catch_interfaces_capture.h
-
-#include <string>
-
-namespace Catch {
-
-    class AssertionResult;
-    struct AssertionInfo;
-    struct SectionInfo;
-    struct SectionEndInfo;
-    struct MessageInfo;
-    struct Counts;
-    struct BenchmarkInfo;
-    struct BenchmarkStats;
-    struct AssertionReaction;
-
-    struct ITransientExpression;
-
-    struct IResultCapture {
-
-        virtual ~IResultCapture();
-
-        virtual bool sectionStarted(    SectionInfo const& sectionInfo,
-                                        Counts& assertions ) = 0;
-        virtual void sectionEnded( SectionEndInfo const& endInfo ) = 0;
-        virtual void sectionEndedEarly( SectionEndInfo const& endInfo ) = 0;
-
-        virtual void benchmarkStarting( BenchmarkInfo const& info ) = 0;
-        virtual void benchmarkEnded( BenchmarkStats const& stats ) = 0;
-
-        virtual void pushScopedMessage( MessageInfo const& message ) = 0;
-        virtual void popScopedMessage( MessageInfo const& message ) = 0;
-
-        virtual void handleFatalErrorCondition( StringRef message ) = 0;
-
-        virtual void handleExpr
-                (   AssertionInfo const& info,
-                    ITransientExpression const& expr,
-                    AssertionReaction& reaction ) = 0;
-        virtual void handleMessage
-                (   AssertionInfo const& info,
-                    ResultWas::OfType resultType,
-                    StringRef const& message,
-                    AssertionReaction& reaction ) = 0;
-        virtual void handleUnexpectedExceptionNotThrown
-                (   AssertionInfo const& info,
-                    AssertionReaction& reaction ) = 0;
-        virtual void handleUnexpectedInflightException
-                (   AssertionInfo const& info,
-                    std::string const& message,
-                    AssertionReaction& reaction ) = 0;
-        virtual void handleIncomplete
-                (   AssertionInfo const& info ) = 0;
-        virtual void handleNonExpr
-                (   AssertionInfo const &info,
-                    ResultWas::OfType resultType,
-                    AssertionReaction &reaction ) = 0;
-
-        virtual bool lastAssertionPassed() = 0;
-        virtual void assertionPassed() = 0;
-
-        // Deprecated, do not use:
-        virtual std::string getCurrentTestName() const = 0;
-        virtual const AssertionResult* getLastResult() const = 0;
-        virtual void exceptionEarlyReported() = 0;
-    };
-
-    IResultCapture& getResultCapture();
-}
-
-// end catch_interfaces_capture.h
-namespace Catch {
-
-    struct TestFailureException{};
-    struct AssertionResultData;
-    struct IResultCapture;
-    class RunContext;
-
-    class LazyExpression {
-        friend class AssertionHandler;
-        friend struct AssertionStats;
-        friend class RunContext;
-
-        ITransientExpression const* m_transientExpression = nullptr;
-        bool m_isNegated;
-    public:
-        LazyExpression( bool isNegated );
-        LazyExpression( LazyExpression const& other );
-        LazyExpression& operator = ( LazyExpression const& ) = delete;
-
-        explicit operator bool() const;
-
-        friend auto operator << ( std::ostream& os, LazyExpression const& lazyExpr ) -> std::ostream&;
-    };
-
-    struct AssertionReaction {
-        bool shouldDebugBreak = false;
-        bool shouldThrow = false;
-    };
-
-    class AssertionHandler {
-        AssertionInfo m_assertionInfo;
-        AssertionReaction m_reaction;
-        bool m_completed = false;
-        IResultCapture& m_resultCapture;
-
-    public:
-        AssertionHandler
-            (   StringRef macroName,
-                SourceLineInfo const& lineInfo,
-                StringRef capturedExpression,
-                ResultDisposition::Flags resultDisposition );
-        ~AssertionHandler() {
-            if ( !m_completed ) {
-                m_resultCapture.handleIncomplete( m_assertionInfo );
-            }
-        }
-
-        template<typename T>
-        void handleExpr( ExprLhs<T> const& expr ) {
-            handleExpr( expr.makeUnaryExpr() );
-        }
-        void handleExpr( ITransientExpression const& expr );
-
-        void handleMessage(ResultWas::OfType resultType, StringRef const& message);
-
-        void handleExceptionThrownAsExpected();
-        void handleUnexpectedExceptionNotThrown();
-        void handleExceptionNotThrownAsExpected();
-        void handleThrowingCallSkipped();
-        void handleUnexpectedInflightException();
-
-        void complete();
-        void setCompleted();
-
-        // query
-        auto allowThrows() const -> bool;
-    };
-
-    void handleExceptionMatchExpr( AssertionHandler& handler, std::string const& str, StringRef matcherString );
-
-} // namespace Catch
-
-// end catch_assertionhandler.h
-// start catch_message.h
-
-#include <string>
-
-namespace Catch {
-
-    struct MessageInfo {
-        MessageInfo(    std::string const& _macroName,
-                        SourceLineInfo const& _lineInfo,
-                        ResultWas::OfType _type );
-
-        std::string macroName;
-        std::string message;
-        SourceLineInfo lineInfo;
-        ResultWas::OfType type;
-        unsigned int sequence;
-
-        bool operator == ( MessageInfo const& other ) const;
-        bool operator < ( MessageInfo const& other ) const;
-    private:
-        static unsigned int globalCount;
-    };
-
-    struct MessageStream {
-
-        template<typename T>
-        MessageStream& operator << ( T const& value ) {
-            m_stream << value;
-            return *this;
-        }
-
-        ReusableStringStream m_stream;
-    };
-
-    struct MessageBuilder : MessageStream {
-        MessageBuilder( std::string const& macroName,
-                        SourceLineInfo const& lineInfo,
-                        ResultWas::OfType type );
-
-        template<typename T>
-        MessageBuilder& operator << ( T const& value ) {
-            m_stream << value;
-            return *this;
-        }
-
-        MessageInfo m_info;
-    };
-
-    class ScopedMessage {
-    public:
-        explicit ScopedMessage( MessageBuilder const& builder );
-        ~ScopedMessage();
-
-        MessageInfo m_info;
-    };
-
-} // end namespace Catch
-
-// end catch_message.h
-#if !defined(CATCH_CONFIG_DISABLE)
-
-#if !defined(CATCH_CONFIG_DISABLE_STRINGIFICATION)
-  #define CATCH_INTERNAL_STRINGIFY(...) #__VA_ARGS__
-#else
-  #define CATCH_INTERNAL_STRINGIFY(...) "Disabled by CATCH_CONFIG_DISABLE_STRINGIFICATION"
-#endif
-
-#if defined(CATCH_CONFIG_FAST_COMPILE)
-
-///////////////////////////////////////////////////////////////////////////////
-// Another way to speed-up compilation is to omit local try-catch for REQUIRE*
-// macros.
-#define INTERNAL_CATCH_TRY
-#define INTERNAL_CATCH_CATCH( capturer )
-
-#else // CATCH_CONFIG_FAST_COMPILE
-
-#define INTERNAL_CATCH_TRY try
-#define INTERNAL_CATCH_CATCH( handler ) catch(...) { handler.handleUnexpectedInflightException(); }
-
-#endif
-
-#define INTERNAL_CATCH_REACT( handler ) handler.complete();
-
-///////////////////////////////////////////////////////////////////////////////
-#define INTERNAL_CATCH_TEST( macroName, resultDisposition, ... ) \
-    do { \
-        Catch::AssertionHandler catchAssertionHandler( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(__VA_ARGS__), resultDisposition ); \
-        INTERNAL_CATCH_TRY { \
-            CATCH_INTERNAL_SUPPRESS_PARENTHESES_WARNINGS \
-            catchAssertionHandler.handleExpr( Catch::Decomposer() <= __VA_ARGS__ ); \
-            CATCH_INTERNAL_UNSUPPRESS_PARENTHESES_WARNINGS \
-        } INTERNAL_CATCH_CATCH( catchAssertionHandler ) \
-        INTERNAL_CATCH_REACT( catchAssertionHandler ) \
-    } while( (void)0, false && static_cast<bool>( !!(__VA_ARGS__) ) ) // the expression here is never evaluated at runtime but it forces the compiler to give it a look
-    // The double negation silences MSVC's C4800 warning, the static_cast forces short-circuit evaluation if the type has overloaded &&.
-
-///////////////////////////////////////////////////////////////////////////////
-#define INTERNAL_CATCH_IF( macroName, resultDisposition, ... ) \
-    INTERNAL_CATCH_TEST( macroName, resultDisposition, __VA_ARGS__ ); \
-    if( Catch::getResultCapture().lastAssertionPassed() )
-
-///////////////////////////////////////////////////////////////////////////////
-#define INTERNAL_CATCH_ELSE( macroName, resultDisposition, ... ) \
-    INTERNAL_CATCH_TEST( macroName, resultDisposition, __VA_ARGS__ ); \
-    if( !Catch::getResultCapture().lastAssertionPassed() )
-
-///////////////////////////////////////////////////////////////////////////////
-#define INTERNAL_CATCH_NO_THROW( macroName, resultDisposition, ... ) \
-    do { \
-        Catch::AssertionHandler catchAssertionHandler( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(__VA_ARGS__), resultDisposition ); \
-        try { \
-            static_cast<void>(__VA_ARGS__); \
-            catchAssertionHandler.handleExceptionNotThrownAsExpected(); \
-        } \
-        catch( ... ) { \
-            catchAssertionHandler.handleUnexpectedInflightException(); \
-        } \
-        INTERNAL_CATCH_REACT( catchAssertionHandler ) \
-    } while( false )
-
-///////////////////////////////////////////////////////////////////////////////
-#define INTERNAL_CATCH_THROWS( macroName, resultDisposition, ... ) \
-    do { \
-        Catch::AssertionHandler catchAssertionHandler( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(__VA_ARGS__), resultDisposition); \
-        if( catchAssertionHandler.allowThrows() ) \
-            try { \
-                static_cast<void>(__VA_ARGS__); \
-                catchAssertionHandler.handleUnexpectedExceptionNotThrown(); \
-            } \
-            catch( ... ) { \
-                catchAssertionHandler.handleExceptionThrownAsExpected(); \
-            } \
-        else \
-            catchAssertionHandler.handleThrowingCallSkipped(); \
-        INTERNAL_CATCH_REACT( catchAssertionHandler ) \
-    } while( false )
-
-///////////////////////////////////////////////////////////////////////////////
-#define INTERNAL_CATCH_THROWS_AS( macroName, exceptionType, resultDisposition, expr ) \
-    do { \
-        Catch::AssertionHandler catchAssertionHandler( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(expr) ", " CATCH_INTERNAL_STRINGIFY(exceptionType), resultDisposition ); \
-        if( catchAssertionHandler.allowThrows() ) \
-            try { \
-                static_cast<void>(expr); \
-                catchAssertionHandler.handleUnexpectedExceptionNotThrown(); \
-            } \
-            catch( exceptionType const& ) { \
-                catchAssertionHandler.handleExceptionThrownAsExpected(); \
-            } \
-            catch( ... ) { \
-                catchAssertionHandler.handleUnexpectedInflightException(); \
-            } \
-        else \
-            catchAssertionHandler.handleThrowingCallSkipped(); \
-        INTERNAL_CATCH_REACT( catchAssertionHandler ) \
-    } while( false )
-
-///////////////////////////////////////////////////////////////////////////////
-#define INTERNAL_CATCH_MSG( macroName, messageType, resultDisposition, ... ) \
-    do { \
-        Catch::AssertionHandler catchAssertionHandler( macroName, CATCH_INTERNAL_LINEINFO, "", resultDisposition ); \
-        catchAssertionHandler.handleMessage( messageType, ( Catch::MessageStream() << __VA_ARGS__ + ::Catch::StreamEndStop() ).m_stream.str() ); \
-        INTERNAL_CATCH_REACT( catchAssertionHandler ) \
-    } while( false )
-
-///////////////////////////////////////////////////////////////////////////////
-#define INTERNAL_CATCH_INFO( macroName, log ) \
-    Catch::ScopedMessage INTERNAL_CATCH_UNIQUE_NAME( scopedMessage )( Catch::MessageBuilder( macroName, CATCH_INTERNAL_LINEINFO, Catch::ResultWas::Info ) << log );
-
-///////////////////////////////////////////////////////////////////////////////
-// Although this is matcher-based, it can be used with just a string
-#define INTERNAL_CATCH_THROWS_STR_MATCHES( macroName, resultDisposition, matcher, ... ) \
-    do { \
-        Catch::AssertionHandler catchAssertionHandler( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(__VA_ARGS__) ", " CATCH_INTERNAL_STRINGIFY(matcher), resultDisposition ); \
-        if( catchAssertionHandler.allowThrows() ) \
-            try { \
-                static_cast<void>(__VA_ARGS__); \
-                catchAssertionHandler.handleUnexpectedExceptionNotThrown(); \
-            } \
-            catch( ... ) { \
-                Catch::handleExceptionMatchExpr( catchAssertionHandler, matcher, #matcher ); \
-            } \
-        else \
-            catchAssertionHandler.handleThrowingCallSkipped(); \
-        INTERNAL_CATCH_REACT( catchAssertionHandler ) \
-    } while( false )
-
-#endif // CATCH_CONFIG_DISABLE
-
-// end catch_capture.hpp
-// start catch_section.h
-
-// start catch_section_info.h
-
-// start catch_totals.h
-
-#include <cstddef>
-
-namespace Catch {
-
-    struct Counts {
-        Counts operator - ( Counts const& other ) const;
-        Counts& operator += ( Counts const& other );
-
-        std::size_t total() const;
-        bool allPassed() const;
-        bool allOk() const;
-
-        std::size_t passed = 0;
-        std::size_t failed = 0;
-        std::size_t failedButOk = 0;
-    };
-
-    struct Totals {
-
-        Totals operator - ( Totals const& other ) const;
-        Totals& operator += ( Totals const& other );
-
-        Totals delta( Totals const& prevTotals ) const;
-
-        int error = 0;
-        Counts assertions;
-        Counts testCases;
-    };
-}
-
-// end catch_totals.h
-#include <string>
-
-namespace Catch {
-
-    struct SectionInfo {
-        SectionInfo
-            (   SourceLineInfo const& _lineInfo,
-                std::string const& _name,
-                std::string const& _description = std::string() );
-
-        std::string name;
-        std::string description;
-        SourceLineInfo lineInfo;
-    };
-
-    struct SectionEndInfo {
-        SectionEndInfo( SectionInfo const& _sectionInfo, Counts const& _prevAssertions, double _durationInSeconds );
-
-        SectionInfo sectionInfo;
-        Counts prevAssertions;
-        double durationInSeconds;
-    };
-
-} // end namespace Catch
-
-// end catch_section_info.h
-// start catch_timer.h
-
-#include <cstdint>
-
-namespace Catch {
-
-    auto getCurrentNanosecondsSinceEpoch() -> uint64_t;
-    auto getEstimatedClockResolution() -> uint64_t;
-
-    class Timer {
-        uint64_t m_nanoseconds = 0;
-    public:
-        void start();
-        auto getElapsedNanoseconds() const -> uint64_t;
-        auto getElapsedMicroseconds() const -> uint64_t;
-        auto getElapsedMilliseconds() const -> unsigned int;
-        auto getElapsedSeconds() const -> double;
-    };
-
-} // namespace Catch
-
-// end catch_timer.h
-#include <string>
-
-namespace Catch {
-
-    class Section : NonCopyable {
-    public:
-        Section( SectionInfo const& info );
-        ~Section();
-
-        // This indicates whether the section should be executed or not
-        explicit operator bool() const;
-
-    private:
-        SectionInfo m_info;
-
-        std::string m_name;
-        Counts m_assertions;
-        bool m_sectionIncluded;
-        Timer m_timer;
-    };
-
-} // end namespace Catch
-
-    #define INTERNAL_CATCH_SECTION( ... ) \
-        if( Catch::Section const& INTERNAL_CATCH_UNIQUE_NAME( catch_internal_Section ) = Catch::SectionInfo( CATCH_INTERNAL_LINEINFO, __VA_ARGS__ ) )
-
-// end catch_section.h
-// start catch_benchmark.h
-
-#include <cstdint>
-#include <string>
-
-namespace Catch {
-
-    class BenchmarkLooper {
-
-        std::string m_name;
-        std::size_t m_count = 0;
-        std::size_t m_iterationsToRun = 1;
-        uint64_t m_resolution;
-        Timer m_timer;
-
-        static auto getResolution() -> uint64_t;
-    public:
-        // Keep most of this inline as it's on the code path that is being timed
-        BenchmarkLooper( StringRef name )
-        :   m_name( name ),
-            m_resolution( getResolution() )
-        {
-            reportStart();
-            m_timer.start();
-        }
-
-        explicit operator bool() {
-            if( m_count < m_iterationsToRun )
-                return true;
-            return needsMoreIterations();
-        }
-
-        void increment() {
-            ++m_count;
-        }
-
-        void reportStart();
-        auto needsMoreIterations() -> bool;
-    };
-
-} // end namespace Catch
-
-#define BENCHMARK( name ) \
-    for( Catch::BenchmarkLooper looper( name ); looper; looper.increment() )
-
-// end catch_benchmark.h
-// start catch_interfaces_exception.h
-
-// start catch_interfaces_registry_hub.h
-
-#include <string>
-#include <memory>
-
-namespace Catch {
-
-    class TestCase;
-    struct ITestCaseRegistry;
-    struct IExceptionTranslatorRegistry;
-    struct IExceptionTranslator;
-    struct IReporterRegistry;
-    struct IReporterFactory;
-    struct ITagAliasRegistry;
-    class StartupExceptionRegistry;
-
-    using IReporterFactoryPtr = std::shared_ptr<IReporterFactory>;
-
-    struct IRegistryHub {
-        virtual ~IRegistryHub();
-
-        virtual IReporterRegistry const& getReporterRegistry() const = 0;
-        virtual ITestCaseRegistry const& getTestCaseRegistry() const = 0;
-        virtual ITagAliasRegistry const& getTagAliasRegistry() const = 0;
-
-        virtual IExceptionTranslatorRegistry& getExceptionTranslatorRegistry() = 0;
-
-        virtual StartupExceptionRegistry const& getStartupExceptionRegistry() const = 0;
-    };
-
-    struct IMutableRegistryHub {
-        virtual ~IMutableRegistryHub();
-        virtual void registerReporter( std::string const& name, IReporterFactoryPtr const& factory ) = 0;
-        virtual void registerListener( IReporterFactoryPtr const& factory ) = 0;
-        virtual void registerTest( TestCase const& testInfo ) = 0;
-        virtual void registerTranslator( const IExceptionTranslator* translator ) = 0;
-        virtual void registerTagAlias( std::string const& alias, std::string const& tag, SourceLineInfo const& lineInfo ) = 0;
-        virtual void registerStartupException() noexcept = 0;
-    };
-
-    IRegistryHub& getRegistryHub();
-    IMutableRegistryHub& getMutableRegistryHub();
-    void cleanUp();
-    std::string translateActiveException();
-
-}
-
-// end catch_interfaces_registry_hub.h
-#if defined(CATCH_CONFIG_DISABLE)
-    #define INTERNAL_CATCH_TRANSLATE_EXCEPTION_NO_REG( translatorName, signature) \
-        static std::string translatorName( signature )
-#endif
-
-#include <exception>
-#include <string>
-#include <vector>
-
-namespace Catch {
-    using exceptionTranslateFunction = std::string(*)();
-
-    struct IExceptionTranslator;
-    using ExceptionTranslators = std::vector<std::unique_ptr<IExceptionTranslator const>>;
-
-    struct IExceptionTranslator {
-        virtual ~IExceptionTranslator();
-        virtual std::string translate( ExceptionTranslators::const_iterator it, ExceptionTranslators::const_iterator itEnd ) const = 0;
-    };
-
-    struct IExceptionTranslatorRegistry {
-        virtual ~IExceptionTranslatorRegistry();
-
-        virtual std::string translateActiveException() const = 0;
-    };
-
-    class ExceptionTranslatorRegistrar {
-        template<typename T>
-        class ExceptionTranslator : public IExceptionTranslator {
-        public:
-
-            ExceptionTranslator( std::string(*translateFunction)( T& ) )
-            : m_translateFunction( translateFunction )
-            {}
-
-            std::string translate( ExceptionTranslators::const_iterator it, ExceptionTranslators::const_iterator itEnd ) const override {
-                try {
-                    if( it == itEnd )
-                        std::rethrow_exception(std::current_exception());
-                    else
-                        return (*it)->translate( it+1, itEnd );
-                }
-                catch( T& ex ) {
-                    return m_translateFunction( ex );
-                }
-            }
-
-        protected:
-            std::string(*m_translateFunction)( T& );
-        };
-
-    public:
-        template<typename T>
-        ExceptionTranslatorRegistrar( std::string(*translateFunction)( T& ) ) {
-            getMutableRegistryHub().registerTranslator
-                ( new ExceptionTranslator<T>( translateFunction ) );
-        }
-    };
-}
-
-///////////////////////////////////////////////////////////////////////////////
-#define INTERNAL_CATCH_TRANSLATE_EXCEPTION2( translatorName, signature ) \
-    static std::string translatorName( signature ); \
-    CATCH_INTERNAL_SUPPRESS_GLOBALS_WARNINGS \
-    namespace{ Catch::ExceptionTranslatorRegistrar INTERNAL_CATCH_UNIQUE_NAME( catch_internal_ExceptionRegistrar )( &translatorName ); } \
-    CATCH_INTERNAL_UNSUPPRESS_GLOBALS_WARNINGS \
-    static std::string translatorName( signature )
-
-#define INTERNAL_CATCH_TRANSLATE_EXCEPTION( signature ) INTERNAL_CATCH_TRANSLATE_EXCEPTION2( INTERNAL_CATCH_UNIQUE_NAME( catch_internal_ExceptionTranslator ), signature )
-
-// end catch_interfaces_exception.h
-// start catch_approx.h
-
-#include <type_traits>
-#include <stdexcept>
-
-namespace Catch {
-namespace Detail {
-
-    class Approx {
-    private:
-        bool equalityComparisonImpl(double other) const;
-
-    public:
-        explicit Approx ( double value );
-
-        static Approx custom();
-
-        template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
-        Approx operator()( T const& value ) {
-            Approx approx( static_cast<double>(value) );
-            approx.epsilon( m_epsilon );
-            approx.margin( m_margin );
-            approx.scale( m_scale );
-            return approx;
-        }
-
-        template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
-        explicit Approx( T const& value ): Approx(static_cast<double>(value))
-        {}
-
-        template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
-        friend bool operator == ( const T& lhs, Approx const& rhs ) {
-            auto lhs_v = static_cast<double>(lhs);
-            return rhs.equalityComparisonImpl(lhs_v);
-        }
-
-        template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
-        friend bool operator == ( Approx const& lhs, const T& rhs ) {
-            return operator==( rhs, lhs );
-        }
-
-        template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
-        friend bool operator != ( T const& lhs, Approx const& rhs ) {
-            return !operator==( lhs, rhs );
-        }
-
-        template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
-        friend bool operator != ( Approx const& lhs, T const& rhs ) {
-            return !operator==( rhs, lhs );
-        }
-
-        template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
-        friend bool operator <= ( T const& lhs, Approx const& rhs ) {
-            return static_cast<double>(lhs) < rhs.m_value || lhs == rhs;
-        }
-
-        template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
-        friend bool operator <= ( Approx const& lhs, T const& rhs ) {
-            return lhs.m_value < static_cast<double>(rhs) || lhs == rhs;
-        }
-
-        template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
-        friend bool operator >= ( T const& lhs, Approx const& rhs ) {
-            return static_cast<double>(lhs) > rhs.m_value || lhs == rhs;
-        }
-
-        template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
-        friend bool operator >= ( Approx const& lhs, T const& rhs ) {
-            return lhs.m_value > static_cast<double>(rhs) || lhs == rhs;
-        }
-
-        template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
-        Approx& epsilon( T const& newEpsilon ) {
-            double epsilonAsDouble = static_cast<double>(newEpsilon);
-            if( epsilonAsDouble < 0 || epsilonAsDouble > 1.0 ) {
-                throw std::domain_error
-                    (   "Invalid Approx::epsilon: " +
-                        Catch::Detail::stringify( epsilonAsDouble ) +
-                        ", Approx::epsilon has to be between 0 and 1" );
-            }
-            m_epsilon = epsilonAsDouble;
-            return *this;
-        }
-
-        template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
-        Approx& margin( T const& newMargin ) {
-            double marginAsDouble = static_cast<double>(newMargin);
-            if( marginAsDouble < 0 ) {
-                throw std::domain_error
-                    (   "Invalid Approx::margin: " +
-                         Catch::Detail::stringify( marginAsDouble ) +
-                         ", Approx::Margin has to be non-negative." );
-
-            }
-            m_margin = marginAsDouble;
-            return *this;
-        }
-
-        template <typename T, typename = typename std::enable_if<std::is_constructible<double, T>::value>::type>
-        Approx& scale( T const& newScale ) {
-            m_scale = static_cast<double>(newScale);
-            return *this;
-        }
-
-        std::string toString() const;
-
-    private:
-        double m_epsilon;
-        double m_margin;
-        double m_scale;
-        double m_value;
-    };
-}
-
-template<>
-struct StringMaker<Catch::Detail::Approx> {
-    static std::string convert(Catch::Detail::Approx const& value);
-};
-
-} // end namespace Catch
-
-// end catch_approx.h
-// start catch_string_manip.h
-
-#include <string>
-#include <iosfwd>
-
-namespace Catch {
-
-    bool startsWith( std::string const& s, std::string const& prefix );
-    bool startsWith( std::string const& s, char prefix );
-    bool endsWith( std::string const& s, std::string const& suffix );
-    bool endsWith( std::string const& s, char suffix );
-    bool contains( std::string const& s, std::string const& infix );
-    void toLowerInPlace( std::string& s );
-    std::string toLower( std::string const& s );
-    std::string trim( std::string const& str );
-    bool replaceInPlace( std::string& str, std::string const& replaceThis, std::string const& withThis );
-
-    struct pluralise {
-        pluralise( std::size_t count, std::string const& label );
-
-        friend std::ostream& operator << ( std::ostream& os, pluralise const& pluraliser );
-
-        std::size_t m_count;
-        std::string m_label;
-    };
-}
-
-// end catch_string_manip.h
-#ifndef CATCH_CONFIG_DISABLE_MATCHERS
-// start catch_capture_matchers.h
-
-// start catch_matchers.h
-
-#include <string>
-#include <vector>
-
-namespace Catch {
-namespace Matchers {
-    namespace Impl {
-
-        template<typename ArgT> struct MatchAllOf;
-        template<typename ArgT> struct MatchAnyOf;
-        template<typename ArgT> struct MatchNotOf;
-
-        class MatcherUntypedBase {
-        public:
-            MatcherUntypedBase() = default;
-            MatcherUntypedBase ( MatcherUntypedBase const& ) = default;
-            MatcherUntypedBase& operator = ( MatcherUntypedBase const& ) = delete;
-            std::string toString() const;
-
-        protected:
-            virtual ~MatcherUntypedBase();
-            virtual std::string describe() const = 0;
-            mutable std::string m_cachedToString;
-        };
-
-        template<typename ObjectT>
-        struct MatcherMethod {
-            virtual bool match( ObjectT const& arg ) const = 0;
-        };
-        template<typename PtrT>
-        struct MatcherMethod<PtrT*> {
-            virtual bool match( PtrT* arg ) const = 0;
-        };
-
-        template<typename T>
-        struct MatcherBase : MatcherUntypedBase, MatcherMethod<T> {
-
-            MatchAllOf<T> operator && ( MatcherBase const& other ) const;
-            MatchAnyOf<T> operator || ( MatcherBase const& other ) const;
-            MatchNotOf<T> operator ! () const;
-        };
-
-        template<typename ArgT>
-        struct MatchAllOf : MatcherBase<ArgT> {
-            bool match( ArgT const& arg ) const override {
-                for( auto matcher : m_matchers ) {
-                    if (!matcher->match(arg))
-                        return false;
-                }
-                return true;
-            }
-            std::string describe() const override {
-                std::string description;
-                description.reserve( 4 + m_matchers.size()*32 );
-                description += "( ";
-                bool first = true;
-                for( auto matcher : m_matchers ) {
-                    if( first )
-                        first = false;
-                    else
-                        description += " and ";
-                    description += matcher->toString();
-                }
-                description += " )";
-                return description;
-            }
-
-            MatchAllOf<ArgT>& operator && ( MatcherBase<ArgT> const& other ) {
-                m_matchers.push_back( &other );
-                return *this;
-            }
-
-            std::vector<MatcherBase<ArgT> const*> m_matchers;
-        };
-        template<typename ArgT>
-        struct MatchAnyOf : MatcherBase<ArgT> {
-
-            bool match( ArgT const& arg ) const override {
-                for( auto matcher : m_matchers ) {
-                    if (matcher->match(arg))
-                        return true;
-                }
-                return false;
-            }
-            std::string describe() const override {
-                std::string description;
-                description.reserve( 4 + m_matchers.size()*32 );
-                description += "( ";
-                bool first = true;
-                for( auto matcher : m_matchers ) {
-                    if( first )
-                        first = false;
-                    else
-                        description += " or ";
-                    description += matcher->toString();
-                }
-                description += " )";
-                return description;
-            }
-
-            MatchAnyOf<ArgT>& operator || ( MatcherBase<ArgT> const& other ) {
-                m_matchers.push_back( &other );
-                return *this;
-            }
-
-            std::vector<MatcherBase<ArgT> const*> m_matchers;
-        };
-
-        template<typename ArgT>
-        struct MatchNotOf : MatcherBase<ArgT> {
-
-            MatchNotOf( MatcherBase<ArgT> const& underlyingMatcher ) : m_underlyingMatcher( underlyingMatcher ) {}
-
-            bool match( ArgT const& arg ) const override {
-                return !m_underlyingMatcher.match( arg );
-            }
-
-            std::string describe() const override {
-                return "not " + m_underlyingMatcher.toString();
-            }
-            MatcherBase<ArgT> const& m_underlyingMatcher;
-        };
-
-        template<typename T>
-        MatchAllOf<T> MatcherBase<T>::operator && ( MatcherBase const& other ) const {
-            return MatchAllOf<T>() && *this && other;
-        }
-        template<typename T>
-        MatchAnyOf<T> MatcherBase<T>::operator || ( MatcherBase const& other ) const {
-            return MatchAnyOf<T>() || *this || other;
-        }
-        template<typename T>
-        MatchNotOf<T> MatcherBase<T>::operator ! () const {
-            return MatchNotOf<T>( *this );
-        }
-
-    } // namespace Impl
-
-} // namespace Matchers
-
-using namespace Matchers;
-using Matchers::Impl::MatcherBase;
-
-} // namespace Catch
-
-// end catch_matchers.h
-// start catch_matchers_floating.h
-
-#include <type_traits>
-#include <cmath>
-
-namespace Catch {
-namespace Matchers {
-
-    namespace Floating {
-
-        enum class FloatingPointKind : uint8_t;
-
-        struct WithinAbsMatcher : MatcherBase<double> {
-            WithinAbsMatcher(double target, double margin);
-            bool match(double const& matchee) const override;
-            std::string describe() const override;
-        private:
-            double m_target;
-            double m_margin;
-        };
-
-        struct WithinUlpsMatcher : MatcherBase<double> {
-            WithinUlpsMatcher(double target, int ulps, FloatingPointKind baseType);
-            bool match(double const& matchee) const override;
-            std::string describe() const override;
-        private:
-            double m_target;
-            int m_ulps;
-            FloatingPointKind m_type;
-        };
-
-    } // namespace Floating
-
-    // The following functions create the actual matcher objects.
-    // This allows the types to be inferred
-    Floating::WithinUlpsMatcher WithinULP(double target, int maxUlpDiff);
-    Floating::WithinUlpsMatcher WithinULP(float target, int maxUlpDiff);
-    Floating::WithinAbsMatcher WithinAbs(double target, double margin);
-
-} // namespace Matchers
-} // namespace Catch
-
-// end catch_matchers_floating.h
-// start catch_matchers_string.h
-
-#include <string>
-
-namespace Catch {
-namespace Matchers {
-
-    namespace StdString {
-
-        struct CasedString
-        {
-            CasedString( std::string const& str, CaseSensitive::Choice caseSensitivity );
-            std::string adjustString( std::string const& str ) const;
-            std::string caseSensitivitySuffix() const;
-
-            CaseSensitive::Choice m_caseSensitivity;
-            std::string m_str;
-        };
-
-        struct StringMatcherBase : MatcherBase<std::string> {
-            StringMatcherBase( std::string const& operation, CasedString const& comparator );
-            std::string describe() const override;
-
-            CasedString m_comparator;
-            std::string m_operation;
-        };
-
-        struct EqualsMatcher : StringMatcherBase {
-            EqualsMatcher( CasedString const& comparator );
-            bool match( std::string const& source ) const override;
-        };
-        struct ContainsMatcher : StringMatcherBase {
-            ContainsMatcher( CasedString const& comparator );
-            bool match( std::string const& source ) const override;
-        };
-        struct StartsWithMatcher : StringMatcherBase {
-            StartsWithMatcher( CasedString const& comparator );
-            bool match( std::string const& source ) const override;
-        };
-        struct EndsWithMatcher : StringMatcherBase {
-            EndsWithMatcher( CasedString const& comparator );
-            bool match( std::string const& source ) const override;
-        };
-
-        struct RegexMatcher : MatcherBase<std::string> {
-            RegexMatcher( std::string regex, CaseSensitive::Choice caseSensitivity );
-            bool match( std::string const& matchee ) const override;
-            std::string describe() const override;
-
-        private:
-            std::string m_regex;
-            CaseSensitive::Choice m_caseSensitivity;
-        };
-
-    } // namespace StdString
-
-    // The following functions create the actual matcher objects.
-    // This allows the types to be inferred
-
-    StdString::EqualsMatcher Equals( std::string const& str, CaseSensitive::Choice caseSensitivity = CaseSensitive::Yes );
-    StdString::ContainsMatcher Contains( std::string const& str, CaseSensitive::Choice caseSensitivity = CaseSensitive::Yes );
-    StdString::EndsWithMatcher EndsWith( std::string const& str, CaseSensitive::Choice caseSensitivity = CaseSensitive::Yes );
-    StdString::StartsWithMatcher StartsWith( std::string const& str, CaseSensitive::Choice caseSensitivity = CaseSensitive::Yes );
-    StdString::RegexMatcher Matches( std::string const& regex, CaseSensitive::Choice caseSensitivity = CaseSensitive::Yes );
-
-} // namespace Matchers
-} // namespace Catch
-
-// end catch_matchers_string.h
-// start catch_matchers_vector.h
-
-#include <algorithm>
-
-namespace Catch {
-namespace Matchers {
-
-    namespace Vector {
-        namespace Detail {
-            template <typename InputIterator, typename T>
-            size_t count(InputIterator first, InputIterator last, T const& item) {
-                size_t cnt = 0;
-                for (; first != last; ++first) {
-                    if (*first == item) {
-                        ++cnt;
-                    }
-                }
-                return cnt;
-            }
-            template <typename InputIterator, typename T>
-            bool contains(InputIterator first, InputIterator last, T const& item) {
-                for (; first != last; ++first) {
-                    if (*first == item) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-        }
-
-        template<typename T>
-        struct ContainsElementMatcher : MatcherBase<std::vector<T>> {
-
-            ContainsElementMatcher(T const &comparator) : m_comparator( comparator) {}
-
-            bool match(std::vector<T> const &v) const override {
-                for (auto const& el : v) {
-                    if (el == m_comparator) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            std::string describe() const override {
-                return "Contains: " + ::Catch::Detail::stringify( m_comparator );
-            }
-
-            T const& m_comparator;
-        };
-
-        template<typename T>
-        struct ContainsMatcher : MatcherBase<std::vector<T>> {
-
-            ContainsMatcher(std::vector<T> const &comparator) : m_comparator( comparator ) {}
-
-            bool match(std::vector<T> const &v) const override {
-                // !TBD: see note in EqualsMatcher
-                if (m_comparator.size() > v.size())
-                    return false;
-                for (auto const& comparator : m_comparator) {
-                    auto present = false;
-                    for (const auto& el : v) {
-                        if (el == comparator) {
-                            present = true;
-                            break;
-                        }
-                    }
-                    if (!present) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            std::string describe() const override {
-                return "Contains: " + ::Catch::Detail::stringify( m_comparator );
-            }
-
-            std::vector<T> const& m_comparator;
-        };
-
-        template<typename T>
-        struct EqualsMatcher : MatcherBase<std::vector<T>> {
-
-            EqualsMatcher(std::vector<T> const &comparator) : m_comparator( comparator ) {}
-
-            bool match(std::vector<T> const &v) const override {
-                // !TBD: This currently works if all elements can be compared using !=
-                // - a more general approach would be via a compare template that defaults
-                // to using !=. but could be specialised for, e.g. std::vector<T> etc
-                // - then just call that directly
-                if (m_comparator.size() != v.size())
-                    return false;
-                for (std::size_t i = 0; i < v.size(); ++i)
-                    if (m_comparator[i] != v[i])
-                        return false;
-                return true;
-            }
-            std::string describe() const override {
-                return "Equals: " + ::Catch::Detail::stringify( m_comparator );
-            }
-            std::vector<T> const& m_comparator;
-        };
-
-        template<typename T>
-        struct UnorderedEqualsMatcher : MatcherBase<std::vector<T>> {
-            UnorderedEqualsMatcher(std::vector<T> const& target) : m_target(target) {}
-            bool match(std::vector<T> const& vec) const override {
-                // Note: This is a reimplementation of std::is_permutation,
-                //       because I don't want to include <algorithm> inside the common path
-                if (m_target.size() != vec.size()) {
-                    return false;
-                }
-                auto lfirst = m_target.begin(), llast = m_target.end();
-                auto rfirst = vec.begin(), rlast = vec.end();
-                // Cut common prefix to optimize checking of permuted parts
-                while (lfirst != llast && *lfirst != *rfirst) {
-                    ++lfirst; ++rfirst;
-                }
-                if (lfirst == llast) {
-                    return true;
-                }
-
-                for (auto mid = lfirst; mid != llast; ++mid) {
-                    // Skip already counted items
-                    if (Detail::contains(lfirst, mid, *mid)) {
-                        continue;
-                    }
-                    size_t num_vec = Detail::count(rfirst, rlast, *mid);
-                    if (num_vec == 0 || Detail::count(lfirst, llast, *mid) != num_vec) {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            std::string describe() const override {
-                return "UnorderedEquals: " + ::Catch::Detail::stringify(m_target);
-            }
-        private:
-            std::vector<T> const& m_target;
-        };
-
-    } // namespace Vector
-
-    // The following functions create the actual matcher objects.
-    // This allows the types to be inferred
-
-    template<typename T>
-    Vector::ContainsMatcher<T> Contains( std::vector<T> const& comparator ) {
-        return Vector::ContainsMatcher<T>( comparator );
-    }
-
-    template<typename T>
-    Vector::ContainsElementMatcher<T> VectorContains( T const& comparator ) {
-        return Vector::ContainsElementMatcher<T>( comparator );
-    }
-
-    template<typename T>
-    Vector::EqualsMatcher<T> Equals( std::vector<T> const& comparator ) {
-        return Vector::EqualsMatcher<T>( comparator );
-    }
-
-    template<typename T>
-    Vector::UnorderedEqualsMatcher<T> UnorderedEquals(std::vector<T> const& target) {
-        return Vector::UnorderedEqualsMatcher<T>(target);
-    }
-
-} // namespace Matchers
-} // namespace Catch
-
-// end catch_matchers_vector.h
-namespace Catch {
-
-    template<typename ArgT, typename MatcherT>
-    class MatchExpr : public ITransientExpression {
-        ArgT const& m_arg;
-        MatcherT m_matcher;
-        StringRef m_matcherString;
-    public:
-        MatchExpr( ArgT const& arg, MatcherT const& matcher, StringRef matcherString )
-        :   ITransientExpression{ true, matcher.match( arg ) },
-            m_arg( arg ),
-            m_matcher( matcher ),
-            m_matcherString( matcherString )
-        {}
-
-        void streamReconstructedExpression( std::ostream &os ) const override {
-            auto matcherAsString = m_matcher.toString();
-            os << Catch::Detail::stringify( m_arg ) << ' ';
-            if( matcherAsString == Detail::unprintableString )
-                os << m_matcherString;
-            else
-                os << matcherAsString;
-        }
-    };
-
-    using StringMatcher = Matchers::Impl::MatcherBase<std::string>;
-
-    void handleExceptionMatchExpr( AssertionHandler& handler, StringMatcher const& matcher, StringRef matcherString  );
-
-    template<typename ArgT, typename MatcherT>
-    auto makeMatchExpr( ArgT const& arg, MatcherT const& matcher, StringRef matcherString  ) -> MatchExpr<ArgT, MatcherT> {
-        return MatchExpr<ArgT, MatcherT>( arg, matcher, matcherString );
-    }
-
-} // namespace Catch
-
-///////////////////////////////////////////////////////////////////////////////
-#define INTERNAL_CHECK_THAT( macroName, matcher, resultDisposition, arg ) \
-    do { \
-        Catch::AssertionHandler catchAssertionHandler( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(arg) ", " CATCH_INTERNAL_STRINGIFY(matcher), resultDisposition ); \
-        INTERNAL_CATCH_TRY { \
-            catchAssertionHandler.handleExpr( Catch::makeMatchExpr( arg, matcher, #matcher ) ); \
-        } INTERNAL_CATCH_CATCH( catchAssertionHandler ) \
-        INTERNAL_CATCH_REACT( catchAssertionHandler ) \
-    } while( false )
-
-///////////////////////////////////////////////////////////////////////////////
-#define INTERNAL_CATCH_THROWS_MATCHES( macroName, exceptionType, resultDisposition, matcher, ... ) \
-    do { \
-        Catch::AssertionHandler catchAssertionHandler( macroName, CATCH_INTERNAL_LINEINFO, CATCH_INTERNAL_STRINGIFY(__VA_ARGS__) ", " CATCH_INTERNAL_STRINGIFY(exceptionType) ", " CATCH_INTERNAL_STRINGIFY(matcher), resultDisposition ); \
-        if( catchAssertionHandler.allowThrows() ) \
-            try { \
-                static_cast<void>(__VA_ARGS__ ); \
-                catchAssertionHandler.handleUnexpectedExceptionNotThrown(); \
-            } \
-            catch( exceptionType const& ex ) { \
-                catchAssertionHandler.handleExpr( Catch::makeMatchExpr( ex, matcher, #matcher ) ); \
-            } \
-            catch( ... ) { \
-                catchAssertionHandler.handleUnexpectedInflightException(); \
-            } \
-        else \
-            catchAssertionHandler.handleThrowingCallSkipped(); \
-        INTERNAL_CATCH_REACT( catchAssertionHandler ) \
-    } while( false )
-
-// end catch_capture_matchers.h
-#endif
-
-// These files are included here so the single_include script doesn't put them
-// in the conditionally compiled sections
-// start catch_test_case_info.h
-
-#include <string>
-#include <vector>
-#include <memory>
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpadded"
-#endif
-
-namespace Catch {
-
-    struct ITestInvoker;
-
-    struct TestCaseInfo {
-        enum SpecialProperties{
-            None = 0,
-            IsHidden = 1 << 1,
-            ShouldFail = 1 << 2,
-            MayFail = 1 << 3,
-            Throws = 1 << 4,
-            NonPortable = 1 << 5,
-            Benchmark = 1 << 6
-        };
-
-        TestCaseInfo(   std::string const& _name,
-                        std::string const& _className,
-                        std::string const& _description,
-                        std::vector<std::string> const& _tags,
-                        SourceLineInfo const& _lineInfo );
-
-        friend void setTags( TestCaseInfo& testCaseInfo, std::vector<std::string> tags );
-
-        bool isHidden() const;
-        bool throws() const;
-        bool okToFail() const;
-        bool expectedToFail() const;
-
-        std::string tagsAsString() const;
-
-        std::string name;
-        std::string className;
-        std::string description;
-        std::vector<std::string> tags;
-        std::vector<std::string> lcaseTags;
-        SourceLineInfo lineInfo;
-        SpecialProperties properties;
-    };
-
-    class TestCase : public TestCaseInfo {
-    public:
-
-        TestCase( ITestInvoker* testCase, TestCaseInfo&& info );
-
-        TestCase withName( std::string const& _newName ) const;
-
-        void invoke() const;
-
-        TestCaseInfo const& getTestCaseInfo() const;
-
-        bool operator == ( TestCase const& other ) const;
-        bool operator < ( TestCase const& other ) const;
-
-    private:
-        std::shared_ptr<ITestInvoker> test;
-    };
-
-    TestCase makeTestCase(  ITestInvoker* testCase,
-                            std::string const& className,
-                            NameAndTags const& nameAndTags,
-                            SourceLineInfo const& lineInfo );
-}
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
-// end catch_test_case_info.h
-// start catch_interfaces_runner.h
-
-namespace Catch {
-
-    struct IRunner {
-        virtual ~IRunner();
-        virtual bool aborting() const = 0;
-    };
-}
-
-// end catch_interfaces_runner.h
-
-#ifdef __OBJC__
-// start catch_objc.hpp
-
-#import <objc/runtime.h>
-
-#include <string>
-
-// NB. Any general catch headers included here must be included
-// in catch.hpp first to make sure they are included by the single
-// header for non obj-usage
-
-///////////////////////////////////////////////////////////////////////////////
-// This protocol is really only here for (self) documenting purposes, since
-// all its methods are optional.
-@protocol OcFixture
-
-@optional
-
--(void) setUp;
--(void) tearDown;
-
-@end
-
-namespace Catch {
-
-    class OcMethod : public ITestInvoker {
-
-    public:
-        OcMethod( Class cls, SEL sel ) : m_cls( cls ), m_sel( sel ) {}
-
-        virtual void invoke() const {
-            id obj = [[m_cls alloc] init];
-
-            performOptionalSelector( obj, @selector(setUp)  );
-            performOptionalSelector( obj, m_sel );
-            performOptionalSelector( obj, @selector(tearDown)  );
-
-            arcSafeRelease( obj );
-        }
-    private:
-        virtual ~OcMethod() {}
-
-        Class m_cls;
-        SEL m_sel;
-    };
-
-    namespace Detail{
-
-        inline std::string getAnnotation(   Class cls,
-                                            std::string const& annotationName,
-                                            std::string const& testCaseName ) {
-            NSString* selStr = [[NSString alloc] initWithFormat:@"Catch_%s_%s", annotationName.c_str(), testCaseName.c_str()];
-            SEL sel = NSSelectorFromString( selStr );
-            arcSafeRelease( selStr );
-            id value = performOptionalSelector( cls, sel );
-            if( value )
-                return [(NSString*)value UTF8String];
-            return "";
-        }
-    }
-
-    inline std::size_t registerTestMethods() {
-        std::size_t noTestMethods = 0;
-        int noClasses = objc_getClassList( nullptr, 0 );
-
-        Class* classes = (CATCH_UNSAFE_UNRETAINED Class *)malloc( sizeof(Class) * noClasses);
-        objc_getClassList( classes, noClasses );
-
-        for( int c = 0; c < noClasses; c++ ) {
-            Class cls = classes[c];
-            {
-                u_int count;
-                Method* methods = class_copyMethodList( cls, &count );
-                for( u_int m = 0; m < count ; m++ ) {
-                    SEL selector = method_getName(methods[m]);
-                    std::string methodName = sel_getName(selector);
-                    if( startsWith( methodName, "Catch_TestCase_" ) ) {
-                        std::string testCaseName = methodName.substr( 15 );
-                        std::string name = Detail::getAnnotation( cls, "Name", testCaseName );
-                        std::string desc = Detail::getAnnotation( cls, "Description", testCaseName );
-                        const char* className = class_getName( cls );
-
-                        getMutableRegistryHub().registerTest( makeTestCase( new OcMethod( cls, selector ), className, name.c_str(), desc.c_str(), SourceLineInfo("",0) ) );
-                        noTestMethods++;
-                    }
-                }
-                free(methods);
-            }
-        }
-        return noTestMethods;
-    }
-
-#if !defined(CATCH_CONFIG_DISABLE_MATCHERS)
-
-    namespace Matchers {
-        namespace Impl {
-        namespace NSStringMatchers {
-
-            struct StringHolder : MatcherBase<NSString*>{
-                StringHolder( NSString* substr ) : m_substr( [substr copy] ){}
-                StringHolder( StringHolder const& other ) : m_substr( [other.m_substr copy] ){}
-                StringHolder() {
-                    arcSafeRelease( m_substr );
-                }
-
-                bool match( NSString* arg ) const override {
-                    return false;
-                }
-
-                NSString* CATCH_ARC_STRONG m_substr;
-            };
-
-            struct Equals : StringHolder {
-                Equals( NSString* substr ) : StringHolder( substr ){}
-
-                bool match( NSString* str ) const override {
-                    return  (str != nil || m_substr == nil ) &&
-                            [str isEqualToString:m_substr];
-                }
-
-                std::string describe() const override {
-                    return "equals string: " + Catch::Detail::stringify( m_substr );
-                }
-            };
-
-            struct Contains : StringHolder {
-                Contains( NSString* substr ) : StringHolder( substr ){}
-
-                bool match( NSString* str ) const {
-                    return  (str != nil || m_substr == nil ) &&
-                            [str rangeOfString:m_substr].location != NSNotFound;
-                }
-
-                std::string describe() const override {
-                    return "contains string: " + Catch::Detail::stringify( m_substr );
-                }
-            };
-
-            struct StartsWith : StringHolder {
-                StartsWith( NSString* substr ) : StringHolder( substr ){}
-
-                bool match( NSString* str ) const override {
-                    return  (str != nil || m_substr == nil ) &&
-                            [str rangeOfString:m_substr].location == 0;
-                }
-
-                std::string describe() const override {
-                    return "starts with: " + Catch::Detail::stringify( m_substr );
-                }
-            };
-            struct EndsWith : StringHolder {
-                EndsWith( NSString* substr ) : StringHolder( substr ){}
-
-                bool match( NSString* str ) const override {
-                    return  (str != nil || m_substr == nil ) &&
-                            [str rangeOfString:m_substr].location == [str length] - [m_substr length];
-                }
-
-                std::string describe() const override {
-                    return "ends with: " + Catch::Detail::stringify( m_substr );
-                }
-            };
-
-        } // namespace NSStringMatchers
-        } // namespace Impl
-
-        inline Impl::NSStringMatchers::Equals
-            Equals( NSString* substr ){ return Impl::NSStringMatchers::Equals( substr ); }
-
-        inline Impl::NSStringMatchers::Contains
-            Contains( NSString* substr ){ return Impl::NSStringMatchers::Contains( substr ); }
-
-        inline Impl::NSStringMatchers::StartsWith
-            StartsWith( NSString* substr ){ return Impl::NSStringMatchers::StartsWith( substr ); }
-
-        inline Impl::NSStringMatchers::EndsWith
-            EndsWith( NSString* substr ){ return Impl::NSStringMatchers::EndsWith( substr ); }
-
-    } // namespace Matchers
-
-    using namespace Matchers;
-
-#endif // CATCH_CONFIG_DISABLE_MATCHERS
-
-} // namespace Catch
-
-///////////////////////////////////////////////////////////////////////////////
-#define OC_MAKE_UNIQUE_NAME( root, uniqueSuffix ) root##uniqueSuffix
-#define OC_TEST_CASE2( name, desc, uniqueSuffix ) \
-+(NSString*) OC_MAKE_UNIQUE_NAME( Catch_Name_test_, uniqueSuffix ) \
-{ \
-return @ name; \
-} \
-+(NSString*) OC_MAKE_UNIQUE_NAME( Catch_Description_test_, uniqueSuffix ) \
-{ \
-return @ desc; \
-} \
--(void) OC_MAKE_UNIQUE_NAME( Catch_TestCase_test_, uniqueSuffix )
-
-#define OC_TEST_CASE( name, desc ) OC_TEST_CASE2( name, desc, __LINE__ )
-
-// end catch_objc.hpp
-#endif
-
-#ifdef CATCH_CONFIG_EXTERNAL_INTERFACES
-// start catch_external_interfaces.h
-
-// start catch_reporter_bases.hpp
-
-// start catch_interfaces_reporter.h
-
-// start catch_config.hpp
-
-// start catch_test_spec_parser.h
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpadded"
-#endif
-
-// start catch_test_spec.h
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpadded"
-#endif
-
-// start catch_wildcard_pattern.h
-
-namespace Catch
-{
-    class WildcardPattern {
-        enum WildcardPosition {
-            NoWildcard = 0,
-            WildcardAtStart = 1,
-            WildcardAtEnd = 2,
-            WildcardAtBothEnds = WildcardAtStart | WildcardAtEnd
-        };
-
-    public:
-
-        WildcardPattern( std::string const& pattern, CaseSensitive::Choice caseSensitivity );
-        virtual ~WildcardPattern() = default;
-        virtual bool matches( std::string const& str ) const;
-
-    private:
-        std::string adjustCase( std::string const& str ) const;
-        CaseSensitive::Choice m_caseSensitivity;
-        WildcardPosition m_wildcard = NoWildcard;
-        std::string m_pattern;
-    };
-}
-
-// end catch_wildcard_pattern.h
-#include <string>
-#include <vector>
-#include <memory>
-
-namespace Catch {
-
-    class TestSpec {
-        struct Pattern {
-            virtual ~Pattern();
-            virtual bool matches( TestCaseInfo const& testCase ) const = 0;
-        };
-        using PatternPtr = std::shared_ptr<Pattern>;
-
-        class NamePattern : public Pattern {
-        public:
-            NamePattern( std::string const& name );
-            virtual ~NamePattern();
-            virtual bool matches( TestCaseInfo const& testCase ) const override;
-        private:
-            WildcardPattern m_wildcardPattern;
-        };
-
-        class TagPattern : public Pattern {
-        public:
-            TagPattern( std::string const& tag );
-            virtual ~TagPattern();
-            virtual bool matches( TestCaseInfo const& testCase ) const override;
-        private:
-            std::string m_tag;
-        };
-
-        class ExcludedPattern : public Pattern {
-        public:
-            ExcludedPattern( PatternPtr const& underlyingPattern );
-            virtual ~ExcludedPattern();
-            virtual bool matches( TestCaseInfo const& testCase ) const override;
-        private:
-            PatternPtr m_underlyingPattern;
-        };
-
-        struct Filter {
-            std::vector<PatternPtr> m_patterns;
-
-            bool matches( TestCaseInfo const& testCase ) const;
-        };
-
-    public:
-        bool hasFilters() const;
-        bool matches( TestCaseInfo const& testCase ) const;
-
-    private:
-        std::vector<Filter> m_filters;
-
-        friend class TestSpecParser;
-    };
-}
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
-// end catch_test_spec.h
-// start catch_interfaces_tag_alias_registry.h
-
-#include <string>
-
-namespace Catch {
-
-    struct TagAlias;
-
-    struct ITagAliasRegistry {
-        virtual ~ITagAliasRegistry();
-        // Nullptr if not present
-        virtual TagAlias const* find( std::string const& alias ) const = 0;
-        virtual std::string expandAliases( std::string const& unexpandedTestSpec ) const = 0;
-
-        static ITagAliasRegistry const& get();
-    };
-
-} // end namespace Catch
-
-// end catch_interfaces_tag_alias_registry.h
-namespace Catch {
-
-    class TestSpecParser {
-        enum Mode{ None, Name, QuotedName, Tag, EscapedName };
-        Mode m_mode = None;
-        bool m_exclusion = false;
-        std::size_t m_start = std::string::npos, m_pos = 0;
-        std::string m_arg;
-        std::vector<std::size_t> m_escapeChars;
-        TestSpec::Filter m_currentFilter;
-        TestSpec m_testSpec;
-        ITagAliasRegistry const* m_tagAliases = nullptr;
-
-    public:
-        TestSpecParser( ITagAliasRegistry const& tagAliases );
-
-        TestSpecParser& parse( std::string const& arg );
-        TestSpec testSpec();
-
-    private:
-        void visitChar( char c );
-        void startNewMode( Mode mode, std::size_t start );
-        void escape();
-        std::string subString() const;
-
-        template<typename T>
-        void addPattern() {
-            std::string token = subString();
-            for( std::size_t i = 0; i < m_escapeChars.size(); ++i )
-                token = token.substr( 0, m_escapeChars[i]-m_start-i ) + token.substr( m_escapeChars[i]-m_start-i+1 );
-            m_escapeChars.clear();
-            if( startsWith( token, "exclude:" ) ) {
-                m_exclusion = true;
-                token = token.substr( 8 );
-            }
-            if( !token.empty() ) {
-                TestSpec::PatternPtr pattern = std::make_shared<T>( token );
-                if( m_exclusion )
-                    pattern = std::make_shared<TestSpec::ExcludedPattern>( pattern );
-                m_currentFilter.m_patterns.push_back( pattern );
-            }
-            m_exclusion = false;
-            m_mode = None;
-        }
-
-        void addFilter();
-    };
-    TestSpec parseTestSpec( std::string const& arg );
-
-} // namespace Catch
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
-// end catch_test_spec_parser.h
-// start catch_interfaces_config.h
-
-#include <iosfwd>
-#include <string>
-#include <vector>
-#include <memory>
-
-namespace Catch {
-
-    enum class Verbosity {
-        Quiet = 0,
-        Normal,
-        High
-    };
-
-    struct WarnAbout { enum What {
-        Nothing = 0x00,
-        NoAssertions = 0x01,
-        NoTests = 0x02
-    }; };
-
-    struct ShowDurations { enum OrNot {
-        DefaultForReporter,
-        Always,
-        Never
-    }; };
-    struct RunTests { enum InWhatOrder {
-        InDeclarationOrder,
-        InLexicographicalOrder,
-        InRandomOrder
-    }; };
-    struct UseColour { enum YesOrNo {
-        Auto,
-        Yes,
-        No
-    }; };
-    struct WaitForKeypress { enum When {
-        Never,
-        BeforeStart = 1,
-        BeforeExit = 2,
-        BeforeStartAndExit = BeforeStart | BeforeExit
-    }; };
-
-    class TestSpec;
-
-    struct IConfig : NonCopyable {
-
-        virtual ~IConfig();
-
-        virtual bool allowThrows() const = 0;
-        virtual std::ostream& stream() const = 0;
-        virtual std::string name() const = 0;
-        virtual bool includeSuccessfulResults() const = 0;
-        virtual bool shouldDebugBreak() const = 0;
-        virtual bool warnAboutMissingAssertions() const = 0;
-        virtual bool warnAboutNoTests() const = 0;
-        virtual int abortAfter() const = 0;
-        virtual bool showInvisibles() const = 0;
-        virtual ShowDurations::OrNot showDurations() const = 0;
-        virtual TestSpec const& testSpec() const = 0;
-        virtual bool hasTestFilters() const = 0;
-        virtual RunTests::InWhatOrder runOrder() const = 0;
-        virtual unsigned int rngSeed() const = 0;
-        virtual int benchmarkResolutionMultiple() const = 0;
-        virtual UseColour::YesOrNo useColour() const = 0;
-        virtual std::vector<std::string> const& getSectionsToRun() const = 0;
-        virtual Verbosity verbosity() const = 0;
-    };
-
-    using IConfigPtr = std::shared_ptr<IConfig const>;
-}
-
-// end catch_interfaces_config.h
-// Libstdc++ doesn't like incomplete classes for unique_ptr
-
-#include <memory>
-#include <vector>
-#include <string>
-
-#ifndef CATCH_CONFIG_CONSOLE_WIDTH
-#define CATCH_CONFIG_CONSOLE_WIDTH 80
-#endif
-
-namespace Catch {
-
-    struct IStream;
-
-    struct ConfigData {
-        bool listTests = false;
-        bool listTags = false;
-        bool listReporters = false;
-        bool listTestNamesOnly = false;
-
-        bool showSuccessfulTests = false;
-        bool shouldDebugBreak = false;
-        bool noThrow = false;
-        bool showHelp = false;
-        bool showInvisibles = false;
-        bool filenamesAsTags = false;
-        bool libIdentify = false;
-
-        int abortAfter = -1;
-        unsigned int rngSeed = 0;
-        int benchmarkResolutionMultiple = 100;
-
-        Verbosity verbosity = Verbosity::Normal;
-        WarnAbout::What warnings = WarnAbout::Nothing;
-        ShowDurations::OrNot showDurations = ShowDurations::DefaultForReporter;
-        RunTests::InWhatOrder runOrder = RunTests::InDeclarationOrder;
-        UseColour::YesOrNo useColour = UseColour::Auto;
-        WaitForKeypress::When waitForKeypress = WaitForKeypress::Never;
-
-        std::string outputFilename;
-        std::string name;
-        std::string processName;
-
-        std::vector<std::string> reporterNames;
-        std::vector<std::string> testsOrTags;
-        std::vector<std::string> sectionsToRun;
-    };
-
-    class Config : public IConfig {
-    public:
-
-        Config() = default;
-        Config( ConfigData const& data );
-        virtual ~Config() = default;
-
-        std::string const& getFilename() const;
-
-        bool listTests() const;
-        bool listTestNamesOnly() const;
-        bool listTags() const;
-        bool listReporters() const;
-
-        std::string getProcessName() const;
-
-        std::vector<std::string> const& getReporterNames() const;
-        std::vector<std::string> const& getTestsOrTags() const;
-        std::vector<std::string> const& getSectionsToRun() const override;
-
-        virtual TestSpec const& testSpec() const override;
-        bool hasTestFilters() const override;
-
-        bool showHelp() const;
-
-        // IConfig interface
-        bool allowThrows() const override;
-        std::ostream& stream() const override;
-        std::string name() const override;
-        bool includeSuccessfulResults() const override;
-        bool warnAboutMissingAssertions() const override;
-        bool warnAboutNoTests() const override;
-        ShowDurations::OrNot showDurations() const override;
-        RunTests::InWhatOrder runOrder() const override;
-        unsigned int rngSeed() const override;
-        int benchmarkResolutionMultiple() const override;
-        UseColour::YesOrNo useColour() const override;
-        bool shouldDebugBreak() const override;
-        int abortAfter() const override;
-        bool showInvisibles() const override;
-        Verbosity verbosity() const override;
-
-    private:
-
-        IStream const* openStream();
-        ConfigData m_data;
-
-        std::unique_ptr<IStream const> m_stream;
-        TestSpec m_testSpec;
-        bool m_hasTestFilters = false;
-    };
-
-} // end namespace Catch
-
-// end catch_config.hpp
-// start catch_assertionresult.h
-
-#include <string>
-
-namespace Catch {
-
-    struct AssertionResultData
-    {
-        AssertionResultData() = delete;
-
-        AssertionResultData( ResultWas::OfType _resultType, LazyExpression const& _lazyExpression );
-
-        std::string message;
-        mutable std::string reconstructedExpression;
-        LazyExpression lazyExpression;
-        ResultWas::OfType resultType;
-
-        std::string reconstructExpression() const;
-    };
-
-    class AssertionResult {
-    public:
-        AssertionResult() = delete;
-        AssertionResult( AssertionInfo const& info, AssertionResultData const& data );
-
-        bool isOk() const;
-        bool succeeded() const;
-        ResultWas::OfType getResultType() const;
-        bool hasExpression() const;
-        bool hasMessage() const;
-        std::string getExpression() const;
-        std::string getExpressionInMacro() const;
-        bool hasExpandedExpression() const;
-        std::string getExpandedExpression() const;
-        std::string getMessage() const;
-        SourceLineInfo getSourceInfo() const;
-        StringRef getTestMacroName() const;
-
-    //protected:
-        AssertionInfo m_info;
-        AssertionResultData m_resultData;
-    };
-
-} // end namespace Catch
-
-// end catch_assertionresult.h
-// start catch_option.hpp
-
-namespace Catch {
-
-    // An optional type
-    template<typename T>
-    class Option {
-    public:
-        Option() : nullableValue( nullptr ) {}
-        Option( T const& _value )
-        : nullableValue( new( storage ) T( _value ) )
-        {}
-        Option( Option const& _other )
-        : nullableValue( _other ? new( storage ) T( *_other ) : nullptr )
-        {}
-
-        ~Option() {
-            reset();
-        }
-
-        Option& operator= ( Option const& _other ) {
-            if( &_other != this ) {
-                reset();
-                if( _other )
-                    nullableValue = new( storage ) T( *_other );
-            }
-            return *this;
-        }
-        Option& operator = ( T const& _value ) {
-            reset();
-            nullableValue = new( storage ) T( _value );
-            return *this;
-        }
-
-        void reset() {
-            if( nullableValue )
-                nullableValue->~T();
-            nullableValue = nullptr;
-        }
-
-        T& operator*() { return *nullableValue; }
-        T const& operator*() const { return *nullableValue; }
-        T* operator->() { return nullableValue; }
-        const T* operator->() const { return nullableValue; }
-
-        T valueOr( T const& defaultValue ) const {
-            return nullableValue ? *nullableValue : defaultValue;
-        }
-
-        bool some() const { return nullableValue != nullptr; }
-        bool none() const { return nullableValue == nullptr; }
-
-        bool operator !() const { return nullableValue == nullptr; }
-        explicit operator bool() const {
-            return some();
-        }
-
-    private:
-        T *nullableValue;
-        alignas(alignof(T)) char storage[sizeof(T)];
-    };
-
-} // end namespace Catch
-
-// end catch_option.hpp
-#include <string>
-#include <iosfwd>
-#include <map>
-#include <set>
-#include <memory>
-
-namespace Catch {
-
-    struct ReporterConfig {
-        explicit ReporterConfig( IConfigPtr const& _fullConfig );
-
-        ReporterConfig( IConfigPtr const& _fullConfig, std::ostream& _stream );
-
-        std::ostream& stream() const;
-        IConfigPtr fullConfig() const;
-
-    private:
-        std::ostream* m_stream;
-        IConfigPtr m_fullConfig;
-    };
-
-    struct ReporterPreferences {
-        bool shouldRedirectStdOut = false;
-    };
-
-    template<typename T>
-    struct LazyStat : Option<T> {
-        LazyStat& operator=( T const& _value ) {
-            Option<T>::operator=( _value );
-            used = false;
-            return *this;
-        }
-        void reset() {
-            Option<T>::reset();
-            used = false;
-        }
-        bool used = false;
-    };
-
-    struct TestRunInfo {
-        TestRunInfo( std::string const& _name );
-        std::string name;
-    };
-    struct GroupInfo {
-        GroupInfo(  std::string const& _name,
-                    std::size_t _groupIndex,
-                    std::size_t _groupsCount );
-
-        std::string name;
-        std::size_t groupIndex;
-        std::size_t groupsCounts;
-    };
-
-    struct AssertionStats {
-        AssertionStats( AssertionResult const& _assertionResult,
-                        std::vector<MessageInfo> const& _infoMessages,
-                        Totals const& _totals );
-
-        AssertionStats( AssertionStats const& )              = default;
-        AssertionStats( AssertionStats && )                  = default;
-        AssertionStats& operator = ( AssertionStats const& ) = default;
-        AssertionStats& operator = ( AssertionStats && )     = default;
-        virtual ~AssertionStats();
-
-        AssertionResult assertionResult;
-        std::vector<MessageInfo> infoMessages;
-        Totals totals;
-    };
-
-    struct SectionStats {
-        SectionStats(   SectionInfo const& _sectionInfo,
-                        Counts const& _assertions,
-                        double _durationInSeconds,
-                        bool _missingAssertions );
-        SectionStats( SectionStats const& )              = default;
-        SectionStats( SectionStats && )                  = default;
-        SectionStats& operator = ( SectionStats const& ) = default;
-        SectionStats& operator = ( SectionStats && )     = default;
-        virtual ~SectionStats();
-
-        SectionInfo sectionInfo;
-        Counts assertions;
-        double durationInSeconds;
-        bool missingAssertions;
-    };
-
-    struct TestCaseStats {
-        TestCaseStats(  TestCaseInfo const& _testInfo,
-                        Totals const& _totals,
-                        std::string const& _stdOut,
-                        std::string const& _stdErr,
-                        bool _aborting );
-
-        TestCaseStats( TestCaseStats const& )              = default;
-        TestCaseStats( TestCaseStats && )                  = default;
-        TestCaseStats& operator = ( TestCaseStats const& ) = default;
-        TestCaseStats& operator = ( TestCaseStats && )     = default;
-        virtual ~TestCaseStats();
-
-        TestCaseInfo testInfo;
-        Totals totals;
-        std::string stdOut;
-        std::string stdErr;
-        bool aborting;
-    };
-
-    struct TestGroupStats {
-        TestGroupStats( GroupInfo const& _groupInfo,
-                        Totals const& _totals,
-                        bool _aborting );
-        TestGroupStats( GroupInfo const& _groupInfo );
-
-        TestGroupStats( TestGroupStats const& )              = default;
-        TestGroupStats( TestGroupStats && )                  = default;
-        TestGroupStats& operator = ( TestGroupStats const& ) = default;
-        TestGroupStats& operator = ( TestGroupStats && )     = default;
-        virtual ~TestGroupStats();
-
-        GroupInfo groupInfo;
-        Totals totals;
-        bool aborting;
-    };
-
-    struct TestRunStats {
-        TestRunStats(   TestRunInfo const& _runInfo,
-                        Totals const& _totals,
-                        bool _aborting );
-
-        TestRunStats( TestRunStats const& )              = default;
-        TestRunStats( TestRunStats && )                  = default;
-        TestRunStats& operator = ( TestRunStats const& ) = default;
-        TestRunStats& operator = ( TestRunStats && )     = default;
-        virtual ~TestRunStats();
-
-        TestRunInfo runInfo;
-        Totals totals;
-        bool aborting;
-    };
-
-    struct BenchmarkInfo {
-        std::string name;
-    };
-    struct BenchmarkStats {
-        BenchmarkInfo info;
-        std::size_t iterations;
-        uint64_t elapsedTimeInNanoseconds;
-    };
-
-    struct IStreamingReporter {
-        virtual ~IStreamingReporter() = default;
-
-        // Implementing class must also provide the following static methods:
-        // static std::string getDescription();
-        // static std::set<Verbosity> getSupportedVerbosities()
-
-        virtual ReporterPreferences getPreferences() const = 0;
-
-        virtual void noMatchingTestCases( std::string const& spec ) = 0;
-
-        virtual void testRunStarting( TestRunInfo const& testRunInfo ) = 0;
-        virtual void testGroupStarting( GroupInfo const& groupInfo ) = 0;
-
-        virtual void testCaseStarting( TestCaseInfo const& testInfo ) = 0;
-        virtual void sectionStarting( SectionInfo const& sectionInfo ) = 0;
-
-        // *** experimental ***
-        virtual void benchmarkStarting( BenchmarkInfo const& ) {}
-
-        virtual void assertionStarting( AssertionInfo const& assertionInfo ) = 0;
-
-        // The return value indicates if the messages buffer should be cleared:
-        virtual bool assertionEnded( AssertionStats const& assertionStats ) = 0;
-
-        // *** experimental ***
-        virtual void benchmarkEnded( BenchmarkStats const& ) {}
-
-        virtual void sectionEnded( SectionStats const& sectionStats ) = 0;
-        virtual void testCaseEnded( TestCaseStats const& testCaseStats ) = 0;
-        virtual void testGroupEnded( TestGroupStats const& testGroupStats ) = 0;
-        virtual void testRunEnded( TestRunStats const& testRunStats ) = 0;
-
-        virtual void skipTest( TestCaseInfo const& testInfo ) = 0;
-
-        // Default empty implementation provided
-        virtual void fatalErrorEncountered( StringRef name );
-
-        virtual bool isMulti() const;
-    };
-    using IStreamingReporterPtr = std::unique_ptr<IStreamingReporter>;
-
-    struct IReporterFactory {
-        virtual ~IReporterFactory();
-        virtual IStreamingReporterPtr create( ReporterConfig const& config ) const = 0;
-        virtual std::string getDescription() const = 0;
-    };
-    using IReporterFactoryPtr = std::shared_ptr<IReporterFactory>;
-
-    struct IReporterRegistry {
-        using FactoryMap = std::map<std::string, IReporterFactoryPtr>;
-        using Listeners = std::vector<IReporterFactoryPtr>;
-
-        virtual ~IReporterRegistry();
-        virtual IStreamingReporterPtr create( std::string const& name, IConfigPtr const& config ) const = 0;
-        virtual FactoryMap const& getFactories() const = 0;
-        virtual Listeners const& getListeners() const = 0;
-    };
-
-    void addReporter( IStreamingReporterPtr& existingReporter, IStreamingReporterPtr&& additionalReporter );
-
-} // end namespace Catch
-
-// end catch_interfaces_reporter.h
-#include <algorithm>
-#include <cstring>
-#include <cfloat>
-#include <cstdio>
-#include <assert.h>
-#include <memory>
-#include <ostream>
-
-namespace Catch {
-    void prepareExpandedExpression(AssertionResult& result);
-
-    // Returns double formatted as %.3f (format expected on output)
-    std::string getFormattedDuration( double duration );
-
-    template<typename DerivedT>
-    struct StreamingReporterBase : IStreamingReporter {
-
-        StreamingReporterBase( ReporterConfig const& _config )
-        :   m_config( _config.fullConfig() ),
-            stream( _config.stream() )
-        {
-            m_reporterPrefs.shouldRedirectStdOut = false;
-            if( !DerivedT::getSupportedVerbosities().count( m_config->verbosity() ) )
-                throw std::domain_error( "Verbosity level not supported by this reporter" );
-        }
-
-        ReporterPreferences getPreferences() const override {
-            return m_reporterPrefs;
-        }
-
-        static std::set<Verbosity> getSupportedVerbosities() {
-            return { Verbosity::Normal };
-        }
-
-        ~StreamingReporterBase() override = default;
-
-        void noMatchingTestCases(std::string const&) override {}
-
-        void testRunStarting(TestRunInfo const& _testRunInfo) override {
-            currentTestRunInfo = _testRunInfo;
-        }
-        void testGroupStarting(GroupInfo const& _groupInfo) override {
-            currentGroupInfo = _groupInfo;
-        }
-
-        void testCaseStarting(TestCaseInfo const& _testInfo) override  {
-            currentTestCaseInfo = _testInfo;
-        }
-        void sectionStarting(SectionInfo const& _sectionInfo) override {
-            m_sectionStack.push_back(_sectionInfo);
-        }
-
-        void sectionEnded(SectionStats const& /* _sectionStats */) override {
-            m_sectionStack.pop_back();
-        }
-        void testCaseEnded(TestCaseStats const& /* _testCaseStats */) override {
-            currentTestCaseInfo.reset();
-        }
-        void testGroupEnded(TestGroupStats const& /* _testGroupStats */) override {
-            currentGroupInfo.reset();
-        }
-        void testRunEnded(TestRunStats const& /* _testRunStats */) override {
-            currentTestCaseInfo.reset();
-            currentGroupInfo.reset();
-            currentTestRunInfo.reset();
-        }
-
-        void skipTest(TestCaseInfo const&) override {
-            // Don't do anything with this by default.
-            // It can optionally be overridden in the derived class.
-        }
-
-        IConfigPtr m_config;
-        std::ostream& stream;
-
-        LazyStat<TestRunInfo> currentTestRunInfo;
-        LazyStat<GroupInfo> currentGroupInfo;
-        LazyStat<TestCaseInfo> currentTestCaseInfo;
-
-        std::vector<SectionInfo> m_sectionStack;
-        ReporterPreferences m_reporterPrefs;
-    };
-
-    template<typename DerivedT>
-    struct CumulativeReporterBase : IStreamingReporter {
-        template<typename T, typename ChildNodeT>
-        struct Node {
-            explicit Node( T const& _value ) : value( _value ) {}
-            virtual ~Node() {}
-
-            using ChildNodes = std::vector<std::shared_ptr<ChildNodeT>>;
-            T value;
-            ChildNodes children;
-        };
-        struct SectionNode {
-            explicit SectionNode(SectionStats const& _stats) : stats(_stats) {}
-            virtual ~SectionNode() = default;
-
-            bool operator == (SectionNode const& other) const {
-                return stats.sectionInfo.lineInfo == other.stats.sectionInfo.lineInfo;
-            }
-            bool operator == (std::shared_ptr<SectionNode> const& other) const {
-                return operator==(*other);
-            }
-
-            SectionStats stats;
-            using ChildSections = std::vector<std::shared_ptr<SectionNode>>;
-            using Assertions = std::vector<AssertionStats>;
-            ChildSections childSections;
-            Assertions assertions;
-            std::string stdOut;
-            std::string stdErr;
-        };
-
-        struct BySectionInfo {
-            BySectionInfo( SectionInfo const& other ) : m_other( other ) {}
-            BySectionInfo( BySectionInfo const& other ) : m_other( other.m_other ) {}
-            bool operator() (std::shared_ptr<SectionNode> const& node) const {
-                return ((node->stats.sectionInfo.name == m_other.name) &&
-                        (node->stats.sectionInfo.lineInfo == m_other.lineInfo));
-            }
-            void operator=(BySectionInfo const&) = delete;
-
-        private:
-            SectionInfo const& m_other;
-        };
-
-        using TestCaseNode = Node<TestCaseStats, SectionNode>;
-        using TestGroupNode = Node<TestGroupStats, TestCaseNode>;
-        using TestRunNode = Node<TestRunStats, TestGroupNode>;
-
-        CumulativeReporterBase( ReporterConfig const& _config )
-        :   m_config( _config.fullConfig() ),
-            stream( _config.stream() )
-        {
-            m_reporterPrefs.shouldRedirectStdOut = false;
-            if( !DerivedT::getSupportedVerbosities().count( m_config->verbosity() ) )
-                throw std::domain_error( "Verbosity level not supported by this reporter" );
-        }
-        ~CumulativeReporterBase() override = default;
-
-        ReporterPreferences getPreferences() const override {
-            return m_reporterPrefs;
-        }
-
-        static std::set<Verbosity> getSupportedVerbosities() {
-            return { Verbosity::Normal };
-        }
-
-        void testRunStarting( TestRunInfo const& ) override {}
-        void testGroupStarting( GroupInfo const& ) override {}
-
-        void testCaseStarting( TestCaseInfo const& ) override {}
-
-        void sectionStarting( SectionInfo const& sectionInfo ) override {
-            SectionStats incompleteStats( sectionInfo, Counts(), 0, false );
-            std::shared_ptr<SectionNode> node;
-            if( m_sectionStack.empty() ) {
-                if( !m_rootSection )
-                    m_rootSection = std::make_shared<SectionNode>( incompleteStats );
-                node = m_rootSection;
-            }
-            else {
-                SectionNode& parentNode = *m_sectionStack.back();
-                auto it =
-                    std::find_if(   parentNode.childSections.begin(),
-                                    parentNode.childSections.end(),
-                                    BySectionInfo( sectionInfo ) );
-                if( it == parentNode.childSections.end() ) {
-                    node = std::make_shared<SectionNode>( incompleteStats );
-                    parentNode.childSections.push_back( node );
-                }
-                else
-                    node = *it;
-            }
-            m_sectionStack.push_back( node );
-            m_deepestSection = std::move(node);
-        }
-
-        void assertionStarting(AssertionInfo const&) override {}
-
-        bool assertionEnded(AssertionStats const& assertionStats) override {
-            assert(!m_sectionStack.empty());
-            // AssertionResult holds a pointer to a temporary DecomposedExpression,
-            // which getExpandedExpression() calls to build the expression string.
-            // Our section stack copy of the assertionResult will likely outlive the
-            // temporary, so it must be expanded or discarded now to avoid calling
-            // a destroyed object later.
-            prepareExpandedExpression(const_cast<AssertionResult&>( assertionStats.assertionResult ) );
-            SectionNode& sectionNode = *m_sectionStack.back();
-            sectionNode.assertions.push_back(assertionStats);
-            return true;
-        }
-        void sectionEnded(SectionStats const& sectionStats) override {
-            assert(!m_sectionStack.empty());
-            SectionNode& node = *m_sectionStack.back();
-            node.stats = sectionStats;
-            m_sectionStack.pop_back();
-        }
-        void testCaseEnded(TestCaseStats const& testCaseStats) override {
-            auto node = std::make_shared<TestCaseNode>(testCaseStats);
-            assert(m_sectionStack.size() == 0);
-            node->children.push_back(m_rootSection);
-            m_testCases.push_back(node);
-            m_rootSection.reset();
-
-            assert(m_deepestSection);
-            m_deepestSection->stdOut = testCaseStats.stdOut;
-            m_deepestSection->stdErr = testCaseStats.stdErr;
-        }
-        void testGroupEnded(TestGroupStats const& testGroupStats) override {
-            auto node = std::make_shared<TestGroupNode>(testGroupStats);
-            node->children.swap(m_testCases);
-            m_testGroups.push_back(node);
-        }
-        void testRunEnded(TestRunStats const& testRunStats) override {
-            auto node = std::make_shared<TestRunNode>(testRunStats);
-            node->children.swap(m_testGroups);
-            m_testRuns.push_back(node);
-            testRunEndedCumulative();
-        }
-        virtual void testRunEndedCumulative() = 0;
-
-        void skipTest(TestCaseInfo const&) override {}
-
-        IConfigPtr m_config;
-        std::ostream& stream;
-        std::vector<AssertionStats> m_assertions;
-        std::vector<std::vector<std::shared_ptr<SectionNode>>> m_sections;
-        std::vector<std::shared_ptr<TestCaseNode>> m_testCases;
-        std::vector<std::shared_ptr<TestGroupNode>> m_testGroups;
-
-        std::vector<std::shared_ptr<TestRunNode>> m_testRuns;
-
-        std::shared_ptr<SectionNode> m_rootSection;
-        std::shared_ptr<SectionNode> m_deepestSection;
-        std::vector<std::shared_ptr<SectionNode>> m_sectionStack;
-        ReporterPreferences m_reporterPrefs;
-    };
-
-    template<char C>
-    char const* getLineOfChars() {
-        static char line[CATCH_CONFIG_CONSOLE_WIDTH] = {0};
-        if( !*line ) {
-            std::memset( line, C, CATCH_CONFIG_CONSOLE_WIDTH-1 );
-            line[CATCH_CONFIG_CONSOLE_WIDTH-1] = 0;
-        }
-        return line;
-    }
-
-    struct TestEventListenerBase : StreamingReporterBase<TestEventListenerBase> {
-        TestEventListenerBase( ReporterConfig const& _config );
-
-        void assertionStarting(AssertionInfo const&) override;
-        bool assertionEnded(AssertionStats const&) override;
-    };
-
-} // end namespace Catch
-
-// end catch_reporter_bases.hpp
-// start catch_console_colour.h
-
-namespace Catch {
-
-    struct Colour {
-        enum Code {
-            None = 0,
-
-            White,
-            Red,
-            Green,
-            Blue,
-            Cyan,
-            Yellow,
-            Grey,
-
-            Bright = 0x10,
-
-            BrightRed = Bright | Red,
-            BrightGreen = Bright | Green,
-            LightGrey = Bright | Grey,
-            BrightWhite = Bright | White,
-            BrightYellow = Bright | Yellow,
-
-            // By intention
-            FileName = LightGrey,
-            Warning = BrightYellow,
-            ResultError = BrightRed,
-            ResultSuccess = BrightGreen,
-            ResultExpectedFailure = Warning,
-
-            Error = BrightRed,
-            Success = Green,
-
-            OriginalExpression = Cyan,
-            ReconstructedExpression = BrightYellow,
-
-            SecondaryText = LightGrey,
-            Headers = White
-        };
-
-        // Use constructed object for RAII guard
-        Colour( Code _colourCode );
-        Colour( Colour&& other ) noexcept;
-        Colour& operator=( Colour&& other ) noexcept;
-        ~Colour();
-
-        // Use static method for one-shot changes
-        static void use( Code _colourCode );
-
-    private:
-        bool m_moved = false;
-    };
-
-    std::ostream& operator << ( std::ostream& os, Colour const& );
-
-} // end namespace Catch
-
-// end catch_console_colour.h
-// start catch_reporter_registrars.hpp
-
-
-namespace Catch {
-
-    template<typename T>
-    class ReporterRegistrar {
-
-        class ReporterFactory : public IReporterFactory {
-
-            virtual IStreamingReporterPtr create( ReporterConfig const& config ) const override {
-                return std::unique_ptr<T>( new T( config ) );
-            }
-
-            virtual std::string getDescription() const override {
-                return T::getDescription();
-            }
-        };
-
-    public:
-
-        explicit ReporterRegistrar( std::string const& name ) {
-            getMutableRegistryHub().registerReporter( name, std::make_shared<ReporterFactory>() );
-        }
-    };
-
-    template<typename T>
-    class ListenerRegistrar {
-
-        class ListenerFactory : public IReporterFactory {
-
-            virtual IStreamingReporterPtr create( ReporterConfig const& config ) const override {
-                return std::unique_ptr<T>( new T( config ) );
-            }
-            virtual std::string getDescription() const override {
-                return std::string();
-            }
-        };
-
-    public:
-
-        ListenerRegistrar() {
-            getMutableRegistryHub().registerListener( std::make_shared<ListenerFactory>() );
-        }
-    };
-}
-
-#if !defined(CATCH_CONFIG_DISABLE)
-
-#define CATCH_REGISTER_REPORTER( name, reporterType ) \
-    CATCH_INTERNAL_SUPPRESS_GLOBALS_WARNINGS          \
-    namespace{ Catch::ReporterRegistrar<reporterType> catch_internal_RegistrarFor##reporterType( name ); } \
-    CATCH_INTERNAL_UNSUPPRESS_GLOBALS_WARNINGS
-
-#define CATCH_REGISTER_LISTENER( listenerType ) \
-     CATCH_INTERNAL_SUPPRESS_GLOBALS_WARNINGS   \
-     namespace{ Catch::ListenerRegistrar<listenerType> catch_internal_RegistrarFor##listenerType; } \
-     CATCH_INTERNAL_SUPPRESS_GLOBALS_WARNINGS
-#else // CATCH_CONFIG_DISABLE
-
-#define CATCH_REGISTER_REPORTER(name, reporterType)
-#define CATCH_REGISTER_LISTENER(listenerType)
-
-#endif // CATCH_CONFIG_DISABLE
-
-// end catch_reporter_registrars.hpp
-// Allow users to base their work off existing reporters
-// start catch_reporter_compact.h
-
-namespace Catch {
-
-    struct CompactReporter : StreamingReporterBase<CompactReporter> {
-
-        using StreamingReporterBase::StreamingReporterBase;
-
-        ~CompactReporter() override;
-
-        static std::string getDescription();
-
-        ReporterPreferences getPreferences() const override;
-
-        void noMatchingTestCases(std::string const& spec) override;
-
-        void assertionStarting(AssertionInfo const&) override;
-
-        bool assertionEnded(AssertionStats const& _assertionStats) override;
-
-        void sectionEnded(SectionStats const& _sectionStats) override;
-
-        void testRunEnded(TestRunStats const& _testRunStats) override;
-
-    };
-
-} // end namespace Catch
-
-// end catch_reporter_compact.h
-// start catch_reporter_console.h
-
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4061) // Not all labels are EXPLICITLY handled in switch
-                              // Note that 4062 (not all labels are handled
-                              // and default is missing) is enabled
-#endif
-
-namespace Catch {
-    // Fwd decls
-    struct SummaryColumn;
-    class TablePrinter;
-
-    struct ConsoleReporter : StreamingReporterBase<ConsoleReporter> {
-        std::unique_ptr<TablePrinter> m_tablePrinter;
-
-        ConsoleReporter(ReporterConfig const& config);
-        ~ConsoleReporter() override;
-        static std::string getDescription();
-
-        void noMatchingTestCases(std::string const& spec) override;
-
-        void assertionStarting(AssertionInfo const&) override;
-
-        bool assertionEnded(AssertionStats const& _assertionStats) override;
-
-        void sectionStarting(SectionInfo const& _sectionInfo) override;
-        void sectionEnded(SectionStats const& _sectionStats) override;
-
-        void benchmarkStarting(BenchmarkInfo const& info) override;
-        void benchmarkEnded(BenchmarkStats const& stats) override;
-
-        void testCaseEnded(TestCaseStats const& _testCaseStats) override;
-        void testGroupEnded(TestGroupStats const& _testGroupStats) override;
-        void testRunEnded(TestRunStats const& _testRunStats) override;
-
-    private:
-
-        void lazyPrint();
-
-        void lazyPrintWithoutClosingBenchmarkTable();
-        void lazyPrintRunInfo();
-        void lazyPrintGroupInfo();
-        void printTestCaseAndSectionHeader();
-
-        void printClosedHeader(std::string const& _name);
-        void printOpenHeader(std::string const& _name);
-
-        // if string has a : in first line will set indent to follow it on
-        // subsequent lines
-        void printHeaderString(std::string const& _string, std::size_t indent = 0);
-
-        void printTotals(Totals const& totals);
-        void printSummaryRow(std::string const& label, std::vector<SummaryColumn> const& cols, std::size_t row);
-
-        void printTotalsDivider(Totals const& totals);
-        void printSummaryDivider();
-
-    private:
-        bool m_headerPrinted = false;
-    };
-
-} // end namespace Catch
-
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
-
-// end catch_reporter_console.h
-// start catch_reporter_junit.h
-
-// start catch_xmlwriter.h
-
-#include <vector>
-
-namespace Catch {
-
-    class XmlEncode {
-    public:
-        enum ForWhat { ForTextNodes, ForAttributes };
-
-        XmlEncode( std::string const& str, ForWhat forWhat = ForTextNodes );
-
-        void encodeTo( std::ostream& os ) const;
-
-        friend std::ostream& operator << ( std::ostream& os, XmlEncode const& xmlEncode );
-
-    private:
-        std::string m_str;
-        ForWhat m_forWhat;
-    };
-
-    class XmlWriter {
-    public:
-
-        class ScopedElement {
-        public:
-            ScopedElement( XmlWriter* writer );
-
-            ScopedElement( ScopedElement&& other ) noexcept;
-            ScopedElement& operator=( ScopedElement&& other ) noexcept;
-
-            ~ScopedElement();
-
-            ScopedElement& writeText( std::string const& text, bool indent = true );
-
-            template<typename T>
-            ScopedElement& writeAttribute( std::string const& name, T const& attribute ) {
-                m_writer->writeAttribute( name, attribute );
-                return *this;
-            }
-
-        private:
-            mutable XmlWriter* m_writer = nullptr;
-        };
-
-        XmlWriter( std::ostream& os = Catch::cout() );
-        ~XmlWriter();
-
-        XmlWriter( XmlWriter const& ) = delete;
-        XmlWriter& operator=( XmlWriter const& ) = delete;
-
-        XmlWriter& startElement( std::string const& name );
-
-        ScopedElement scopedElement( std::string const& name );
-
-        XmlWriter& endElement();
-
-        XmlWriter& writeAttribute( std::string const& name, std::string const& attribute );
-
-        XmlWriter& writeAttribute( std::string const& name, bool attribute );
-
-        template<typename T>
-        XmlWriter& writeAttribute( std::string const& name, T const& attribute ) {
-            ReusableStringStream rss;
-            rss << attribute;
-            return writeAttribute( name, rss.str() );
-        }
-
-        XmlWriter& writeText( std::string const& text, bool indent = true );
-
-        XmlWriter& writeComment( std::string const& text );
-
-        void writeStylesheetRef( std::string const& url );
-
-        XmlWriter& writeBlankLine();
-
-        void ensureTagClosed();
-
-    private:
-
-        void writeDeclaration();
-
-        void newlineIfNecessary();
-
-        bool m_tagIsOpen = false;
-        bool m_needsNewline = false;
-        std::vector<std::string> m_tags;
-        std::string m_indent;
-        std::ostream& m_os;
-    };
-
-}
-
-// end catch_xmlwriter.h
-namespace Catch {
-
-    class JunitReporter : public CumulativeReporterBase<JunitReporter> {
-    public:
-        JunitReporter(ReporterConfig const& _config);
-
-        ~JunitReporter() override;
-
-        static std::string getDescription();
-
-        void noMatchingTestCases(std::string const& /*spec*/) override;
-
-        void testRunStarting(TestRunInfo const& runInfo) override;
-
-        void testGroupStarting(GroupInfo const& groupInfo) override;
-
-        void testCaseStarting(TestCaseInfo const& testCaseInfo) override;
-        bool assertionEnded(AssertionStats const& assertionStats) override;
-
-        void testCaseEnded(TestCaseStats const& testCaseStats) override;
-
-        void testGroupEnded(TestGroupStats const& testGroupStats) override;
-
-        void testRunEndedCumulative() override;
-
-        void writeGroup(TestGroupNode const& groupNode, double suiteTime);
-
-        void writeTestCase(TestCaseNode const& testCaseNode);
-
-        void writeSection(std::string const& className,
-                          std::string const& rootName,
-                          SectionNode const& sectionNode);
-
-        void writeAssertions(SectionNode const& sectionNode);
-        void writeAssertion(AssertionStats const& stats);
-
-        XmlWriter xml;
-        Timer suiteTimer;
-        std::string stdOutForSuite;
-        std::string stdErrForSuite;
-        unsigned int unexpectedExceptions = 0;
-        bool m_okToFail = false;
-    };
-
-} // end namespace Catch
-
-// end catch_reporter_junit.h
-// start catch_reporter_xml.h
-
-namespace Catch {
-    class XmlReporter : public StreamingReporterBase<XmlReporter> {
-    public:
-        XmlReporter(ReporterConfig const& _config);
-
-        ~XmlReporter() override;
-
-        static std::string getDescription();
-
-        virtual std::string getStylesheetRef() const;
-
-        void writeSourceInfo(SourceLineInfo const& sourceInfo);
-
-    public: // StreamingReporterBase
-
-        void noMatchingTestCases(std::string const& s) override;
-
-        void testRunStarting(TestRunInfo const& testInfo) override;
-
-        void testGroupStarting(GroupInfo const& groupInfo) override;
-
-        void testCaseStarting(TestCaseInfo const& testInfo) override;
-
-        void sectionStarting(SectionInfo const& sectionInfo) override;
-
-        void assertionStarting(AssertionInfo const&) override;
-
-        bool assertionEnded(AssertionStats const& assertionStats) override;
-
-        void sectionEnded(SectionStats const& sectionStats) override;
-
-        void testCaseEnded(TestCaseStats const& testCaseStats) override;
-
-        void testGroupEnded(TestGroupStats const& testGroupStats) override;
-
-        void testRunEnded(TestRunStats const& testRunStats) override;
-
-    private:
-        Timer m_testCaseTimer;
-        XmlWriter m_xml;
-        int m_sectionDepth = 0;
-    };
-
-} // end namespace Catch
-
-// end catch_reporter_xml.h
-
-// end catch_external_interfaces.h
-#endif
-
-#endif // ! CATCH_CONFIG_IMPL_ONLY
-
-#ifdef CATCH_IMPL
-// start catch_impl.hpp
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wweak-vtables"
-#endif
-
-// Keep these here for external reporters
-// start catch_test_case_tracker.h
-
-#include <string>
-#include <vector>
-#include <memory>
-
-namespace Catch {
-namespace TestCaseTracking {
-
-    struct NameAndLocation {
-        std::string name;
-        SourceLineInfo location;
-
-        NameAndLocation( std::string const& _name, SourceLineInfo const& _location );
-    };
-
-    struct ITracker;
-
-    using ITrackerPtr = std::shared_ptr<ITracker>;
-
-    struct ITracker {
-        virtual ~ITracker();
-
-        // static queries
-        virtual NameAndLocation const& nameAndLocation() const = 0;
-
-        // dynamic queries
-        virtual bool isComplete() const = 0; // Successfully completed or failed
-        virtual bool isSuccessfullyCompleted() const = 0;
-        virtual bool isOpen() const = 0; // Started but not complete
-        virtual bool hasChildren() const = 0;
-
-        virtual ITracker& parent() = 0;
-
-        // actions
-        virtual void close() = 0; // Successfully complete
-        virtual void fail() = 0;
-        virtual void markAsNeedingAnotherRun() = 0;
-
-        virtual void addChild( ITrackerPtr const& child ) = 0;
-        virtual ITrackerPtr findChild( NameAndLocation const& nameAndLocation ) = 0;
-        virtual void openChild() = 0;
-
-        // Debug/ checking
-        virtual bool isSectionTracker() const = 0;
-        virtual bool isIndexTracker() const = 0;
-    };
-
-    class TrackerContext {
-
-        enum RunState {
-            NotStarted,
-            Executing,
-            CompletedCycle
-        };
-
-        ITrackerPtr m_rootTracker;
-        ITracker* m_currentTracker = nullptr;
-        RunState m_runState = NotStarted;
-
-    public:
-
-        static TrackerContext& instance();
-
-        ITracker& startRun();
-        void endRun();
-
-        void startCycle();
-        void completeCycle();
-
-        bool completedCycle() const;
-        ITracker& currentTracker();
-        void setCurrentTracker( ITracker* tracker );
-    };
-
-    class TrackerBase : public ITracker {
-    protected:
-        enum CycleState {
-            NotStarted,
-            Executing,
-            ExecutingChildren,
-            NeedsAnotherRun,
-            CompletedSuccessfully,
-            Failed
-        };
-
-        class TrackerHasName {
-            NameAndLocation m_nameAndLocation;
-        public:
-            TrackerHasName( NameAndLocation const& nameAndLocation );
-            bool operator ()( ITrackerPtr const& tracker ) const;
-        };
-
-        using Children = std::vector<ITrackerPtr>;
-        NameAndLocation m_nameAndLocation;
-        TrackerContext& m_ctx;
-        ITracker* m_parent;
-        Children m_children;
-        CycleState m_runState = NotStarted;
-
-    public:
-        TrackerBase( NameAndLocation const& nameAndLocation, TrackerContext& ctx, ITracker* parent );
-
-        NameAndLocation const& nameAndLocation() const override;
-        bool isComplete() const override;
-        bool isSuccessfullyCompleted() const override;
-        bool isOpen() const override;
-        bool hasChildren() const override;
-
-        void addChild( ITrackerPtr const& child ) override;
-
-        ITrackerPtr findChild( NameAndLocation const& nameAndLocation ) override;
-        ITracker& parent() override;
-
-        void openChild() override;
-
-        bool isSectionTracker() const override;
-        bool isIndexTracker() const override;
-
-        void open();
-
-        void close() override;
-        void fail() override;
-        void markAsNeedingAnotherRun() override;
-
-    private:
-        void moveToParent();
-        void moveToThis();
-    };
-
-    class SectionTracker : public TrackerBase {
-        std::vector<std::string> m_filters;
-    public:
-        SectionTracker( NameAndLocation const& nameAndLocation, TrackerContext& ctx, ITracker* parent );
-
-        bool isSectionTracker() const override;
-
-        static SectionTracker& acquire( TrackerContext& ctx, NameAndLocation const& nameAndLocation );
-
-        void tryOpen();
-
-        void addInitialFilters( std::vector<std::string> const& filters );
-        void addNextFilters( std::vector<std::string> const& filters );
-    };
-
-    class IndexTracker : public TrackerBase {
-        int m_size;
-        int m_index = -1;
-    public:
-        IndexTracker( NameAndLocation const& nameAndLocation, TrackerContext& ctx, ITracker* parent, int size );
-
-        bool isIndexTracker() const override;
-        void close() override;
-
-        static IndexTracker& acquire( TrackerContext& ctx, NameAndLocation const& nameAndLocation, int size );
-
-        int index() const;
-
-        void moveNext();
-    };
-
-} // namespace TestCaseTracking
-
-using TestCaseTracking::ITracker;
-using TestCaseTracking::TrackerContext;
-using TestCaseTracking::SectionTracker;
-using TestCaseTracking::IndexTracker;
-
-} // namespace Catch
-
-// end catch_test_case_tracker.h
-
-// start catch_leak_detector.h
-
-namespace Catch {
-
-    struct LeakDetector {
-        LeakDetector();
-    };
-
-}
-// end catch_leak_detector.h
-// Cpp files will be included in the single-header file here
-// start catch_approx.cpp
-
-#include <cmath>
-#include <limits>
-
-namespace {
-
-// Performs equivalent check of std::fabs(lhs - rhs) <= margin
-// But without the subtraction to allow for INFINITY in comparison
-bool marginComparison(double lhs, double rhs, double margin) {
-    return (lhs + margin >= rhs) && (rhs + margin >= lhs);
-}
-
-}
-
-namespace Catch {
-namespace Detail {
-
-    Approx::Approx ( double value )
-    :   m_epsilon( std::numeric_limits<float>::epsilon()*100 ),
-        m_margin( 0.0 ),
-        m_scale( 0.0 ),
-        m_value( value )
-    {}
-
-    Approx Approx::custom() {
-        return Approx( 0 );
-    }
-
-    std::string Approx::toString() const {
-        ReusableStringStream rss;
-        rss << "Approx( " << ::Catch::Detail::stringify( m_value ) << " )";
-        return rss.str();
-    }
-
-    bool Approx::equalityComparisonImpl(const double other) const {
-        // First try with fixed margin, then compute margin based on epsilon, scale and Approx's value
-        // Thanks to Richard Harris for his help refining the scaled margin value
-        return marginComparison(m_value, other, m_margin) || marginComparison(m_value, other, m_epsilon * (m_scale + std::fabs(m_value)));
-    }
-
-} // end namespace Detail
-
-std::string StringMaker<Catch::Detail::Approx>::convert(Catch::Detail::Approx const& value) {
-    return value.toString();
-}
-
-} // end namespace Catch
-// end catch_approx.cpp
-// start catch_assertionhandler.cpp
-
-// start catch_context.h
-
-#include <memory>
-
-namespace Catch {
-
-    struct IResultCapture;
-    struct IRunner;
-    struct IConfig;
-    struct IMutableContext;
-
-    using IConfigPtr = std::shared_ptr<IConfig const>;
-
-    struct IContext
-    {
-        virtual ~IContext();
-
-        virtual IResultCapture* getResultCapture() = 0;
-        virtual IRunner* getRunner() = 0;
-        virtual IConfigPtr const& getConfig() const = 0;
-    };
-
-    struct IMutableContext : IContext
-    {
-        virtual ~IMutableContext();
-        virtual void setResultCapture( IResultCapture* resultCapture ) = 0;
-        virtual void setRunner( IRunner* runner ) = 0;
-        virtual void setConfig( IConfigPtr const& config ) = 0;
-
-    private:
-        static IMutableContext *currentContext;
-        friend IMutableContext& getCurrentMutableContext();
-        friend void cleanUpContext();
-        static void createContext();
-    };
-
-    inline IMutableContext& getCurrentMutableContext()
-    {
-        if( !IMutableContext::currentContext )
-            IMutableContext::createContext();
-        return *IMutableContext::currentContext;
-    }
-
-    inline IContext& getCurrentContext()
-    {
-        return getCurrentMutableContext();
-    }
-
-    void cleanUpContext();
-}
-
-// end catch_context.h
-// start catch_debugger.h
-
-namespace Catch {
-    bool isDebuggerActive();
-}
-
-#ifdef CATCH_PLATFORM_MAC
-
-    #define CATCH_TRAP() __asm__("int $3\n" : : ) /* NOLINT */
-
-#elif defined(CATCH_PLATFORM_LINUX)
-    // If we can use inline assembler, do it because this allows us to break
-    // directly at the location of the failing check instead of breaking inside
-    // raise() called from it, i.e. one stack frame below.
-    #if defined(__GNUC__) && (defined(__i386) || defined(__x86_64))
-        #define CATCH_TRAP() asm volatile ("int $3") /* NOLINT */
-    #else // Fall back to the generic way.
-        #include <signal.h>
-
-        #define CATCH_TRAP() raise(SIGTRAP)
-    #endif
-#elif defined(_MSC_VER)
-    #define CATCH_TRAP() __debugbreak()
-#elif defined(__MINGW32__)
-    extern "C" __declspec(dllimport) void __stdcall DebugBreak();
-    #define CATCH_TRAP() DebugBreak()
-#endif
-
-#ifdef CATCH_TRAP
-    #define CATCH_BREAK_INTO_DEBUGGER() if( Catch::isDebuggerActive() ) { CATCH_TRAP(); }
-#else
-    namespace Catch {
-        inline void doNothing() {}
-    }
-    #define CATCH_BREAK_INTO_DEBUGGER() Catch::doNothing()
-#endif
-
-// end catch_debugger.h
-// start catch_run_context.h
-
-// start catch_fatal_condition.h
-
-// start catch_windows_h_proxy.h
-
-
-#if defined(CATCH_PLATFORM_WINDOWS)
-
-#if !defined(NOMINMAX) && !defined(CATCH_CONFIG_NO_NOMINMAX)
-#  define CATCH_DEFINED_NOMINMAX
-#  define NOMINMAX
-#endif
-#if !defined(WIN32_LEAN_AND_MEAN) && !defined(CATCH_CONFIG_NO_WIN32_LEAN_AND_MEAN)
-#  define CATCH_DEFINED_WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
-#endif
-
-#ifdef __AFXDLL
-#include <AfxWin.h>
-#else
-#include <windows.h>
-#endif
-
-#ifdef CATCH_DEFINED_NOMINMAX
-#  undef NOMINMAX
-#endif
-#ifdef CATCH_DEFINED_WIN32_LEAN_AND_MEAN
-#  undef WIN32_LEAN_AND_MEAN
-#endif
-
-#endif // defined(CATCH_PLATFORM_WINDOWS)
-
-// end catch_windows_h_proxy.h
-#if defined( CATCH_CONFIG_WINDOWS_SEH )
-
-namespace Catch {
-
-    struct FatalConditionHandler {
-
-        static LONG CALLBACK handleVectoredException(PEXCEPTION_POINTERS ExceptionInfo);
-        FatalConditionHandler();
-        static void reset();
-        ~FatalConditionHandler();
-
-    private:
-        static bool isSet;
-        static ULONG guaranteeSize;
-        static PVOID exceptionHandlerHandle;
-    };
-
-} // namespace Catch
-
-#elif defined ( CATCH_CONFIG_POSIX_SIGNALS )
-
-#include <signal.h>
-
-namespace Catch {
-
-    struct FatalConditionHandler {
-
-        static bool isSet;
-        static struct sigaction oldSigActions[];
-        static stack_t oldSigStack;
-        static char altStackMem[];
-
-        static void handleSignal( int sig );
-
-        FatalConditionHandler();
-        ~FatalConditionHandler();
-        static void reset();
-    };
-
-} // namespace Catch
-
-#else
-
-namespace Catch {
-    struct FatalConditionHandler {
-        void reset();
-    };
-}
-
-#endif
-
-// end catch_fatal_condition.h
-#include <string>
-
-namespace Catch {
-
-    struct IMutableContext;
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    class RunContext : public IResultCapture, public IRunner {
-
-    public:
-        RunContext( RunContext const& ) = delete;
-        RunContext& operator =( RunContext const& ) = delete;
-
-        explicit RunContext( IConfigPtr const& _config, IStreamingReporterPtr&& reporter );
-
-        ~RunContext() override;
-
-        void testGroupStarting( std::string const& testSpec, std::size_t groupIndex, std::size_t groupsCount );
-        void testGroupEnded( std::string const& testSpec, Totals const& totals, std::size_t groupIndex, std::size_t groupsCount );
-
-        Totals runTest(TestCase const& testCase);
-
-        IConfigPtr config() const;
-        IStreamingReporter& reporter() const;
-
-    public: // IResultCapture
-
-        // Assertion handlers
-        void handleExpr
-                (   AssertionInfo const& info,
-                    ITransientExpression const& expr,
-                    AssertionReaction& reaction ) override;
-        void handleMessage
-                (   AssertionInfo const& info,
-                    ResultWas::OfType resultType,
-                    StringRef const& message,
-                    AssertionReaction& reaction ) override;
-        void handleUnexpectedExceptionNotThrown
-                (   AssertionInfo const& info,
-                    AssertionReaction& reaction ) override;
-        void handleUnexpectedInflightException
-                (   AssertionInfo const& info,
-                    std::string const& message,
-                    AssertionReaction& reaction ) override;
-        void handleIncomplete
-                (   AssertionInfo const& info ) override;
-        void handleNonExpr
-                (   AssertionInfo const &info,
-                    ResultWas::OfType resultType,
-                    AssertionReaction &reaction ) override;
-
-        bool sectionStarted( SectionInfo const& sectionInfo, Counts& assertions ) override;
-
-        void sectionEnded( SectionEndInfo const& endInfo ) override;
-        void sectionEndedEarly( SectionEndInfo const& endInfo ) override;
-
-        void benchmarkStarting( BenchmarkInfo const& info ) override;
-        void benchmarkEnded( BenchmarkStats const& stats ) override;
-
-        void pushScopedMessage( MessageInfo const& message ) override;
-        void popScopedMessage( MessageInfo const& message ) override;
-
-        std::string getCurrentTestName() const override;
-
-        const AssertionResult* getLastResult() const override;
-
-        void exceptionEarlyReported() override;
-
-        void handleFatalErrorCondition( StringRef message ) override;
-
-        bool lastAssertionPassed() override;
-
-        void assertionPassed() override;
-
-    public:
-        // !TBD We need to do this another way!
-        bool aborting() const override;
-
-    private:
-
-        void runCurrentTest( std::string& redirectedCout, std::string& redirectedCerr );
-        void invokeActiveTestCase();
-
-        void resetAssertionInfo();
-        bool testForMissingAssertions( Counts& assertions );
-
-        void assertionEnded( AssertionResult const& result );
-        void reportExpr
-                (   AssertionInfo const &info,
-                    ResultWas::OfType resultType,
-                    ITransientExpression const *expr,
-                    bool negated );
-
-        void populateReaction( AssertionReaction& reaction );
-
-    private:
-
-        void handleUnfinishedSections();
-
-        TestRunInfo m_runInfo;
-        IMutableContext& m_context;
-        TestCase const* m_activeTestCase = nullptr;
-        ITracker* m_testCaseTracker;
-        Option<AssertionResult> m_lastResult;
-
-        IConfigPtr m_config;
-        Totals m_totals;
-        IStreamingReporterPtr m_reporter;
-        std::vector<MessageInfo> m_messages;
-        AssertionInfo m_lastAssertionInfo;
-        std::vector<SectionEndInfo> m_unfinishedSections;
-        std::vector<ITracker*> m_activeSections;
-        TrackerContext m_trackerContext;
-        bool m_lastAssertionPassed = false;
-        bool m_shouldReportUnexpected = true;
-        bool m_includeSuccessfulResults;
-    };
-
-} // end namespace Catch
-
-// end catch_run_context.h
-namespace Catch {
-
-    auto operator <<( std::ostream& os, ITransientExpression const& expr ) -> std::ostream& {
-        expr.streamReconstructedExpression( os );
-        return os;
-    }
-
-    LazyExpression::LazyExpression( bool isNegated )
-    :   m_isNegated( isNegated )
-    {}
-
-    LazyExpression::LazyExpression( LazyExpression const& other ) : m_isNegated( other.m_isNegated ) {}
-
-    LazyExpression::operator bool() const {
-        return m_transientExpression != nullptr;
-    }
-
-    auto operator << ( std::ostream& os, LazyExpression const& lazyExpr ) -> std::ostream& {
-        if( lazyExpr.m_isNegated )
-            os << "!";
-
-        if( lazyExpr ) {
-            if( lazyExpr.m_isNegated && lazyExpr.m_transientExpression->isBinaryExpression() )
-                os << "(" << *lazyExpr.m_transientExpression << ")";
-            else
-                os << *lazyExpr.m_transientExpression;
-        }
-        else {
-            os << "{** error - unchecked empty expression requested **}";
-        }
-        return os;
-    }
-
-    AssertionHandler::AssertionHandler
-        (   StringRef macroName,
-            SourceLineInfo const& lineInfo,
-            StringRef capturedExpression,
-            ResultDisposition::Flags resultDisposition )
-    :   m_assertionInfo{ macroName, lineInfo, capturedExpression, resultDisposition },
-        m_resultCapture( getResultCapture() )
-    {}
-
-    void AssertionHandler::handleExpr( ITransientExpression const& expr ) {
-        m_resultCapture.handleExpr( m_assertionInfo, expr, m_reaction );
-    }
-    void AssertionHandler::handleMessage(ResultWas::OfType resultType, StringRef const& message) {
-        m_resultCapture.handleMessage( m_assertionInfo, resultType, message, m_reaction );
-    }
-
-    auto AssertionHandler::allowThrows() const -> bool {
-        return getCurrentContext().getConfig()->allowThrows();
-    }
-
-    void AssertionHandler::complete() {
-        setCompleted();
-        if( m_reaction.shouldDebugBreak ) {
-
-            // If you find your debugger stopping you here then go one level up on the
-            // call-stack for the code that caused it (typically a failed assertion)
-
-            // (To go back to the test and change execution, jump over the throw, next)
-            CATCH_BREAK_INTO_DEBUGGER();
-        }
-        if( m_reaction.shouldThrow )
-            throw Catch::TestFailureException();
-    }
-    void AssertionHandler::setCompleted() {
-        m_completed = true;
-    }
-
-    void AssertionHandler::handleUnexpectedInflightException() {
-        m_resultCapture.handleUnexpectedInflightException( m_assertionInfo, Catch::translateActiveException(), m_reaction );
-    }
-
-    void AssertionHandler::handleExceptionThrownAsExpected() {
-        m_resultCapture.handleNonExpr(m_assertionInfo, ResultWas::Ok, m_reaction);
-    }
-    void AssertionHandler::handleExceptionNotThrownAsExpected() {
-        m_resultCapture.handleNonExpr(m_assertionInfo, ResultWas::Ok, m_reaction);
-    }
-
-    void AssertionHandler::handleUnexpectedExceptionNotThrown() {
-        m_resultCapture.handleUnexpectedExceptionNotThrown( m_assertionInfo, m_reaction );
-    }
-
-    void AssertionHandler::handleThrowingCallSkipped() {
-        m_resultCapture.handleNonExpr(m_assertionInfo, ResultWas::Ok, m_reaction);
-    }
-
-    // This is the overload that takes a string and infers the Equals matcher from it
-    // The more general overload, that takes any string matcher, is in catch_capture_matchers.cpp
-    void handleExceptionMatchExpr( AssertionHandler& handler, std::string const& str, StringRef matcherString  ) {
-        handleExceptionMatchExpr( handler, Matchers::Equals( str ), matcherString );
-    }
-
-} // namespace Catch
-// end catch_assertionhandler.cpp
-// start catch_assertionresult.cpp
-
-namespace Catch {
-    AssertionResultData::AssertionResultData(ResultWas::OfType _resultType, LazyExpression const & _lazyExpression):
-        lazyExpression(_lazyExpression),
-        resultType(_resultType) {}
-
-    std::string AssertionResultData::reconstructExpression() const {
-
-        if( reconstructedExpression.empty() ) {
-            if( lazyExpression ) {
-                ReusableStringStream rss;
-                rss << lazyExpression;
-                reconstructedExpression = rss.str();
-            }
-        }
-        return reconstructedExpression;
-    }
-
-    AssertionResult::AssertionResult( AssertionInfo const& info, AssertionResultData const& data )
-    :   m_info( info ),
-        m_resultData( data )
-    {}
-
-    // Result was a success
-    bool AssertionResult::succeeded() const {
-        return Catch::isOk( m_resultData.resultType );
-    }
-
-    // Result was a success, or failure is suppressed
-    bool AssertionResult::isOk() const {
-        return Catch::isOk( m_resultData.resultType ) || shouldSuppressFailure( m_info.resultDisposition );
-    }
-
-    ResultWas::OfType AssertionResult::getResultType() const {
-        return m_resultData.resultType;
-    }
-
-    bool AssertionResult::hasExpression() const {
-        return m_info.capturedExpression[0] != 0;
-    }
-
-    bool AssertionResult::hasMessage() const {
-        return !m_resultData.message.empty();
-    }
-
-    std::string AssertionResult::getExpression() const {
-        if( isFalseTest( m_info.resultDisposition ) )
-            return "!(" + m_info.capturedExpression + ")";
-        else
-            return m_info.capturedExpression;
-    }
-
-    std::string AssertionResult::getExpressionInMacro() const {
-        std::string expr;
-        if( m_info.macroName[0] == 0 )
-            expr = m_info.capturedExpression;
-        else {
-            expr.reserve( m_info.macroName.size() + m_info.capturedExpression.size() + 4 );
-            expr += m_info.macroName;
-            expr += "( ";
-            expr += m_info.capturedExpression;
-            expr += " )";
-        }
-        return expr;
-    }
-
-    bool AssertionResult::hasExpandedExpression() const {
-        return hasExpression() && getExpandedExpression() != getExpression();
-    }
-
-    std::string AssertionResult::getExpandedExpression() const {
-        std::string expr = m_resultData.reconstructExpression();
-        return expr.empty()
-                ? getExpression()
-                : expr;
-    }
-
-    std::string AssertionResult::getMessage() const {
-        return m_resultData.message;
-    }
-    SourceLineInfo AssertionResult::getSourceInfo() const {
-        return m_info.lineInfo;
-    }
-
-    StringRef AssertionResult::getTestMacroName() const {
-        return m_info.macroName;
-    }
-
-} // end namespace Catch
-// end catch_assertionresult.cpp
-// start catch_benchmark.cpp
-
-namespace Catch {
-
-    auto BenchmarkLooper::getResolution() -> uint64_t {
-        return getEstimatedClockResolution() * getCurrentContext().getConfig()->benchmarkResolutionMultiple();
-    }
-
-    void BenchmarkLooper::reportStart() {
-        getResultCapture().benchmarkStarting( { m_name } );
-    }
-    auto BenchmarkLooper::needsMoreIterations() -> bool {
-        auto elapsed = m_timer.getElapsedNanoseconds();
-
-        // Exponentially increasing iterations until we're confident in our timer resolution
-        if( elapsed < m_resolution ) {
-            m_iterationsToRun *= 10;
-            return true;
-        }
-
-        getResultCapture().benchmarkEnded( { { m_name }, m_count, elapsed } );
-        return false;
-    }
-
-} // end namespace Catch
-// end catch_benchmark.cpp
-// start catch_capture_matchers.cpp
-
-namespace Catch {
-
-    using StringMatcher = Matchers::Impl::MatcherBase<std::string>;
-
-    // This is the general overload that takes a any string matcher
-    // There is another overload, in catch_assertionhandler.h/.cpp, that only takes a string and infers
-    // the Equals matcher (so the header does not mention matchers)
-    void handleExceptionMatchExpr( AssertionHandler& handler, StringMatcher const& matcher, StringRef matcherString  ) {
-        std::string exceptionMessage = Catch::translateActiveException();
-        MatchExpr<std::string, StringMatcher const&> expr( exceptionMessage, matcher, matcherString );
-        handler.handleExpr( expr );
-    }
-
-} // namespace Catch
-// end catch_capture_matchers.cpp
-// start catch_commandline.cpp
-
-// start catch_commandline.h
-
-// start catch_clara.h
-
-// Use Catch's value for console width (store Clara's off to the side, if present)
-#ifdef CLARA_CONFIG_CONSOLE_WIDTH
-#define CATCH_TEMP_CLARA_CONFIG_CONSOLE_WIDTH CATCH_CLARA_TEXTFLOW_CONFIG_CONSOLE_WIDTH
-#undef CATCH_CLARA_TEXTFLOW_CONFIG_CONSOLE_WIDTH
-#endif
-#define CATCH_CLARA_TEXTFLOW_CONFIG_CONSOLE_WIDTH CATCH_CONFIG_CONSOLE_WIDTH-1
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wweak-vtables"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#pragma clang diagnostic ignored "-Wshadow"
-#endif
-
-// start clara.hpp
-// Copyright 2017 Two Blue Cubes Ltd. All rights reserved.
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
-// See https://github.com/philsquared/Clara for more details
-
-// Clara v1.1.4
-
-
-#ifndef CATCH_CLARA_CONFIG_CONSOLE_WIDTH
-#define CATCH_CLARA_CONFIG_CONSOLE_WIDTH 80
-#endif
-
-#ifndef CATCH_CLARA_TEXTFLOW_CONFIG_CONSOLE_WIDTH
-#define CATCH_CLARA_TEXTFLOW_CONFIG_CONSOLE_WIDTH CATCH_CLARA_CONFIG_CONSOLE_WIDTH
-#endif
-
-#ifndef CLARA_CONFIG_OPTIONAL_TYPE
-#ifdef __has_include
-#if __has_include(<optional>) && __cplusplus >= 201703L
-#include <optional>
-#define CLARA_CONFIG_OPTIONAL_TYPE std::optional
-#endif
-#endif
-#endif
-
-// ----------- #included from clara_textflow.hpp -----------
-
-// TextFlowCpp
-//
-// A single-header library for wrapping and laying out basic text, by Phil Nash
-//
-// This work is licensed under the BSD 2-Clause license.
-// See the accompanying LICENSE file, or the one at https://opensource.org/licenses/BSD-2-Clause
-//
-// This project is hosted at https://github.com/philsquared/textflowcpp
-
-
-#include <cassert>
-#include <ostream>
-#include <sstream>
-#include <vector>
-
-#ifndef CATCH_CLARA_TEXTFLOW_CONFIG_CONSOLE_WIDTH
-#define CATCH_CLARA_TEXTFLOW_CONFIG_CONSOLE_WIDTH 80
-#endif
-
-namespace Catch { namespace clara { namespace TextFlow {
-
-    inline auto isWhitespace( char c ) -> bool {
-        static std::string chars = " \t\n\r";
-        return chars.find( c ) != std::string::npos;
-    }
-    inline auto isBreakableBefore( char c ) -> bool {
-        static std::string chars = "[({<|";
-        return chars.find( c ) != std::string::npos;
-    }
-    inline auto isBreakableAfter( char c ) -> bool {
-        static std::string chars = "])}>.,:;*+-=&/\\";
-        return chars.find( c ) != std::string::npos;
-    }
-
-    class Columns;
-
-    class Column {
-        std::vector<std::string> m_strings;
-        size_t m_width = CATCH_CLARA_TEXTFLOW_CONFIG_CONSOLE_WIDTH;
-        size_t m_indent = 0;
-        size_t m_initialIndent = std::string::npos;
-
-    public:
-        class iterator {
-            friend Column;
-
-            Column const& m_column;
-            size_t m_stringIndex = 0;
-            size_t m_pos = 0;
-
-            size_t m_len = 0;
-            size_t m_end = 0;
-            bool m_suffix = false;
-
-            iterator( Column const& column, size_t stringIndex )
-            :   m_column( column ),
-                m_stringIndex( stringIndex )
-            {}
-
-            auto line() const -> std::string const& { return m_column.m_strings[m_stringIndex]; }
-
-            auto isBoundary( size_t at ) const -> bool {
-                assert( at > 0 );
-                assert( at <= line().size() );
-
-                return at == line().size() ||
-                       ( isWhitespace( line()[at] ) && !isWhitespace( line()[at-1] ) ) ||
-                       isBreakableBefore( line()[at] ) ||
-                       isBreakableAfter( line()[at-1] );
-            }
-
-            void calcLength() {
-                assert( m_stringIndex < m_column.m_strings.size() );
-
-                m_suffix = false;
-                auto width = m_column.m_width-indent();
-                m_end = m_pos;
-                while( m_end < line().size() && line()[m_end] != '\n' )
-                    ++m_end;
-
-                if( m_end < m_pos + width ) {
-                    m_len = m_end - m_pos;
-                }
-                else {
-                    size_t len = width;
-                    while (len > 0 && !isBoundary(m_pos + len))
-                        --len;
-                    while (len > 0 && isWhitespace( line()[m_pos + len - 1] ))
-                        --len;
-
-                    if (len > 0) {
-                        m_len = len;
-                    } else {
-                        m_suffix = true;
-                        m_len = width - 1;
-                    }
-                }
-            }
-
-            auto indent() const -> size_t {
-                auto initial = m_pos == 0 && m_stringIndex == 0 ? m_column.m_initialIndent : std::string::npos;
-                return initial == std::string::npos ? m_column.m_indent : initial;
-            }
-
-            auto addIndentAndSuffix(std::string const &plain) const -> std::string {
-                return std::string( indent(), ' ' ) + (m_suffix ? plain + "-" : plain);
-            }
-
-        public:
-            explicit iterator( Column const& column ) : m_column( column ) {
-                assert( m_column.m_width > m_column.m_indent );
-                assert( m_column.m_initialIndent == std::string::npos || m_column.m_width > m_column.m_initialIndent );
-                calcLength();
-                if( m_len == 0 )
-                    m_stringIndex++; // Empty string
-            }
-
-            auto operator *() const -> std::string {
-                assert( m_stringIndex < m_column.m_strings.size() );
-                assert( m_pos <= m_end );
-                if( m_pos + m_column.m_width < m_end )
-                    return addIndentAndSuffix(line().substr(m_pos, m_len));
-                else
-                    return addIndentAndSuffix(line().substr(m_pos, m_end - m_pos));
-            }
-
-            auto operator ++() -> iterator& {
-                m_pos += m_len;
-                if( m_pos < line().size() && line()[m_pos] == '\n' )
-                    m_pos += 1;
-                else
-                    while( m_pos < line().size() && isWhitespace( line()[m_pos] ) )
-                        ++m_pos;
-
-                if( m_pos == line().size() ) {
-                    m_pos = 0;
-                    ++m_stringIndex;
-                }
-                if( m_stringIndex < m_column.m_strings.size() )
-                    calcLength();
-                return *this;
-            }
-            auto operator ++(int) -> iterator {
-                iterator prev( *this );
-                operator++();
-                return prev;
-            }
-
-            auto operator ==( iterator const& other ) const -> bool {
-                return
-                    m_pos == other.m_pos &&
-                    m_stringIndex == other.m_stringIndex &&
-                    &m_column == &other.m_column;
-            }
-            auto operator !=( iterator const& other ) const -> bool {
-                return !operator==( other );
-            }
-        };
-        using const_iterator = iterator;
-
-        explicit Column( std::string const& text ) { m_strings.push_back( text ); }
-
-        auto width( size_t newWidth ) -> Column& {
-            assert( newWidth > 0 );
-            m_width = newWidth;
-            return *this;
-        }
-        auto indent( size_t newIndent ) -> Column& {
-            m_indent = newIndent;
-            return *this;
-        }
-        auto initialIndent( size_t newIndent ) -> Column& {
-            m_initialIndent = newIndent;
-            return *this;
-        }
-
-        auto width() const -> size_t { return m_width; }
-        auto begin() const -> iterator { return iterator( *this ); }
-        auto end() const -> iterator { return { *this, m_strings.size() }; }
-
-        inline friend std::ostream& operator << ( std::ostream& os, Column const& col ) {
-            bool first = true;
-            for( auto line : col ) {
-                if( first )
-                    first = false;
-                else
-                    os << "\n";
-                os <<  line;
-            }
-            return os;
-        }
-
-        auto operator + ( Column const& other ) -> Columns;
-
-        auto toString() const -> std::string {
-            std::ostringstream oss;
-            oss << *this;
-            return oss.str();
-        }
-    };
-
-    class Spacer : public Column {
-
-    public:
-        explicit Spacer( size_t spaceWidth ) : Column( "" ) {
-            width( spaceWidth );
-        }
-    };
-
-    class Columns {
-        std::vector<Column> m_columns;
-
-    public:
-
-        class iterator {
-            friend Columns;
-            struct EndTag {};
-
-            std::vector<Column> const& m_columns;
-            std::vector<Column::iterator> m_iterators;
-            size_t m_activeIterators;
-
-            iterator( Columns const& columns, EndTag )
-            :   m_columns( columns.m_columns ),
-                m_activeIterators( 0 )
-            {
-                m_iterators.reserve( m_columns.size() );
-
-                for( auto const& col : m_columns )
-                    m_iterators.push_back( col.end() );
-            }
-
-        public:
-            explicit iterator( Columns const& columns )
-            :   m_columns( columns.m_columns ),
-                m_activeIterators( m_columns.size() )
-            {
-                m_iterators.reserve( m_columns.size() );
-
-                for( auto const& col : m_columns )
-                    m_iterators.push_back( col.begin() );
-            }
-
-            auto operator ==( iterator const& other ) const -> bool {
-                return m_iterators == other.m_iterators;
-            }
-            auto operator !=( iterator const& other ) const -> bool {
-                return m_iterators != other.m_iterators;
-            }
-            auto operator *() const -> std::string {
-                std::string row, padding;
-
-                for( size_t i = 0; i < m_columns.size(); ++i ) {
-                    auto width = m_columns[i].width();
-                    if( m_iterators[i] != m_columns[i].end() ) {
-                        std::string col = *m_iterators[i];
-                        row += padding + col;
-                        if( col.size() < width )
-                            padding = std::string( width - col.size(), ' ' );
-                        else
-                            padding = "";
-                    }
-                    else {
-                        padding += std::string( width, ' ' );
-                    }
-                }
-                return row;
-            }
-            auto operator ++() -> iterator& {
-                for( size_t i = 0; i < m_columns.size(); ++i ) {
-                    if (m_iterators[i] != m_columns[i].end())
-                        ++m_iterators[i];
-                }
-                return *this;
-            }
-            auto operator ++(int) -> iterator {
-                iterator prev( *this );
-                operator++();
-                return prev;
-            }
-        };
-        using const_iterator = iterator;
-
-        auto begin() const -> iterator { return iterator( *this ); }
-        auto end() const -> iterator { return { *this, iterator::EndTag() }; }
-
-        auto operator += ( Column const& col ) -> Columns& {
-            m_columns.push_back( col );
-            return *this;
-        }
-        auto operator + ( Column const& col ) -> Columns {
-            Columns combined = *this;
-            combined += col;
-            return combined;
-        }
-
-        inline friend std::ostream& operator << ( std::ostream& os, Columns const& cols ) {
-
-            bool first = true;
-            for( auto line : cols ) {
-                if( first )
-                    first = false;
-                else
-                    os << "\n";
-                os << line;
-            }
-            return os;
-        }
-
-        auto toString() const -> std::string {
-            std::ostringstream oss;
-            oss << *this;
-            return oss.str();
-        }
-    };
-
-    inline auto Column::operator + ( Column const& other ) -> Columns {
-        Columns cols;
-        cols += *this;
-        cols += other;
-        return cols;
-    }
-}}} // namespace Catch::clara::TextFlow
-
-// ----------- end of #include from clara_textflow.hpp -----------
-// ........... back in clara.hpp
-
-#include <memory>
-#include <set>
-#include <algorithm>
-
-#if !defined(CATCH_PLATFORM_WINDOWS) && ( defined(WIN32) || defined(__WIN32__) || defined(_WIN32) || defined(_MSC_VER) )
-#define CATCH_PLATFORM_WINDOWS
-#endif
-
-namespace Catch { namespace clara {
-namespace detail {
-
-    // Traits for extracting arg and return type of lambdas (for single argument lambdas)
-    template<typename L>
-    struct UnaryLambdaTraits : UnaryLambdaTraits<decltype( &L::operator() )> {};
-
-    template<typename ClassT, typename ReturnT, typename... Args>
-    struct UnaryLambdaTraits<ReturnT( ClassT::* )( Args... ) const> {
-        static const bool isValid = false;
-    };
-
-    template<typename ClassT, typename ReturnT, typename ArgT>
-    struct UnaryLambdaTraits<ReturnT( ClassT::* )( ArgT ) const> {
-        static const bool isValid = true;
-        using ArgType = typename std::remove_const<typename std::remove_reference<ArgT>::type>::type;
-        using ReturnType = ReturnT;
-    };
-
-    class TokenStream;
-
-    // Transport for raw args (copied from main args, or supplied via init list for testing)
-    class Args {
-        friend TokenStream;
-        std::string m_exeName;
-        std::vector<std::string> m_args;
-
-    public:
-        Args( int argc, char const* const* argv )
-            : m_exeName(argv[0]),
-              m_args(argv + 1, argv + argc) {}
-
-        Args( std::initializer_list<std::string> args )
-        :   m_exeName( *args.begin() ),
-            m_args( args.begin()+1, args.end() )
-        {}
-
-        auto exeName() const -> std::string {
-            return m_exeName;
-        }
-    };
-
-    // Wraps a token coming from a token stream. These may not directly correspond to strings as a single string
-    // may encode an option + its argument if the : or = form is used
-    enum class TokenType {
-        Option, Argument
-    };
-    struct Token {
-        TokenType type;
-        std::string token;
-    };
-
-    inline auto isOptPrefix( char c ) -> bool {
-        return c == '-'
-#ifdef CATCH_PLATFORM_WINDOWS
-            || c == '/'
-#endif
-        ;
-    }
-
-    // Abstracts iterators into args as a stream of tokens, with option arguments uniformly handled
-    class TokenStream {
-        using Iterator = std::vector<std::string>::const_iterator;
-        Iterator it;
-        Iterator itEnd;
-        std::vector<Token> m_tokenBuffer;
-
-        void loadBuffer() {
-            m_tokenBuffer.resize( 0 );
-
-            // Skip any empty strings
-            while( it != itEnd && it->empty() )
-                ++it;
-
-            if( it != itEnd ) {
-                auto const &next = *it;
-                if( isOptPrefix( next[0] ) ) {
-                    auto delimiterPos = next.find_first_of( " :=" );
-                    if( delimiterPos != std::string::npos ) {
-                        m_tokenBuffer.push_back( { TokenType::Option, next.substr( 0, delimiterPos ) } );
-                        m_tokenBuffer.push_back( { TokenType::Argument, next.substr( delimiterPos + 1 ) } );
-                    } else {
-                        if( next[1] != '-' && next.size() > 2 ) {
-                            std::string opt = "- ";
-                            for( size_t i = 1; i < next.size(); ++i ) {
-                                opt[1] = next[i];
-                                m_tokenBuffer.push_back( { TokenType::Option, opt } );
-                            }
-                        } else {
-                            m_tokenBuffer.push_back( { TokenType::Option, next } );
-                        }
-                    }
-                } else {
-                    m_tokenBuffer.push_back( { TokenType::Argument, next } );
-                }
-            }
-        }
-
-    public:
-        explicit TokenStream( Args const &args ) : TokenStream( args.m_args.begin(), args.m_args.end() ) {}
-
-        TokenStream( Iterator it, Iterator itEnd ) : it( it ), itEnd( itEnd ) {
-            loadBuffer();
-        }
-
-        explicit operator bool() const {
-            return !m_tokenBuffer.empty() || it != itEnd;
-        }
-
-        auto count() const -> size_t { return m_tokenBuffer.size() + (itEnd - it); }
-
-        auto operator*() const -> Token {
-            assert( !m_tokenBuffer.empty() );
-            return m_tokenBuffer.front();
-        }
-
-        auto operator->() const -> Token const * {
-            assert( !m_tokenBuffer.empty() );
-            return &m_tokenBuffer.front();
-        }
-
-        auto operator++() -> TokenStream & {
-            if( m_tokenBuffer.size() >= 2 ) {
-                m_tokenBuffer.erase( m_tokenBuffer.begin() );
-            } else {
-                if( it != itEnd )
-                    ++it;
-                loadBuffer();
-            }
-            return *this;
-        }
-    };
-
-    class ResultBase {
-    public:
-        enum Type {
-            Ok, LogicError, RuntimeError
-        };
-
-    protected:
-        ResultBase( Type type ) : m_type( type ) {}
-        virtual ~ResultBase() = default;
-
-        virtual void enforceOk() const = 0;
-
-        Type m_type;
-    };
-
-    template<typename T>
-    class ResultValueBase : public ResultBase {
-    public:
-        auto value() const -> T const & {
-            enforceOk();
-            return m_value;
-        }
-
-    protected:
-        ResultValueBase( Type type ) : ResultBase( type ) {}
-
-        ResultValueBase( ResultValueBase const &other ) : ResultBase( other ) {
-            if( m_type == ResultBase::Ok )
-                new( &m_value ) T( other.m_value );
-        }
-
-        ResultValueBase( Type, T const &value ) : ResultBase( Ok ) {
-            new( &m_value ) T( value );
-        }
-
-        auto operator=( ResultValueBase const &other ) -> ResultValueBase & {
-            if( m_type == ResultBase::Ok )
-                m_value.~T();
-            ResultBase::operator=(other);
-            if( m_type == ResultBase::Ok )
-                new( &m_value ) T( other.m_value );
-            return *this;
-        }
-
-        ~ResultValueBase() override {
-            if( m_type == Ok )
-                m_value.~T();
-        }
-
-        union {
-            T m_value;
-        };
-    };
-
-    template<>
-    class ResultValueBase<void> : public ResultBase {
-    protected:
-        using ResultBase::ResultBase;
-    };
-
-    template<typename T = void>
-    class BasicResult : public ResultValueBase<T> {
-    public:
-        template<typename U>
-        explicit BasicResult( BasicResult<U> const &other )
-        :   ResultValueBase<T>( other.type() ),
-            m_errorMessage( other.errorMessage() )
-        {
-            assert( type() != ResultBase::Ok );
-        }
-
-        template<typename U>
-        static auto ok( U const &value ) -> BasicResult { return { ResultBase::Ok, value }; }
-        static auto ok() -> BasicResult { return { ResultBase::Ok }; }
-        static auto logicError( std::string const &message ) -> BasicResult { return { ResultBase::LogicError, message }; }
-        static auto runtimeError( std::string const &message ) -> BasicResult { return { ResultBase::RuntimeError, message }; }
-
-        explicit operator bool() const { return m_type == ResultBase::Ok; }
-        auto type() const -> ResultBase::Type { return m_type; }
-        auto errorMessage() const -> std::string { return m_errorMessage; }
-
-    protected:
-        void enforceOk() const override {
-
-            // Errors shouldn't reach this point, but if they do
-            // the actual error message will be in m_errorMessage
-            assert( m_type != ResultBase::LogicError );
-            assert( m_type != ResultBase::RuntimeError );
-            if( m_type != ResultBase::Ok )
-                std::abort();
-        }
-
-        std::string m_errorMessage; // Only populated if resultType is an error
-
-        BasicResult( ResultBase::Type type, std::string const &message )
-        :   ResultValueBase<T>(type),
-            m_errorMessage(message)
-        {
-            assert( m_type != ResultBase::Ok );
-        }
-
-        using ResultValueBase<T>::ResultValueBase;
-        using ResultBase::m_type;
-    };
-
-    enum class ParseResultType {
-        Matched, NoMatch, ShortCircuitAll, ShortCircuitSame
-    };
-
-    class ParseState {
-    public:
-
-        ParseState( ParseResultType type, TokenStream const &remainingTokens )
-        : m_type(type),
-          m_remainingTokens( remainingTokens )
-        {}
-
-        auto type() const -> ParseResultType { return m_type; }
-        auto remainingTokens() const -> TokenStream { return m_remainingTokens; }
-
-    private:
-        ParseResultType m_type;
-        TokenStream m_remainingTokens;
-    };
-
-    using Result = BasicResult<void>;
-    using ParserResult = BasicResult<ParseResultType>;
-    using InternalParseResult = BasicResult<ParseState>;
-
-    struct HelpColumns {
-        std::string left;
-        std::string right;
-    };
-
-    template<typename T>
-    inline auto convertInto( std::string const &source, T& target ) -> ParserResult {
-        std::stringstream ss;
-        ss << source;
-        ss >> target;
-        if( ss.fail() )
-            return ParserResult::runtimeError( "Unable to convert '" + source + "' to destination type" );
-        else
-            return ParserResult::ok( ParseResultType::Matched );
-    }
-    inline auto convertInto( std::string const &source, std::string& target ) -> ParserResult {
-        target = source;
-        return ParserResult::ok( ParseResultType::Matched );
-    }
-    inline auto convertInto( std::string const &source, bool &target ) -> ParserResult {
-        std::string srcLC = source;
-        std::transform( srcLC.begin(), srcLC.end(), srcLC.begin(), []( char c ) { return static_cast<char>( ::tolower(c) ); } );
-        if (srcLC == "y" || srcLC == "1" || srcLC == "true" || srcLC == "yes" || srcLC == "on")
-            target = true;
-        else if (srcLC == "n" || srcLC == "0" || srcLC == "false" || srcLC == "no" || srcLC == "off")
-            target = false;
-        else
-            return ParserResult::runtimeError( "Expected a boolean value but did not recognise: '" + source + "'" );
-        return ParserResult::ok( ParseResultType::Matched );
-    }
-#ifdef CLARA_CONFIG_OPTIONAL_TYPE
-    template<typename T>
-    inline auto convertInto( std::string const &source, CLARA_CONFIG_OPTIONAL_TYPE<T>& target ) -> ParserResult {
-        T temp;
-        auto result = convertInto( source, temp );
-        if( result )
-            target = std::move(temp);
-        return result;
-    }
-#endif // CLARA_CONFIG_OPTIONAL_TYPE
-
-    struct NonCopyable {
-        NonCopyable() = default;
-        NonCopyable( NonCopyable const & ) = delete;
-        NonCopyable( NonCopyable && ) = delete;
-        NonCopyable &operator=( NonCopyable const & ) = delete;
-        NonCopyable &operator=( NonCopyable && ) = delete;
-    };
-
-    struct BoundRef : NonCopyable {
-        virtual ~BoundRef() = default;
-        virtual auto isContainer() const -> bool { return false; }
-        virtual auto isFlag() const -> bool { return false; }
-    };
-    struct BoundValueRefBase : BoundRef {
-        virtual auto setValue( std::string const &arg ) -> ParserResult = 0;
-    };
-    struct BoundFlagRefBase : BoundRef {
-        virtual auto setFlag( bool flag ) -> ParserResult = 0;
-        virtual auto isFlag() const -> bool { return true; }
-    };
-
-    template<typename T>
-    struct BoundValueRef : BoundValueRefBase {
-        T &m_ref;
-
-        explicit BoundValueRef( T &ref ) : m_ref( ref ) {}
-
-        auto setValue( std::string const &arg ) -> ParserResult override {
-            return convertInto( arg, m_ref );
-        }
-    };
-
-    template<typename T>
-    struct BoundValueRef<std::vector<T>> : BoundValueRefBase {
-        std::vector<T> &m_ref;
-
-        explicit BoundValueRef( std::vector<T> &ref ) : m_ref( ref ) {}
-
-        auto isContainer() const -> bool override { return true; }
-
-        auto setValue( std::string const &arg ) -> ParserResult override {
-            T temp;
-            auto result = convertInto( arg, temp );
-            if( result )
-                m_ref.push_back( temp );
-            return result;
-        }
-    };
-
-    struct BoundFlagRef : BoundFlagRefBase {
-        bool &m_ref;
-
-        explicit BoundFlagRef( bool &ref ) : m_ref( ref ) {}
-
-        auto setFlag( bool flag ) -> ParserResult override {
-            m_ref = flag;
-            return ParserResult::ok( ParseResultType::Matched );
-        }
-    };
-
-    template<typename ReturnType>
-    struct LambdaInvoker {
-        static_assert( std::is_same<ReturnType, ParserResult>::value, "Lambda must return void or clara::ParserResult" );
-
-        template<typename L, typename ArgType>
-        static auto invoke( L const &lambda, ArgType const &arg ) -> ParserResult {
-            return lambda( arg );
-        }
-    };
-
-    template<>
-    struct LambdaInvoker<void> {
-        template<typename L, typename ArgType>
-        static auto invoke( L const &lambda, ArgType const &arg ) -> ParserResult {
-            lambda( arg );
-            return ParserResult::ok( ParseResultType::Matched );
-        }
-    };
-
-    template<typename ArgType, typename L>
-    inline auto invokeLambda( L const &lambda, std::string const &arg ) -> ParserResult {
-        ArgType temp{};
-        auto result = convertInto( arg, temp );
-        return !result
-           ? result
-           : LambdaInvoker<typename UnaryLambdaTraits<L>::ReturnType>::invoke( lambda, temp );
-    }
-
-    template<typename L>
-    struct BoundLambda : BoundValueRefBase {
-        L m_lambda;
-
-        static_assert( UnaryLambdaTraits<L>::isValid, "Supplied lambda must take exactly one argument" );
-        explicit BoundLambda( L const &lambda ) : m_lambda( lambda ) {}
-
-        auto setValue( std::string const &arg ) -> ParserResult override {
-            return invokeLambda<typename UnaryLambdaTraits<L>::ArgType>( m_lambda, arg );
-        }
-    };
-
-    template<typename L>
-    struct BoundFlagLambda : BoundFlagRefBase {
-        L m_lambda;
-
-        static_assert( UnaryLambdaTraits<L>::isValid, "Supplied lambda must take exactly one argument" );
-        static_assert( std::is_same<typename UnaryLambdaTraits<L>::ArgType, bool>::value, "flags must be boolean" );
-
-        explicit BoundFlagLambda( L const &lambda ) : m_lambda( lambda ) {}
-
-        auto setFlag( bool flag ) -> ParserResult override {
-            return LambdaInvoker<typename UnaryLambdaTraits<L>::ReturnType>::invoke( m_lambda, flag );
-        }
-    };
-
-    enum class Optionality { Optional, Required };
-
-    struct Parser;
-
-    class ParserBase {
-    public:
-        virtual ~ParserBase() = default;
-        virtual auto validate() const -> Result { return Result::ok(); }
-        virtual auto parse( std::string const& exeName, TokenStream const &tokens) const -> InternalParseResult  = 0;
-        virtual auto cardinality() const -> size_t { return 1; }
-
-        auto parse( Args const &args ) const -> InternalParseResult {
-            return parse( args.exeName(), TokenStream( args ) );
-        }
-    };
-
-    template<typename DerivedT>
-    class ComposableParserImpl : public ParserBase {
-    public:
-        template<typename T>
-        auto operator|( T const &other ) const -> Parser;
-
-		template<typename T>
-        auto operator+( T const &other ) const -> Parser;
-    };
-
-    // Common code and state for Args and Opts
-    template<typename DerivedT>
-    class ParserRefImpl : public ComposableParserImpl<DerivedT> {
-    protected:
-        Optionality m_optionality = Optionality::Optional;
-        std::shared_ptr<BoundRef> m_ref;
-        std::string m_hint;
-        std::string m_description;
-
-        explicit ParserRefImpl( std::shared_ptr<BoundRef> const &ref ) : m_ref( ref ) {}
-
-    public:
-        template<typename T>
-        ParserRefImpl( T &ref, std::string const &hint )
-        :   m_ref( std::make_shared<BoundValueRef<T>>( ref ) ),
-            m_hint( hint )
-        {}
-
-        template<typename LambdaT>
-        ParserRefImpl( LambdaT const &ref, std::string const &hint )
-        :   m_ref( std::make_shared<BoundLambda<LambdaT>>( ref ) ),
-            m_hint(hint)
-        {}
-
-        auto operator()( std::string const &description ) -> DerivedT & {
-            m_description = description;
-            return static_cast<DerivedT &>( *this );
-        }
-
-        auto optional() -> DerivedT & {
-            m_optionality = Optionality::Optional;
-            return static_cast<DerivedT &>( *this );
-        };
-
-        auto required() -> DerivedT & {
-            m_optionality = Optionality::Required;
-            return static_cast<DerivedT &>( *this );
-        };
-
-        auto isOptional() const -> bool {
-            return m_optionality == Optionality::Optional;
-        }
-
-        auto cardinality() const -> size_t override {
-            if( m_ref->isContainer() )
-                return 0;
-            else
-                return 1;
-        }
-
-        auto hint() const -> std::string { return m_hint; }
-    };
-
-    class ExeName : public ComposableParserImpl<ExeName> {
-        std::shared_ptr<std::string> m_name;
-        std::shared_ptr<BoundValueRefBase> m_ref;
-
-        template<typename LambdaT>
-        static auto makeRef(LambdaT const &lambda) -> std::shared_ptr<BoundValueRefBase> {
-            return std::make_shared<BoundLambda<LambdaT>>( lambda) ;
-        }
-
-    public:
-        ExeName() : m_name( std::make_shared<std::string>( "<executable>" ) ) {}
-
-        explicit ExeName( std::string &ref ) : ExeName() {
-            m_ref = std::make_shared<BoundValueRef<std::string>>( ref );
-        }
-
-        template<typename LambdaT>
-        explicit ExeName( LambdaT const& lambda ) : ExeName() {
-            m_ref = std::make_shared<BoundLambda<LambdaT>>( lambda );
-        }
-
-        // The exe name is not parsed out of the normal tokens, but is handled specially
-        auto parse( std::string const&, TokenStream const &tokens ) const -> InternalParseResult override {
-            return InternalParseResult::ok( ParseState( ParseResultType::NoMatch, tokens ) );
-        }
-
-        auto name() const -> std::string { return *m_name; }
-        auto set( std::string const& newName ) -> ParserResult {
-
-            auto lastSlash = newName.find_last_of( "\\/" );
-            auto filename = ( lastSlash == std::string::npos )
-                    ? newName
-                    : newName.substr( lastSlash+1 );
-
-            *m_name = filename;
-            if( m_ref )
-                return m_ref->setValue( filename );
-            else
-                return ParserResult::ok( ParseResultType::Matched );
-        }
-    };
-
-    class Arg : public ParserRefImpl<Arg> {
-    public:
-        using ParserRefImpl::ParserRefImpl;
-
-        auto parse( std::string const &, TokenStream const &tokens ) const -> InternalParseResult override {
-            auto validationResult = validate();
-            if( !validationResult )
-                return InternalParseResult( validationResult );
-
-            auto remainingTokens = tokens;
-            auto const &token = *remainingTokens;
-            if( token.type != TokenType::Argument )
-                return InternalParseResult::ok( ParseState( ParseResultType::NoMatch, remainingTokens ) );
-
-            assert( !m_ref->isFlag() );
-            auto valueRef = static_cast<detail::BoundValueRefBase*>( m_ref.get() );
-
-            auto result = valueRef->setValue( remainingTokens->token );
-            if( !result )
-                return InternalParseResult( result );
-            else
-                return InternalParseResult::ok( ParseState( ParseResultType::Matched, ++remainingTokens ) );
-        }
-    };
-
-    inline auto normaliseOpt( std::string const &optName ) -> std::string {
-#ifdef CATCH_PLATFORM_WINDOWS
-        if( optName[0] == '/' )
-            return "-" + optName.substr( 1 );
-        else
-#endif
-            return optName;
-    }
-
-    class Opt : public ParserRefImpl<Opt> {
-    protected:
-        std::vector<std::string> m_optNames;
-
-    public:
-        template<typename LambdaT>
-        explicit Opt( LambdaT const &ref ) : ParserRefImpl( std::make_shared<BoundFlagLambda<LambdaT>>( ref ) ) {}
-
-        explicit Opt( bool &ref ) : ParserRefImpl( std::make_shared<BoundFlagRef>( ref ) ) {}
-
-        template<typename LambdaT>
-        Opt( LambdaT const &ref, std::string const &hint ) : ParserRefImpl( ref, hint ) {}
-
-        template<typename T>
-        Opt( T &ref, std::string const &hint ) : ParserRefImpl( ref, hint ) {}
-
-        auto operator[]( std::string const &optName ) -> Opt & {
-            m_optNames.push_back( optName );
-            return *this;
-        }
-
-        auto getHelpColumns() const -> std::vector<HelpColumns> {
-            std::ostringstream oss;
-            bool first = true;
-            for( auto const &opt : m_optNames ) {
-                if (first)
-                    first = false;
-                else
-                    oss << ", ";
-                oss << opt;
-            }
-            if( !m_hint.empty() )
-                oss << " <" << m_hint << ">";
-            return { { oss.str(), m_description } };
-        }
-
-        auto isMatch( std::string const &optToken ) const -> bool {
-            auto normalisedToken = normaliseOpt( optToken );
-            for( auto const &name : m_optNames ) {
-                if( normaliseOpt( name ) == normalisedToken )
-                    return true;
-            }
-            return false;
-        }
-
-        using ParserBase::parse;
-
-        auto parse( std::string const&, TokenStream const &tokens ) const -> InternalParseResult override {
-            auto validationResult = validate();
-            if( !validationResult )
-                return InternalParseResult( validationResult );
-
-            auto remainingTokens = tokens;
-            if( remainingTokens && remainingTokens->type == TokenType::Option ) {
-                auto const &token = *remainingTokens;
-                if( isMatch(token.token ) ) {
-                    if( m_ref->isFlag() ) {
-                        auto flagRef = static_cast<detail::BoundFlagRefBase*>( m_ref.get() );
-                        auto result = flagRef->setFlag( true );
-                        if( !result )
-                            return InternalParseResult( result );
-                        if( result.value() == ParseResultType::ShortCircuitAll )
-                            return InternalParseResult::ok( ParseState( result.value(), remainingTokens ) );
-                    } else {
-                        auto valueRef = static_cast<detail::BoundValueRefBase*>( m_ref.get() );
-                        ++remainingTokens;
-                        if( !remainingTokens )
-                            return InternalParseResult::runtimeError( "Expected argument following " + token.token );
-                        auto const &argToken = *remainingTokens;
-                        if( argToken.type != TokenType::Argument )
-                            return InternalParseResult::runtimeError( "Expected argument following " + token.token );
-                        auto result = valueRef->setValue( argToken.token );
-                        if( !result )
-                            return InternalParseResult( result );
-                        if( result.value() == ParseResultType::ShortCircuitAll )
-                            return InternalParseResult::ok( ParseState( result.value(), remainingTokens ) );
-                    }
-                    return InternalParseResult::ok( ParseState( ParseResultType::Matched, ++remainingTokens ) );
-                }
-            }
-            return InternalParseResult::ok( ParseState( ParseResultType::NoMatch, remainingTokens ) );
-        }
-
-        auto validate() const -> Result override {
-            if( m_optNames.empty() )
-                return Result::logicError( "No options supplied to Opt" );
-            for( auto const &name : m_optNames ) {
-                if( name.empty() )
-                    return Result::logicError( "Option name cannot be empty" );
-#ifdef CATCH_PLATFORM_WINDOWS
-                if( name[0] != '-' && name[0] != '/' )
-                    return Result::logicError( "Option name must begin with '-' or '/'" );
-#else
-                if( name[0] != '-' )
-                    return Result::logicError( "Option name must begin with '-'" );
-#endif
-            }
-            return ParserRefImpl::validate();
-        }
-    };
-
-    struct Help : Opt {
-        Help( bool &showHelpFlag )
-        :   Opt([&]( bool flag ) {
-                showHelpFlag = flag;
-                return ParserResult::ok( ParseResultType::ShortCircuitAll );
-            })
-        {
-            static_cast<Opt &>( *this )
-                    ("display usage information")
-                    ["-?"]["-h"]["--help"]
-                    .optional();
-        }
-    };
-
-    struct Parser : ParserBase {
-
-        mutable ExeName m_exeName;
-        std::vector<Opt> m_options;
-        std::vector<Arg> m_args;
-
-        auto operator|=( ExeName const &exeName ) -> Parser & {
-            m_exeName = exeName;
-            return *this;
-        }
-
-        auto operator|=( Arg const &arg ) -> Parser & {
-            m_args.push_back(arg);
-            return *this;
-        }
-
-        auto operator|=( Opt const &opt ) -> Parser & {
-            m_options.push_back(opt);
-            return *this;
-        }
-
-        auto operator|=( Parser const &other ) -> Parser & {
-            m_options.insert(m_options.end(), other.m_options.begin(), other.m_options.end());
-            m_args.insert(m_args.end(), other.m_args.begin(), other.m_args.end());
-            return *this;
-        }
-
-        template<typename T>
-        auto operator|( T const &other ) const -> Parser {
-            return Parser( *this ) |= other;
-        }
-
-        // Forward deprecated interface with '+' instead of '|'
-        template<typename T>
-        auto operator+=( T const &other ) -> Parser & { return operator|=( other ); }
-        template<typename T>
-        auto operator+( T const &other ) const -> Parser { return operator|( other ); }
-
-        auto getHelpColumns() const -> std::vector<HelpColumns> {
-            std::vector<HelpColumns> cols;
-            for (auto const &o : m_options) {
-                auto childCols = o.getHelpColumns();
-                cols.insert( cols.end(), childCols.begin(), childCols.end() );
-            }
-            return cols;
-        }
-
-        void writeToStream( std::ostream &os ) const {
-            if (!m_exeName.name().empty()) {
-                os << "usage:\n" << "  " << m_exeName.name() << " ";
-                bool required = true, first = true;
-                for( auto const &arg : m_args ) {
-                    if (first)
-                        first = false;
-                    else
-                        os << " ";
-                    if( arg.isOptional() && required ) {
-                        os << "[";
-                        required = false;
-                    }
-                    os << "<" << arg.hint() << ">";
-                    if( arg.cardinality() == 0 )
-                        os << " ... ";
-                }
-                if( !required )
-                    os << "]";
-                if( !m_options.empty() )
-                    os << " options";
-                os << "\n\nwhere options are:" << std::endl;
-            }
-
-            auto rows = getHelpColumns();
-            size_t consoleWidth = CATCH_CLARA_CONFIG_CONSOLE_WIDTH;
-            size_t optWidth = 0;
-            for( auto const &cols : rows )
-                optWidth = (std::max)(optWidth, cols.left.size() + 2);
-
-            optWidth = (std::min)(optWidth, consoleWidth/2);
-
-            for( auto const &cols : rows ) {
-                auto row =
-                        TextFlow::Column( cols.left ).width( optWidth ).indent( 2 ) +
-                        TextFlow::Spacer(4) +
-                        TextFlow::Column( cols.right ).width( consoleWidth - 7 - optWidth );
-                os << row << std::endl;
-            }
-        }
-
-        friend auto operator<<( std::ostream &os, Parser const &parser ) -> std::ostream& {
-            parser.writeToStream( os );
-            return os;
-        }
-
-        auto validate() const -> Result override {
-            for( auto const &opt : m_options ) {
-                auto result = opt.validate();
-                if( !result )
-                    return result;
-            }
-            for( auto const &arg : m_args ) {
-                auto result = arg.validate();
-                if( !result )
-                    return result;
-            }
-            return Result::ok();
-        }
-
-        using ParserBase::parse;
-
-        auto parse( std::string const& exeName, TokenStream const &tokens ) const -> InternalParseResult override {
-
-            struct ParserInfo {
-                ParserBase const* parser = nullptr;
-                size_t count = 0;
-            };
-            const size_t totalParsers = m_options.size() + m_args.size();
-            assert( totalParsers < 512 );
-            // ParserInfo parseInfos[totalParsers]; // <-- this is what we really want to do
-            ParserInfo parseInfos[512];
-
-            {
-                size_t i = 0;
-                for (auto const &opt : m_options) parseInfos[i++].parser = &opt;
-                for (auto const &arg : m_args) parseInfos[i++].parser = &arg;
-            }
-
-            m_exeName.set( exeName );
-
-            auto result = InternalParseResult::ok( ParseState( ParseResultType::NoMatch, tokens ) );
-            while( result.value().remainingTokens() ) {
-                bool tokenParsed = false;
-
-                for( size_t i = 0; i < totalParsers; ++i ) {
-                    auto&  parseInfo = parseInfos[i];
-                    if( parseInfo.parser->cardinality() == 0 || parseInfo.count < parseInfo.parser->cardinality() ) {
-                        result = parseInfo.parser->parse(exeName, result.value().remainingTokens());
-                        if (!result)
-                            return result;
-                        if (result.value().type() != ParseResultType::NoMatch) {
-                            tokenParsed = true;
-                            ++parseInfo.count;
-                            break;
-                        }
-                    }
-                }
-
-                if( result.value().type() == ParseResultType::ShortCircuitAll )
-                    return result;
-                if( !tokenParsed )
-                    return InternalParseResult::runtimeError( "Unrecognised token: " + result.value().remainingTokens()->token );
-            }
-            // !TBD Check missing required options
-            return result;
-        }
-    };
-
-    template<typename DerivedT>
-    template<typename T>
-    auto ComposableParserImpl<DerivedT>::operator|( T const &other ) const -> Parser {
-        return Parser() | static_cast<DerivedT const &>( *this ) | other;
-    }
-} // namespace detail
-
-// A Combined parser
-using detail::Parser;
-
-// A parser for options
-using detail::Opt;
-
-// A parser for arguments
-using detail::Arg;
-
-// Wrapper for argc, argv from main()
-using detail::Args;
-
-// Specifies the name of the executable
-using detail::ExeName;
-
-// Convenience wrapper for option parser that specifies the help option
-using detail::Help;
-
-// enum of result types from a parse
-using detail::ParseResultType;
-
-// Result type for parser operation
-using detail::ParserResult;
-
-}} // namespace Catch::clara
-
-// end clara.hpp
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
-// Restore Clara's value for console width, if present
-#ifdef CATCH_TEMP_CLARA_CONFIG_CONSOLE_WIDTH
-#define CATCH_CLARA_TEXTFLOW_CONFIG_CONSOLE_WIDTH CATCH_TEMP_CLARA_CONFIG_CONSOLE_WIDTH
-#undef CATCH_TEMP_CLARA_CONFIG_CONSOLE_WIDTH
-#endif
-
-// end catch_clara.h
-namespace Catch {
-
-    clara::Parser makeCommandLineParser( ConfigData& config );
-
-} // end namespace Catch
-
-// end catch_commandline.h
-#include <fstream>
-#include <ctime>
-
-namespace Catch {
-
-    clara::Parser makeCommandLineParser( ConfigData& config ) {
-
-        using namespace clara;
-
-        auto const setWarning = [&]( std::string const& warning ) {
-                auto warningSet = [&]() {
-                    if( warning == "NoAssertions" )
-                        return WarnAbout::NoAssertions;
-
-                    if ( warning == "NoTests" )
-                        return WarnAbout::NoTests;
-
-                    return WarnAbout::Nothing;
-                }();
-
-                if (warningSet == WarnAbout::Nothing)
-                    return ParserResult::runtimeError( "Unrecognised warning: '" + warning + "'" );
-                config.warnings = static_cast<WarnAbout::What>( config.warnings | warningSet );
-                return ParserResult::ok( ParseResultType::Matched );
-            };
-        auto const loadTestNamesFromFile = [&]( std::string const& filename ) {
-                std::ifstream f( filename.c_str() );
-                if( !f.is_open() )
-                    return ParserResult::runtimeError( "Unable to load input file: '" + filename + "'" );
-
-                std::string line;
-                while( std::getline( f, line ) ) {
-                    line = trim(line);
-                    if( !line.empty() && !startsWith( line, '#' ) ) {
-                        if( !startsWith( line, '"' ) )
-                            line = '"' + line + '"';
-                        config.testsOrTags.push_back( line + ',' );
-                    }
-                }
-                return ParserResult::ok( ParseResultType::Matched );
-            };
-        auto const setTestOrder = [&]( std::string const& order ) {
-                if( startsWith( "declared", order ) )
-                    config.runOrder = RunTests::InDeclarationOrder;
-                else if( startsWith( "lexical", order ) )
-                    config.runOrder = RunTests::InLexicographicalOrder;
-                else if( startsWith( "random", order ) )
-                    config.runOrder = RunTests::InRandomOrder;
-                else
-                    return clara::ParserResult::runtimeError( "Unrecognised ordering: '" + order + "'" );
-                return ParserResult::ok( ParseResultType::Matched );
-            };
-        auto const setRngSeed = [&]( std::string const& seed ) {
-                if( seed != "time" )
-                    return clara::detail::convertInto( seed, config.rngSeed );
-                config.rngSeed = static_cast<unsigned int>( std::time(nullptr) );
-                return ParserResult::ok( ParseResultType::Matched );
-            };
-        auto const setColourUsage = [&]( std::string const& useColour ) {
-                    auto mode = toLower( useColour );
-
-                    if( mode == "yes" )
-                        config.useColour = UseColour::Yes;
-                    else if( mode == "no" )
-                        config.useColour = UseColour::No;
-                    else if( mode == "auto" )
-                        config.useColour = UseColour::Auto;
-                    else
-                        return ParserResult::runtimeError( "colour mode must be one of: auto, yes or no. '" + useColour + "' not recognised" );
-                return ParserResult::ok( ParseResultType::Matched );
-            };
-        auto const setWaitForKeypress = [&]( std::string const& keypress ) {
-                auto keypressLc = toLower( keypress );
-                if( keypressLc == "start" )
-                    config.waitForKeypress = WaitForKeypress::BeforeStart;
-                else if( keypressLc == "exit" )
-                    config.waitForKeypress = WaitForKeypress::BeforeExit;
-                else if( keypressLc == "both" )
-                    config.waitForKeypress = WaitForKeypress::BeforeStartAndExit;
-                else
-                    return ParserResult::runtimeError( "keypress argument must be one of: start, exit or both. '" + keypress + "' not recognised" );
-            return ParserResult::ok( ParseResultType::Matched );
-            };
-        auto const setVerbosity = [&]( std::string const& verbosity ) {
-            auto lcVerbosity = toLower( verbosity );
-            if( lcVerbosity == "quiet" )
-                config.verbosity = Verbosity::Quiet;
-            else if( lcVerbosity == "normal" )
-                config.verbosity = Verbosity::Normal;
-            else if( lcVerbosity == "high" )
-                config.verbosity = Verbosity::High;
-            else
-                return ParserResult::runtimeError( "Unrecognised verbosity, '" + verbosity + "'" );
-            return ParserResult::ok( ParseResultType::Matched );
-        };
-
-        auto cli
-            = ExeName( config.processName )
-            | Help( config.showHelp )
-            | Opt( config.listTests )
-                ["-l"]["--list-tests"]
-                ( "list all/matching test cases" )
-            | Opt( config.listTags )
-                ["-t"]["--list-tags"]
-                ( "list all/matching tags" )
-            | Opt( config.showSuccessfulTests )
-                ["-s"]["--success"]
-                ( "include successful tests in output" )
-            | Opt( config.shouldDebugBreak )
-                ["-b"]["--break"]
-                ( "break into debugger on failure" )
-            | Opt( config.noThrow )
-                ["-e"]["--nothrow"]
-                ( "skip exception tests" )
-            | Opt( config.showInvisibles )
-                ["-i"]["--invisibles"]
-                ( "show invisibles (tabs, newlines)" )
-            | Opt( config.outputFilename, "filename" )
-                ["-o"]["--out"]
-                ( "output filename" )
-            | Opt( config.reporterNames, "name" )
-                ["-r"]["--reporter"]
-                ( "reporter to use (defaults to console)" )
-            | Opt( config.name, "name" )
-                ["-n"]["--name"]
-                ( "suite name" )
-            | Opt( [&]( bool ){ config.abortAfter = 1; } )
-                ["-a"]["--abort"]
-                ( "abort at first failure" )
-            | Opt( [&]( int x ){ config.abortAfter = x; }, "no. failures" )
-                ["-x"]["--abortx"]
-                ( "abort after x failures" )
-            | Opt( setWarning, "warning name" )
-                ["-w"]["--warn"]
-                ( "enable warnings" )
-            | Opt( [&]( bool flag ) { config.showDurations = flag ? ShowDurations::Always : ShowDurations::Never; }, "yes|no" )
-                ["-d"]["--durations"]
-                ( "show test durations" )
-            | Opt( loadTestNamesFromFile, "filename" )
-                ["-f"]["--input-file"]
-                ( "load test names to run from a file" )
-            | Opt( config.filenamesAsTags )
-                ["-#"]["--filenames-as-tags"]
-                ( "adds a tag for the filename" )
-            | Opt( config.sectionsToRun, "section name" )
-                ["-c"]["--section"]
-                ( "specify section to run" )
-            | Opt( setVerbosity, "quiet|normal|high" )
-                ["-v"]["--verbosity"]
-                ( "set output verbosity" )
-            | Opt( config.listTestNamesOnly )
-                ["--list-test-names-only"]
-                ( "list all/matching test cases names only" )
-            | Opt( config.listReporters )
-                ["--list-reporters"]
-                ( "list all reporters" )
-            | Opt( setTestOrder, "decl|lex|rand" )
-                ["--order"]
-                ( "test case order (defaults to decl)" )
-            | Opt( setRngSeed, "'time'|number" )
-                ["--rng-seed"]
-                ( "set a specific seed for random numbers" )
-            | Opt( setColourUsage, "yes|no" )
-                ["--use-colour"]
-                ( "should output be colourised" )
-            | Opt( config.libIdentify )
-                ["--libidentify"]
-                ( "report name and version according to libidentify standard" )
-            | Opt( setWaitForKeypress, "start|exit|both" )
-                ["--wait-for-keypress"]
-                ( "waits for a keypress before exiting" )
-            | Opt( config.benchmarkResolutionMultiple, "multiplier" )
-                ["--benchmark-resolution-multiple"]
-                ( "multiple of clock resolution to run benchmarks" )
-
-            | Arg( config.testsOrTags, "test name|pattern|tags" )
-                ( "which test or tests to use" );
-
-        return cli;
-    }
-
-} // end namespace Catch
-// end catch_commandline.cpp
-// start catch_common.cpp
-
-#include <cstring>
-#include <ostream>
-
-namespace Catch {
-
-    bool SourceLineInfo::empty() const noexcept {
-        return file[0] == '\0';
-    }
-    bool SourceLineInfo::operator == ( SourceLineInfo const& other ) const noexcept {
-        return line == other.line && (file == other.file || std::strcmp(file, other.file) == 0);
-    }
-    bool SourceLineInfo::operator < ( SourceLineInfo const& other ) const noexcept {
-        return line < other.line || ( line == other.line && (std::strcmp(file, other.file) < 0));
-    }
-
-    std::ostream& operator << ( std::ostream& os, SourceLineInfo const& info ) {
-#ifndef __GNUG__
-        os << info.file << '(' << info.line << ')';
-#else
-        os << info.file << ':' << info.line;
-#endif
-        return os;
-    }
-
-    std::string StreamEndStop::operator+() const {
-        return std::string();
-    }
-
-    NonCopyable::NonCopyable() = default;
-    NonCopyable::~NonCopyable() = default;
-
-}
-// end catch_common.cpp
-// start catch_config.cpp
-
-// start catch_enforce.h
-
-#include <stdexcept>
-
-#define CATCH_PREPARE_EXCEPTION( type, msg ) \
-    type( ( Catch::ReusableStringStream() << msg ).str() )
-#define CATCH_INTERNAL_ERROR( msg ) \
-    throw CATCH_PREPARE_EXCEPTION( std::logic_error, CATCH_INTERNAL_LINEINFO << ": Internal Catch error: " << msg);
-#define CATCH_ERROR( msg ) \
-    throw CATCH_PREPARE_EXCEPTION( std::domain_error, msg )
-#define CATCH_ENFORCE( condition, msg ) \
-    do{ if( !(condition) ) CATCH_ERROR( msg ); } while(false)
-
-// end catch_enforce.h
-namespace Catch {
-
-    Config::Config( ConfigData const& data )
-    :   m_data( data ),
-        m_stream( openStream() )
-    {
-        TestSpecParser parser(ITagAliasRegistry::get());
-        if (data.testsOrTags.empty()) {
-            parser.parse("~[.]"); // All not hidden tests
-        }
-        else {
-            m_hasTestFilters = true;
-            for( auto const& testOrTags : data.testsOrTags )
-                parser.parse( testOrTags );
-        }
-        m_testSpec = parser.testSpec();
-    }
-
-    std::string const& Config::getFilename() const {
-        return m_data.outputFilename ;
-    }
-
-    bool Config::listTests() const          { return m_data.listTests; }
-    bool Config::listTestNamesOnly() const  { return m_data.listTestNamesOnly; }
-    bool Config::listTags() const           { return m_data.listTags; }
-    bool Config::listReporters() const      { return m_data.listReporters; }
-
-    std::string Config::getProcessName() const { return m_data.processName; }
-
-    std::vector<std::string> const& Config::getReporterNames() const { return m_data.reporterNames; }
-    std::vector<std::string> const& Config::getTestsOrTags() const { return m_data.testsOrTags; }
-    std::vector<std::string> const& Config::getSectionsToRun() const { return m_data.sectionsToRun; }
-
-    TestSpec const& Config::testSpec() const { return m_testSpec; }
-    bool Config::hasTestFilters() const { return m_hasTestFilters; }
-
-    bool Config::showHelp() const { return m_data.showHelp; }
-
-    // IConfig interface
-    bool Config::allowThrows() const                   { return !m_data.noThrow; }
-    std::ostream& Config::stream() const               { return m_stream->stream(); }
-    std::string Config::name() const                   { return m_data.name.empty() ? m_data.processName : m_data.name; }
-    bool Config::includeSuccessfulResults() const      { return m_data.showSuccessfulTests; }
-    bool Config::warnAboutMissingAssertions() const    { return !!(m_data.warnings & WarnAbout::NoAssertions); }
-    bool Config::warnAboutNoTests() const              { return !!(m_data.warnings & WarnAbout::NoTests); }
-    ShowDurations::OrNot Config::showDurations() const { return m_data.showDurations; }
-    RunTests::InWhatOrder Config::runOrder() const     { return m_data.runOrder; }
-    unsigned int Config::rngSeed() const               { return m_data.rngSeed; }
-    int Config::benchmarkResolutionMultiple() const    { return m_data.benchmarkResolutionMultiple; }
-    UseColour::YesOrNo Config::useColour() const       { return m_data.useColour; }
-    bool Config::shouldDebugBreak() const              { return m_data.shouldDebugBreak; }
-    int Config::abortAfter() const                     { return m_data.abortAfter; }
-    bool Config::showInvisibles() const                { return m_data.showInvisibles; }
-    Verbosity Config::verbosity() const                { return m_data.verbosity; }
-
-    IStream const* Config::openStream() {
-        return Catch::makeStream(m_data.outputFilename);
-    }
-
-} // end namespace Catch
-// end catch_config.cpp
-// start catch_console_colour.cpp
-
-#if defined(__clang__)
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wexit-time-destructors"
-#endif
-
-// start catch_errno_guard.h
-
-namespace Catch {
-
-    class ErrnoGuard {
-    public:
-        ErrnoGuard();
-        ~ErrnoGuard();
-    private:
-        int m_oldErrno;
-    };
-
-}
-
-// end catch_errno_guard.h
-#include <sstream>
-
-namespace Catch {
-    namespace {
-
-        struct IColourImpl {
-            virtual ~IColourImpl() = default;
-            virtual void use( Colour::Code _colourCode ) = 0;
-        };
-
-        struct NoColourImpl : IColourImpl {
-            void use( Colour::Code ) {}
-
-            static IColourImpl* instance() {
-                static NoColourImpl s_instance;
-                return &s_instance;
-            }
-        };
-
-    } // anon namespace
-} // namespace Catch
-
-#if !defined( CATCH_CONFIG_COLOUR_NONE ) && !defined( CATCH_CONFIG_COLOUR_WINDOWS ) && !defined( CATCH_CONFIG_COLOUR_ANSI )
-#   ifdef CATCH_PLATFORM_WINDOWS
-#       define CATCH_CONFIG_COLOUR_WINDOWS
-#   else
-#       define CATCH_CONFIG_COLOUR_ANSI
-#   endif
-#endif
-
-#if defined ( CATCH_CONFIG_COLOUR_WINDOWS ) /////////////////////////////////////////
-
-namespace Catch {
-namespace {
-
-    class Win32ColourImpl : public IColourImpl {
-    public:
-        Win32ColourImpl() : stdoutHandle( GetStdHandle(STD_OUTPUT_HANDLE) )
-        {
-            CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-            GetConsoleScreenBufferInfo( stdoutHandle, &csbiInfo );
-            originalForegroundAttributes = csbiInfo.wAttributes & ~( BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_INTENSITY );
-            originalBackgroundAttributes = csbiInfo.wAttributes & ~( FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY );
-        }
-
-        virtual void use( Colour::Code _colourCode ) override {
-            switch( _colourCode ) {
-                case Colour::None:      return setTextAttribute( originalForegroundAttributes );
-                case Colour::White:     return setTextAttribute( FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE );
-                case Colour::Red:       return setTextAttribute( FOREGROUND_RED );
-                case Colour::Green:     return setTextAttribute( FOREGROUND_GREEN );
-                case Colour::Blue:      return setTextAttribute( FOREGROUND_BLUE );
-                case Colour::Cyan:      return setTextAttribute( FOREGROUND_BLUE | FOREGROUND_GREEN );
-                case Colour::Yellow:    return setTextAttribute( FOREGROUND_RED | FOREGROUND_GREEN );
-                case Colour::Grey:      return setTextAttribute( 0 );
-
-                case Colour::LightGrey:     return setTextAttribute( FOREGROUND_INTENSITY );
-                case Colour::BrightRed:     return setTextAttribute( FOREGROUND_INTENSITY | FOREGROUND_RED );
-                case Colour::BrightGreen:   return setTextAttribute( FOREGROUND_INTENSITY | FOREGROUND_GREEN );
-                case Colour::BrightWhite:   return setTextAttribute( FOREGROUND_INTENSITY | FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE );
-                case Colour::BrightYellow:  return setTextAttribute( FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN );
-
-                case Colour::Bright: CATCH_INTERNAL_ERROR( "not a colour" );
-
-                default:
-                    CATCH_ERROR( "Unknown colour requested" );
-            }
-        }
-
-    private:
-        void setTextAttribute( WORD _textAttribute ) {
-            SetConsoleTextAttribute( stdoutHandle, _textAttribute | originalBackgroundAttributes );
-        }
-        HANDLE stdoutHandle;
-        WORD originalForegroundAttributes;
-        WORD originalBackgroundAttributes;
-    };
-
-    IColourImpl* platformColourInstance() {
-        static Win32ColourImpl s_instance;
-
-        IConfigPtr config = getCurrentContext().getConfig();
-        UseColour::YesOrNo colourMode = config
-            ? config->useColour()
-            : UseColour::Auto;
-        if( colourMode == UseColour::Auto )
-            colourMode = UseColour::Yes;
-        return colourMode == UseColour::Yes
-            ? &s_instance
-            : NoColourImpl::instance();
-    }
-
-} // end anon namespace
-} // end namespace Catch
-
-#elif defined( CATCH_CONFIG_COLOUR_ANSI ) //////////////////////////////////////
-
-#include <unistd.h>
-
-namespace Catch {
-namespace {
-
-    // use POSIX/ ANSI console terminal codes
-    // Thanks to Adam Strzelecki for original contribution
-    // (http://github.com/nanoant)
-    // https://github.com/philsquared/Catch/pull/131
-    class PosixColourImpl : public IColourImpl {
-    public:
-        virtual void use( Colour::Code _colourCode ) override {
-            switch( _colourCode ) {
-                case Colour::None:
-                case Colour::White:     return setColour( "[0m" );
-                case Colour::Red:       return setColour( "[0;31m" );
-                case Colour::Green:     return setColour( "[0;32m" );
-                case Colour::Blue:      return setColour( "[0;34m" );
-                case Colour::Cyan:      return setColour( "[0;36m" );
-                case Colour::Yellow:    return setColour( "[0;33m" );
-                case Colour::Grey:      return setColour( "[1;30m" );
-
-                case Colour::LightGrey:     return setColour( "[0;37m" );
-                case Colour::BrightRed:     return setColour( "[1;31m" );
-                case Colour::BrightGreen:   return setColour( "[1;32m" );
-                case Colour::BrightWhite:   return setColour( "[1;37m" );
-                case Colour::BrightYellow:  return setColour( "[1;33m" );
-
-                case Colour::Bright: CATCH_INTERNAL_ERROR( "not a colour" );
-                default: CATCH_INTERNAL_ERROR( "Unknown colour requested" );
-            }
-        }
-        static IColourImpl* instance() {
-            static PosixColourImpl s_instance;
-            return &s_instance;
-        }
-
-    private:
-        void setColour( const char* _escapeCode ) {
-            Catch::cout() << '\033' << _escapeCode;
-        }
-    };
-
-    bool useColourOnPlatform() {
+#!/usr/bin/env python
+#
+# Copyright (c) 2009 Google Inc. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#    * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#    * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+"""Does google-lint on c++ files.
+
+The goal of this script is to identify places in the code that *may*
+be in non-compliance with google style.  It does not attempt to fix
+up these problems -- the point is to educate.  It does also not
+attempt to find all problems, or to ensure that everything it does
+find is legitimately a problem.
+
+In particular, we can get very confused by /* and // inside strings!
+We do a small hack, which is to ignore //'s with "'s after them on the
+same line, but it is far from perfect (in either direction).
+"""
+
+import codecs
+import copy
+import getopt
+import math  # for log
+import os
+import re
+import sre_compile
+import string
+import sys
+import unicodedata
+import sysconfig
+
+try:
+  xrange          # Python 2
+except NameError:
+  xrange = range  # Python 3
+
+
+_USAGE = """
+Syntax: cpplint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
+                   [--counting=total|toplevel|detailed] [--root=subdir]
+                   [--linelength=digits] [--headers=x,y,...]
+                   [--quiet]
+        <file> [file] ...
+
+  The style guidelines this tries to follow are those in
+    https://google.github.io/styleguide/cppguide.html
+
+  Every problem is given a confidence score from 1-5, with 5 meaning we are
+  certain of the problem, and 1 meaning it could be a legitimate construct.
+  This will miss some errors, and is not a substitute for a code review.
+
+  To suppress false-positive errors of a certain category, add a
+  'NOLINT(category)' comment to the line.  NOLINT or NOLINT(*)
+  suppresses errors of all categories on that line.
+
+  The files passed in will be linted; at least one file must be provided.
+  Default linted extensions are .cc, .cpp, .cu, .cuh and .h.  Change the
+  extensions with the --extensions flag.
+
+  Flags:
+
+    output=vs7
+      By default, the output is formatted to ease emacs parsing.  Visual Studio
+      compatible output (vs7) may also be used.  Other formats are unsupported.
+
+    verbose=#
+      Specify a number 0-5 to restrict errors to certain verbosity levels.
+
+    quiet
+      Don't print anything if no errors are found.
+
+    filter=-x,+y,...
+      Specify a comma-separated list of category-filters to apply: only
+      error messages whose category names pass the filters will be printed.
+      (Category names are printed with the message and look like
+      "[whitespace/indent]".)  Filters are evaluated left to right.
+      "-FOO" and "FOO" means "do not print categories that start with FOO".
+      "+FOO" means "do print categories that start with FOO".
+
+      Examples: --filter=-whitespace,+whitespace/braces
+                --filter=whitespace,runtime/printf,+runtime/printf_format
+                --filter=-,+build/include_what_you_use
+
+      To see a list of all the categories used in cpplint, pass no arg:
+         --filter=
+
+    counting=total|toplevel|detailed
+      The total number of errors found is always printed. If
+      'toplevel' is provided, then the count of errors in each of
+      the top-level categories like 'build' and 'whitespace' will
+      also be printed. If 'detailed' is provided, then a count
+      is provided for each category like 'build/class'.
+
+    root=subdir
+      The root directory used for deriving header guard CPP variable.
+      By default, the header guard CPP variable is calculated as the relative
+      path to the directory that contains .git, .hg, or .svn.  When this flag
+      is specified, the relative path is calculated from the specified
+      directory. If the specified directory does not exist, this flag is
+      ignored.
+
+      Examples:
+        Assuming that top/src/.git exists (and cwd=top/src), the header guard
+        CPP variables for top/src/chrome/browser/ui/browser.h are:
+
+        No flag => CHROME_BROWSER_UI_BROWSER_H_
+        --root=chrome => BROWSER_UI_BROWSER_H_
+        --root=chrome/browser => UI_BROWSER_H_
+        --root=.. => SRC_CHROME_BROWSER_UI_BROWSER_H_
+
+    linelength=digits
+      This is the allowed line length for the project. The default value is
+      80 characters.
+
+      Examples:
+        --linelength=120
+
+    extensions=extension,extension,...
+      The allowed file extensions that cpplint will check
+
+      Examples:
+        --extensions=hpp,cpp
+
+    headers=x,y,...
+      The header extensions that cpplint will treat as .h in checks. Values are
+      automatically added to --extensions list.
+
+      Examples:
+        --headers=hpp,hxx
+        --headers=hpp
+
+    cpplint.py supports per-directory configurations specified in CPPLINT.cfg
+    files. CPPLINT.cfg file can contain a number of key=value pairs.
+    Currently the following options are supported:
+
+      set noparent
+      filter=+filter1,-filter2,...
+      exclude_files=regex
+      linelength=80
+      root=subdir
+      headers=x,y,...
+
+    "set noparent" option prevents cpplint from traversing directory tree
+    upwards looking for more .cfg files in parent directories. This option
+    is usually placed in the top-level project directory.
+
+    The "filter" option is similar in function to --filter flag. It specifies
+    message filters in addition to the |_DEFAULT_FILTERS| and those specified
+    through --filter command-line flag.
+
+    "exclude_files" allows to specify a regular expression to be matched against
+    a file name. If the expression matches, the file is skipped and not run
+    through liner.
+
+    "linelength" allows to specify the allowed line length for the project.
+
+    The "root" option is similar in function to the --root flag (see example
+    above). Paths are relative to the directory of the CPPLINT.cfg.
+
+    The "headers" option is similar in function to the --headers flag
+    (see example above).
+
+    CPPLINT.cfg has an effect on files in the same directory and all
+    sub-directories, unless overridden by a nested configuration file.
+
+      Example file:
+        filter=-build/include_order,+build/include_alpha
+        exclude_files=.*\.cc
+
+    The above example disables build/include_order warning and enables
+    build/include_alpha as well as excludes all .cc from being
+    processed by linter, in the current directory (where the .cfg
+    file is located) and all sub-directories.
+"""
+
+# We categorize each error message we print.  Here are the categories.
+# We want an explicit list so we can list them all in cpplint --filter=.
+# If you add a new error message with a new category, add it to the list
+# here!  cpplint_unittest.py should tell you if you forget to do this.
+_ERROR_CATEGORIES = [
+    'build/class',
+    'build/c++11',
+    'build/c++14',
+    'build/c++tr1',
+    'build/deprecated',
+    'build/endif_comment',
+    'build/explicit_make_pair',
+    'build/forward_decl',
+    'build/header_guard',
+    'build/include',
+    'build/include_alpha',
+    'build/include_order',
+    'build/include_what_you_use',
+    'build/namespaces',
+    'build/printf_format',
+    'build/storage_class',
+    'legal/copyright',
+    'readability/alt_tokens',
+    'readability/braces',
+    'readability/casting',
+    'readability/check',
+    'readability/constructors',
+    'readability/fn_size',
+    'readability/inheritance',
+    'readability/multiline_comment',
+    'readability/multiline_string',
+    'readability/namespace',
+    'readability/nolint',
+    'readability/nul',
+    'readability/strings',
+    'readability/todo',
+    'readability/utf8',
+    'runtime/arrays',
+    'runtime/casting',
+    'runtime/explicit',
+    'runtime/int',
+    'runtime/init',
+    'runtime/invalid_increment',
+    'runtime/member_string_references',
+    'runtime/memset',
+    'runtime/indentation_namespace',
+    'runtime/operator',
+    'runtime/printf',
+    'runtime/printf_format',
+    'runtime/references',
+    'runtime/string',
+    'runtime/threadsafe_fn',
+    'runtime/vlog',
+    'whitespace/blank_line',
+    'whitespace/braces',
+    'whitespace/comma',
+    'whitespace/comments',
+    'whitespace/empty_conditional_body',
+    'whitespace/empty_if_body',
+    'whitespace/empty_loop_body',
+    'whitespace/end_of_line',
+    'whitespace/ending_newline',
+    'whitespace/forcolon',
+    'whitespace/indent',
+    'whitespace/line_length',
+    'whitespace/newline',
+    'whitespace/operators',
+    'whitespace/parens',
+    'whitespace/semicolon',
+    'whitespace/tab',
+    'whitespace/todo',
+    ]
+
+# These error categories are no longer enforced by cpplint, but for backwards-
+# compatibility they may still appear in NOLINT comments.
+_LEGACY_ERROR_CATEGORIES = [
+    'readability/streams',
+    'readability/function',
+    ]
+
+# The default state of the category filter. This is overridden by the --filter=
+# flag. By default all errors are on, so only add here categories that should be
+# off by default (i.e., categories that must be enabled by the --filter= flags).
+# All entries here should start with a '-' or '+', as in the --filter= flag.
+_DEFAULT_FILTERS = ['-build/include_alpha']
+
+# The default list of categories suppressed for C (not C++) files.
+_DEFAULT_C_SUPPRESSED_CATEGORIES = [
+    'readability/casting',
+    ]
+
+# The default list of categories suppressed for Linux Kernel files.
+_DEFAULT_KERNEL_SUPPRESSED_CATEGORIES = [
+    'whitespace/tab',
+    ]
+
+# We used to check for high-bit characters, but after much discussion we
+# decided those were OK, as long as they were in UTF-8 and didn't represent
+# hard-coded international strings, which belong in a separate i18n file.
+
+# C++ headers
+_CPP_HEADERS = frozenset([
+    # Legacy
+    'algobase.h',
+    'algo.h',
+    'alloc.h',
+    'builtinbuf.h',
+    'bvector.h',
+    'complex.h',
+    'defalloc.h',
+    'deque.h',
+    'editbuf.h',
+    'fstream.h',
+    'function.h',
+    'hash_map',
+    'hash_map.h',
+    'hash_set',
+    'hash_set.h',
+    'hashtable.h',
+    'heap.h',
+    'indstream.h',
+    'iomanip.h',
+    'iostream.h',
+    'istream.h',
+    'iterator.h',
+    'list.h',
+    'map.h',
+    'multimap.h',
+    'multiset.h',
+    'ostream.h',
+    'pair.h',
+    'parsestream.h',
+    'pfstream.h',
+    'procbuf.h',
+    'pthread_alloc',
+    'pthread_alloc.h',
+    'rope',
+    'rope.h',
+    'ropeimpl.h',
+    'set.h',
+    'slist',
+    'slist.h',
+    'stack.h',
+    'stdiostream.h',
+    'stl_alloc.h',
+    'stl_relops.h',
+    'streambuf.h',
+    'stream.h',
+    'strfile.h',
+    'strstream.h',
+    'tempbuf.h',
+    'tree.h',
+    'type_traits.h',
+    'vector.h',
+    # 17.6.1.2 C++ library headers
+    'algorithm',
+    'array',
+    'atomic',
+    'bitset',
+    'chrono',
+    'codecvt',
+    'complex',
+    'condition_variable',
+    'deque',
+    'exception',
+    'forward_list',
+    'fstream',
+    'functional',
+    'future',
+    'initializer_list',
+    'iomanip',
+    'ios',
+    'iosfwd',
+    'iostream',
+    'istream',
+    'iterator',
+    'limits',
+    'list',
+    'locale',
+    'map',
+    'memory',
+    'mutex',
+    'new',
+    'numeric',
+    'ostream',
+    'queue',
+    'random',
+    'ratio',
+    'regex',
+    'scoped_allocator',
+    'set',
+    'sstream',
+    'stack',
+    'stdexcept',
+    'streambuf',
+    'string',
+    'strstream',
+    'system_error',
+    'thread',
+    'tuple',
+    'typeindex',
+    'typeinfo',
+    'type_traits',
+    'unordered_map',
+    'unordered_set',
+    'utility',
+    'valarray',
+    'vector',
+    # 17.6.1.2 C++ headers for C library facilities
+    'cassert',
+    'ccomplex',
+    'cctype',
+    'cerrno',
+    'cfenv',
+    'cfloat',
+    'cinttypes',
+    'ciso646',
+    'climits',
+    'clocale',
+    'cmath',
+    'csetjmp',
+    'csignal',
+    'cstdalign',
+    'cstdarg',
+    'cstdbool',
+    'cstddef',
+    'cstdint',
+    'cstdio',
+    'cstdlib',
+    'cstring',
+    'ctgmath',
+    'ctime',
+    'cuchar',
+    'cwchar',
+    'cwctype',
+    ])
+
+# Type names
+_TYPES = re.compile(
+    r'^(?:'
+    # [dcl.type.simple]
+    r'(char(16_t|32_t)?)|wchar_t|'
+    r'bool|short|int|long|signed|unsigned|float|double|'
+    # [support.types]
+    r'(ptrdiff_t|size_t|max_align_t|nullptr_t)|'
+    # [cstdint.syn]
+    r'(u?int(_fast|_least)?(8|16|32|64)_t)|'
+    r'(u?int(max|ptr)_t)|'
+    r')$')
+
+
+# These headers are excluded from [build/include] and [build/include_order]
+# checks:
+# - Anything not following google file name conventions (containing an
+#   uppercase character, such as Python.h or nsStringAPI.h, for example).
+# - Lua headers.
+_THIRD_PARTY_HEADERS_PATTERN = re.compile(
+    r'^(?:[^/]*[A-Z][^/]*\.h|lua\.h|lauxlib\.h|lualib\.h)$')
+
+# Pattern for matching FileInfo.BaseName() against test file name
+_TEST_FILE_SUFFIX = r'(_test|_unittest|_regtest)$'
+
+# Pattern that matches only complete whitespace, possibly across multiple lines.
+_EMPTY_CONDITIONAL_BODY_PATTERN = re.compile(r'^\s*$', re.DOTALL)
+
+# Assertion macros.  These are defined in base/logging.h and
+# testing/base/public/gunit.h.
+_CHECK_MACROS = [
+    'DCHECK', 'CHECK',
+    'EXPECT_TRUE', 'ASSERT_TRUE',
+    'EXPECT_FALSE', 'ASSERT_FALSE',
+    ]
+
+# Replacement macros for CHECK/DCHECK/EXPECT_TRUE/EXPECT_FALSE
+_CHECK_REPLACEMENT = dict([(m, {}) for m in _CHECK_MACROS])
+
+for op, replacement in [('==', 'EQ'), ('!=', 'NE'),
+                        ('>=', 'GE'), ('>', 'GT'),
+                        ('<=', 'LE'), ('<', 'LT')]:
+  _CHECK_REPLACEMENT['DCHECK'][op] = 'DCHECK_%s' % replacement
+  _CHECK_REPLACEMENT['CHECK'][op] = 'CHECK_%s' % replacement
+  _CHECK_REPLACEMENT['EXPECT_TRUE'][op] = 'EXPECT_%s' % replacement
+  _CHECK_REPLACEMENT['ASSERT_TRUE'][op] = 'ASSERT_%s' % replacement
+
+for op, inv_replacement in [('==', 'NE'), ('!=', 'EQ'),
+                            ('>=', 'LT'), ('>', 'LE'),
+                            ('<=', 'GT'), ('<', 'GE')]:
+  _CHECK_REPLACEMENT['EXPECT_FALSE'][op] = 'EXPECT_%s' % inv_replacement
+  _CHECK_REPLACEMENT['ASSERT_FALSE'][op] = 'ASSERT_%s' % inv_replacement
+
+# Alternative tokens and their replacements.  For full list, see section 2.5
+# Alternative tokens [lex.digraph] in the C++ standard.
+#
+# Digraphs (such as '%:') are not included here since it's a mess to
+# match those on a word boundary.
+_ALT_TOKEN_REPLACEMENT = {
+    'and': '&&',
+    'bitor': '|',
+    'or': '||',
+    'xor': '^',
+    'compl': '~',
+    'bitand': '&',
+    'and_eq': '&=',
+    'or_eq': '|=',
+    'xor_eq': '^=',
+    'not': '!',
+    'not_eq': '!='
+    }
+
+# Compile regular expression that matches all the above keywords.  The "[ =()]"
+# bit is meant to avoid matching these keywords outside of boolean expressions.
+#
+# False positives include C-style multi-line comments and multi-line strings
+# but those have always been troublesome for cpplint.
+_ALT_TOKEN_REPLACEMENT_PATTERN = re.compile(
+    r'[ =()](' + ('|'.join(_ALT_TOKEN_REPLACEMENT.keys())) + r')(?=[ (]|$)')
+
+
+# These constants define types of headers for use with
+# _IncludeState.CheckNextIncludeOrder().
+_C_SYS_HEADER = 1
+_CPP_SYS_HEADER = 2
+_LIKELY_MY_HEADER = 3
+_POSSIBLE_MY_HEADER = 4
+_OTHER_HEADER = 5
+
+# These constants define the current inline assembly state
+_NO_ASM = 0       # Outside of inline assembly block
+_INSIDE_ASM = 1   # Inside inline assembly block
+_END_ASM = 2      # Last line of inline assembly block
+_BLOCK_ASM = 3    # The whole block is an inline assembly block
+
+# Match start of assembly blocks
+_MATCH_ASM = re.compile(r'^\s*(?:asm|_asm|__asm|__asm__)'
+                        r'(?:\s+(volatile|__volatile__))?'
+                        r'\s*[{(]')
+
+# Match strings that indicate we're working on a C (not C++) file.
+_SEARCH_C_FILE = re.compile(r'\b(?:LINT_C_FILE|'
+                            r'vim?:\s*.*(\s*|:)filetype=c(\s*|:|$))')
+
+# Match string that indicates we're working on a Linux Kernel file.
+_SEARCH_KERNEL_FILE = re.compile(r'\b(?:LINT_KERNEL_FILE)')
+
+_regexp_compile_cache = {}
+
+# {str, set(int)}: a map from error categories to sets of linenumbers
+# on which those errors are expected and should be suppressed.
+_error_suppressions = {}
+
+# The root directory used for deriving header guard CPP variable.
+# This is set by --root flag.
+_root = None
+_root_debug = False
+
+# The allowed line length of files.
+# This is set by --linelength flag.
+_line_length = 80
+
+# The allowed extensions for file names
+# This is set by --extensions flag.
+_valid_extensions = set(['cc', 'h', 'cpp', 'cu', 'cuh'])
+
+# Treat all headers starting with 'h' equally: .h, .hpp, .hxx etc.
+# This is set by --headers flag.
+_hpp_headers = set(['h'])
+
+# {str, bool}: a map from error categories to booleans which indicate if the
+# category should be suppressed for every line.
+_global_error_suppressions = {}
+
+def ProcessHppHeadersOption(val):
+  global _hpp_headers
+  try:
+    _hpp_headers = set(val.split(','))
+    # Automatically append to extensions list so it does not have to be set 2 times
+    _valid_extensions.update(_hpp_headers)
+  except ValueError:
+    PrintUsage('Header extensions must be comma separated list.')
+
+def IsHeaderExtension(file_extension):
+  return file_extension in _hpp_headers
+
+def ParseNolintSuppressions(filename, raw_line, linenum, error):
+  """Updates the global list of line error-suppressions.
+
+  Parses any NOLINT comments on the current line, updating the global
+  error_suppressions store.  Reports an error if the NOLINT comment
+  was malformed.
+
+  Args:
+    filename: str, the name of the input file.
+    raw_line: str, the line of input text, with comments.
+    linenum: int, the number of the current line.
+    error: function, an error handler.
+  """
+  matched = Search(r'\bNOLINT(NEXTLINE)?\b(\([^)]+\))?', raw_line)
+  if matched:
+    if matched.group(1):
+      suppressed_line = linenum + 1
+    else:
+      suppressed_line = linenum
+    category = matched.group(2)
+    if category in (None, '(*)'):  # => "suppress all"
+      _error_suppressions.setdefault(None, set()).add(suppressed_line)
+    else:
+      if category.startswith('(') and category.endswith(')'):
+        category = category[1:-1]
+        if category in _ERROR_CATEGORIES:
+          _error_suppressions.setdefault(category, set()).add(suppressed_line)
+        elif category not in _LEGACY_ERROR_CATEGORIES:
+          error(filename, linenum, 'readability/nolint', 5,
+                'Unknown NOLINT error category: %s' % category)
+
+
+def ProcessGlobalSuppresions(lines):
+  """Updates the list of global error suppressions.
+
+  Parses any lint directives in the file that have global effect.
+
+  Args:
+    lines: An array of strings, each representing a line of the file, with the
+           last element being empty if the file is terminated with a newline.
+  """
+  for line in lines:
+    if _SEARCH_C_FILE.search(line):
+      for category in _DEFAULT_C_SUPPRESSED_CATEGORIES:
+        _global_error_suppressions[category] = True
+    if _SEARCH_KERNEL_FILE.search(line):
+      for category in _DEFAULT_KERNEL_SUPPRESSED_CATEGORIES:
+        _global_error_suppressions[category] = True
+
+
+def ResetNolintSuppressions():
+  """Resets the set of NOLINT suppressions to empty."""
+  _error_suppressions.clear()
+  _global_error_suppressions.clear()
+
+
+def IsErrorSuppressedByNolint(category, linenum):
+  """Returns true if the specified error category is suppressed on this line.
+
+  Consults the global error_suppressions map populated by
+  ParseNolintSuppressions/ProcessGlobalSuppresions/ResetNolintSuppressions.
+
+  Args:
+    category: str, the category of the error.
+    linenum: int, the current line number.
+  Returns:
+    bool, True iff the error should be suppressed due to a NOLINT comment or
+    global suppression.
+  """
+  return (_global_error_suppressions.get(category, False) or
+          linenum in _error_suppressions.get(category, set()) or
+          linenum in _error_suppressions.get(None, set()))
+
+
+def Match(pattern, s):
+  """Matches the string with the pattern, caching the compiled regexp."""
+  # The regexp compilation caching is inlined in both Match and Search for
+  # performance reasons; factoring it out into a separate function turns out
+  # to be noticeably expensive.
+  if pattern not in _regexp_compile_cache:
+    _regexp_compile_cache[pattern] = sre_compile.compile(pattern)
+  return _regexp_compile_cache[pattern].match(s)
+
+
+def ReplaceAll(pattern, rep, s):
+  """Replaces instances of pattern in a string with a replacement.
+
+  The compiled regex is kept in a cache shared by Match and Search.
+
+  Args:
+    pattern: regex pattern
+    rep: replacement text
+    s: search string
+
+  Returns:
+    string with replacements made (or original string if no replacements)
+  """
+  if pattern not in _regexp_compile_cache:
+    _regexp_compile_cache[pattern] = sre_compile.compile(pattern)
+  return _regexp_compile_cache[pattern].sub(rep, s)
+
+
+def Search(pattern, s):
+  """Searches the string for the pattern, caching the compiled regexp."""
+  if pattern not in _regexp_compile_cache:
+    _regexp_compile_cache[pattern] = sre_compile.compile(pattern)
+  return _regexp_compile_cache[pattern].search(s)
+
+
+def _IsSourceExtension(s):
+  """File extension (excluding dot) matches a source file extension."""
+  return s in ('c', 'cc', 'cpp', 'cxx')
+
+
+class _IncludeState(object):
+  """Tracks line numbers for includes, and the order in which includes appear.
+
+  include_list contains list of lists of (header, line number) pairs.
+  It's a lists of lists rather than just one flat list to make it
+  easier to update across preprocessor boundaries.
+
+  Call CheckNextIncludeOrder() once for each header in the file, passing
+  in the type constants defined above. Calls in an illegal order will
+  raise an _IncludeError with an appropriate error message.
+
+  """
+  # self._section will move monotonically through this set. If it ever
+  # needs to move backwards, CheckNextIncludeOrder will raise an error.
+  _INITIAL_SECTION = 0
+  _MY_H_SECTION = 1
+  _C_SECTION = 2
+  _CPP_SECTION = 3
+  _OTHER_H_SECTION = 4
+
+  _TYPE_NAMES = {
+      _C_SYS_HEADER: 'C system header',
+      _CPP_SYS_HEADER: 'C++ system header',
+      _LIKELY_MY_HEADER: 'header this file implements',
+      _POSSIBLE_MY_HEADER: 'header this file may implement',
+      _OTHER_HEADER: 'other header',
+      }
+  _SECTION_NAMES = {
+      _INITIAL_SECTION: "... nothing. (This can't be an error.)",
+      _MY_H_SECTION: 'a header this file implements',
+      _C_SECTION: 'C system header',
+      _CPP_SECTION: 'C++ system header',
+      _OTHER_H_SECTION: 'other header',
+      }
+
+  def __init__(self):
+    self.include_list = [[]]
+    self.ResetSection('')
+
+  def FindHeader(self, header):
+    """Check if a header has already been included.
+
+    Args:
+      header: header to check.
+    Returns:
+      Line number of previous occurrence, or -1 if the header has not
+      been seen before.
+    """
+    for section_list in self.include_list:
+      for f in section_list:
+        if f[0] == header:
+          return f[1]
+    return -1
+
+  def ResetSection(self, directive):
+    """Reset section checking for preprocessor directive.
+
+    Args:
+      directive: preprocessor directive (e.g. "if", "else").
+    """
+    # The name of the current section.
+    self._section = self._INITIAL_SECTION
+    # The path of last found header.
+    self._last_header = ''
+
+    # Update list of includes.  Note that we never pop from the
+    # include list.
+    if directive in ('if', 'ifdef', 'ifndef'):
+      self.include_list.append([])
+    elif directive in ('else', 'elif'):
+      self.include_list[-1] = []
+
+  def SetLastHeader(self, header_path):
+    self._last_header = header_path
+
+  def CanonicalizeAlphabeticalOrder(self, header_path):
+    """Returns a path canonicalized for alphabetical comparison.
+
+    - replaces "-" with "_" so they both cmp the same.
+    - removes '-inl' since we don't require them to be after the main header.
+    - lowercase everything, just in case.
+
+    Args:
+      header_path: Path to be canonicalized.
+
+    Returns:
+      Canonicalized path.
+    """
+    return header_path.replace('-inl.h', '.h').replace('-', '_').lower()
+
+  def IsInAlphabeticalOrder(self, clean_lines, linenum, header_path):
+    """Check if a header is in alphabetical order with the previous header.
+
+    Args:
+      clean_lines: A CleansedLines instance containing the file.
+      linenum: The number of the line to check.
+      header_path: Canonicalized header to be checked.
+
+    Returns:
+      Returns true if the header is in alphabetical order.
+    """
+    # If previous section is different from current section, _last_header will
+    # be reset to empty string, so it's always less than current header.
+    #
+    # If previous line was a blank line, assume that the headers are
+    # intentionally sorted the way they are.
+    if (self._last_header > header_path and
+        Match(r'^\s*#\s*include\b', clean_lines.elided[linenum - 1])):
+      return False
+    return True
+
+  def CheckNextIncludeOrder(self, header_type):
+    """Returns a non-empty error message if the next header is out of order.
+
+    This function also updates the internal state to be ready to check
+    the next include.
+
+    Args:
+      header_type: One of the _XXX_HEADER constants defined above.
+
+    Returns:
+      The empty string if the header is in the right order, or an
+      error message describing what's wrong.
+
+    """
+    error_message = ('Found %s after %s' %
+                     (self._TYPE_NAMES[header_type],
+                      self._SECTION_NAMES[self._section]))
+
+    last_section = self._section
+
+    if header_type == _C_SYS_HEADER:
+      if self._section <= self._C_SECTION:
+        self._section = self._C_SECTION
+      else:
+        self._last_header = ''
+        return error_message
+    elif header_type == _CPP_SYS_HEADER:
+      if self._section <= self._CPP_SECTION:
+        self._section = self._CPP_SECTION
+      else:
+        self._last_header = ''
+        return error_message
+    elif header_type == _LIKELY_MY_HEADER:
+      if self._section <= self._MY_H_SECTION:
+        self._section = self._MY_H_SECTION
+      else:
+        self._section = self._OTHER_H_SECTION
+    elif header_type == _POSSIBLE_MY_HEADER:
+      if self._section <= self._MY_H_SECTION:
+        self._section = self._MY_H_SECTION
+      else:
+        # This will always be the fallback because we're not sure
+        # enough that the header is associated with this file.
+        self._section = self._OTHER_H_SECTION
+    else:
+      assert header_type == _OTHER_HEADER
+      self._section = self._OTHER_H_SECTION
+
+    if last_section != self._section:
+      self._last_header = ''
+
+    return ''
+
+
+class _CppLintState(object):
+  """Maintains module-wide state.."""
+
+  def __init__(self):
+    self.verbose_level = 1  # global setting.
+    self.error_count = 0    # global count of reported errors
+    # filters to apply when emitting error messages
+    self.filters = _DEFAULT_FILTERS[:]
+    # backup of filter list. Used to restore the state after each file.
+    self._filters_backup = self.filters[:]
+    self.counting = 'total'  # In what way are we counting errors?
+    self.errors_by_category = {}  # string to int dict storing error counts
+    self.quiet = False  # Suppress non-error messagess?
+
+    # output format:
+    # "emacs" - format that emacs can parse (default)
+    # "vs7" - format that Microsoft Visual Studio 7 can parse
+    self.output_format = 'emacs'
+
+  def SetOutputFormat(self, output_format):
+    """Sets the output format for errors."""
+    self.output_format = output_format
+
+  def SetQuiet(self, quiet):
+    """Sets the module's quiet settings, and returns the previous setting."""
+    last_quiet = self.quiet
+    self.quiet = quiet
+    return last_quiet
+
+  def SetVerboseLevel(self, level):
+    """Sets the module's verbosity, and returns the previous setting."""
+    last_verbose_level = self.verbose_level
+    self.verbose_level = level
+    return last_verbose_level
+
+  def SetCountingStyle(self, counting_style):
+    """Sets the module's counting options."""
+    self.counting = counting_style
+
+  def SetFilters(self, filters):
+    """Sets the error-message filters.
+
+    These filters are applied when deciding whether to emit a given
+    error message.
+
+    Args:
+      filters: A string of comma-separated filters (eg "+whitespace/indent").
+               Each filter should start with + or -; else we die.
+
+    Raises:
+      ValueError: The comma-separated filters did not all start with '+' or '-'.
+                  E.g. "-,+whitespace,-whitespace/indent,whitespace/badfilter"
+    """
+    # Default filters always have less priority than the flag ones.
+    self.filters = _DEFAULT_FILTERS[:]
+    self.AddFilters(filters)
+
+  def AddFilters(self, filters):
+    """ Adds more filters to the existing list of error-message filters. """
+    for filt in filters.split(','):
+      clean_filt = filt.strip()
+      if clean_filt:
+        self.filters.append(clean_filt)
+    for filt in self.filters:
+      if not (filt.startswith('+') or filt.startswith('-')):
+        raise ValueError('Every filter in --filters must start with + or -'
+                         ' (%s does not)' % filt)
+
+  def BackupFilters(self):
+    """ Saves the current filter list to backup storage."""
+    self._filters_backup = self.filters[:]
+
+  def RestoreFilters(self):
+    """ Restores filters previously backed up."""
+    self.filters = self._filters_backup[:]
+
+  def ResetErrorCounts(self):
+    """Sets the module's error statistic back to zero."""
+    self.error_count = 0
+    self.errors_by_category = {}
+
+  def IncrementErrorCount(self, category):
+    """Bumps the module's error statistic."""
+    self.error_count += 1
+    if self.counting in ('toplevel', 'detailed'):
+      if self.counting != 'detailed':
+        category = category.split('/')[0]
+      if category not in self.errors_by_category:
+        self.errors_by_category[category] = 0
+      self.errors_by_category[category] += 1
+
+  def PrintErrorCounts(self):
+    """Print a summary of errors by category, and the total."""
+    for category, count in self.errors_by_category.iteritems():
+      sys.stderr.write('Category \'%s\' errors found: %d\n' %
+                       (category, count))
+    sys.stdout.write('Total errors found: %d\n' % self.error_count)
+
+_cpplint_state = _CppLintState()
+
+
+def _OutputFormat():
+  """Gets the module's output format."""
+  return _cpplint_state.output_format
+
+
+def _SetOutputFormat(output_format):
+  """Sets the module's output format."""
+  _cpplint_state.SetOutputFormat(output_format)
+
+def _Quiet():
+  """Return's the module's quiet setting."""
+  return _cpplint_state.quiet
+
+def _SetQuiet(quiet):
+  """Set the module's quiet status, and return previous setting."""
+  return _cpplint_state.SetQuiet(quiet)
+
+
+def _VerboseLevel():
+  """Returns the module's verbosity setting."""
+  return _cpplint_state.verbose_level
+
+
+def _SetVerboseLevel(level):
+  """Sets the module's verbosity, and returns the previous setting."""
+  return _cpplint_state.SetVerboseLevel(level)
+
+
+def _SetCountingStyle(level):
+  """Sets the module's counting options."""
+  _cpplint_state.SetCountingStyle(level)
+
+
+def _Filters():
+  """Returns the module's list of output filters, as a list."""
+  return _cpplint_state.filters
+
+
+def _SetFilters(filters):
+  """Sets the module's error-message filters.
+
+  These filters are applied when deciding whether to emit a given
+  error message.
+
+  Args:
+    filters: A string of comma-separated filters (eg "whitespace/indent").
+             Each filter should start with + or -; else we die.
+  """
+  _cpplint_state.SetFilters(filters)
+
+def _AddFilters(filters):
+  """Adds more filter overrides.
+
+  Unlike _SetFilters, this function does not reset the current list of filters
+  available.
+
+  Args:
+    filters: A string of comma-separated filters (eg "whitespace/indent").
+             Each filter should start with + or -; else we die.
+  """
+  _cpplint_state.AddFilters(filters)
+
+def _BackupFilters():
+  """ Saves the current filter list to backup storage."""
+  _cpplint_state.BackupFilters()
+
+def _RestoreFilters():
+  """ Restores filters previously backed up."""
+  _cpplint_state.RestoreFilters()
+
+class _FunctionState(object):
+  """Tracks current function name and the number of lines in its body."""
+
+  _NORMAL_TRIGGER = 250  # for --v=0, 500 for --v=1, etc.
+  _TEST_TRIGGER = 400    # about 50% more than _NORMAL_TRIGGER.
+
+  def __init__(self):
+    self.in_a_function = False
+    self.lines_in_function = 0
+    self.current_function = ''
+
+  def Begin(self, function_name):
+    """Start analyzing function body.
+
+    Args:
+      function_name: The name of the function being tracked.
+    """
+    self.in_a_function = True
+    self.lines_in_function = 0
+    self.current_function = function_name
+
+  def Count(self):
+    """Count line in current function body."""
+    if self.in_a_function:
+      self.lines_in_function += 1
+
+  def Check(self, error, filename, linenum):
+    """Report if too many lines in function body.
+
+    Args:
+      error: The function to call with any errors found.
+      filename: The name of the current file.
+      linenum: The number of the line to check.
+    """
+    if not self.in_a_function:
+      return
+
+    if Match(r'T(EST|est)', self.current_function):
+      base_trigger = self._TEST_TRIGGER
+    else:
+      base_trigger = self._NORMAL_TRIGGER
+    trigger = base_trigger * 2**_VerboseLevel()
+
+    if self.lines_in_function > trigger:
+      error_level = int(math.log(self.lines_in_function / base_trigger, 2))
+      # 50 => 0, 100 => 1, 200 => 2, 400 => 3, 800 => 4, 1600 => 5, ...
+      if error_level > 5:
+        error_level = 5
+      error(filename, linenum, 'readability/fn_size', error_level,
+            'Small and focused functions are preferred:'
+            ' %s has %d non-comment lines'
+            ' (error triggered by exceeding %d lines).'  % (
+                self.current_function, self.lines_in_function, trigger))
+
+  def End(self):
+    """Stop analyzing function body."""
+    self.in_a_function = False
+
+
+class _IncludeError(Exception):
+  """Indicates a problem with the include order in a file."""
+  pass
+
+
+class FileInfo(object):
+  """Provides utility functions for filenames.
+
+  FileInfo provides easy access to the components of a file's path
+  relative to the project root.
+  """
+
+  def __init__(self, filename):
+    self._filename = filename
+
+  def FullName(self):
+    """Make Windows paths like Unix."""
+    return os.path.abspath(self._filename).replace('\\', '/')
+
+  def RepositoryName(self):
+    """FullName after removing the local path to the repository.
+
+    If we have a real absolute path name here we can try to do something smart:
+    detecting the root of the checkout and truncating /path/to/checkout from
+    the name so that we get header guards that don't include things like
+    "C:\Documents and Settings\..." or "/home/username/..." in them and thus
+    people on different computers who have checked the source out to different
+    locations won't see bogus errors.
+    """
+    fullname = self.FullName()
+
+    if os.path.exists(fullname):
+      project_dir = os.path.dirname(fullname)
+
+      if os.path.exists(os.path.join(project_dir, ".svn")):
+        # If there's a .svn file in the current directory, we recursively look
+        # up the directory tree for the top of the SVN checkout
+        root_dir = project_dir
+        one_up_dir = os.path.dirname(root_dir)
+        while os.path.exists(os.path.join(one_up_dir, ".svn")):
+          root_dir = os.path.dirname(root_dir)
+          one_up_dir = os.path.dirname(one_up_dir)
+
+        prefix = os.path.commonprefix([root_dir, project_dir])
+        return fullname[len(prefix) + 1:]
+
+      # Not SVN <= 1.6? Try to find a git, hg, or svn top level directory by
+      # searching up from the current path.
+      root_dir = current_dir = os.path.dirname(fullname)
+      while current_dir != os.path.dirname(current_dir):
+        if (os.path.exists(os.path.join(current_dir, ".git")) or
+            os.path.exists(os.path.join(current_dir, ".hg")) or
+            os.path.exists(os.path.join(current_dir, ".svn"))):
+          root_dir = current_dir
+        current_dir = os.path.dirname(current_dir)
+
+      if (os.path.exists(os.path.join(root_dir, ".git")) or
+          os.path.exists(os.path.join(root_dir, ".hg")) or
+          os.path.exists(os.path.join(root_dir, ".svn"))):
+        prefix = os.path.commonprefix([root_dir, project_dir])
+        return fullname[len(prefix) + 1:]
+
+    # Don't know what to do; header guard warnings may be wrong...
+    return fullname
+
+  def Split(self):
+    """Splits the file into the directory, basename, and extension.
+
+    For 'chrome/browser/browser.cc', Split() would
+    return ('chrome/browser', 'browser', '.cc')
+
+    Returns:
+      A tuple of (directory, basename, extension).
+    """
+
+    googlename = self.RepositoryName()
+    project, rest = os.path.split(googlename)
+    return (project,) + os.path.splitext(rest)
+
+  def BaseName(self):
+    """File base name - text after the final slash, before the final period."""
+    return self.Split()[1]
+
+  def Extension(self):
+    """File extension - text following the final period."""
+    return self.Split()[2]
+
+  def NoExtension(self):
+    """File has no source file extension."""
+    return '/'.join(self.Split()[0:2])
+
+  def IsSource(self):
+    """File has a source file extension."""
+    return _IsSourceExtension(self.Extension()[1:])
+
+
+def _ShouldPrintError(category, confidence, linenum):
+  """If confidence >= verbose, category passes filter and is not suppressed."""
+
+  # There are three ways we might decide not to print an error message:
+  # a "NOLINT(category)" comment appears in the source,
+  # the verbosity level isn't high enough, or the filters filter it out.
+  if IsErrorSuppressedByNolint(category, linenum):
+    return False
+
+  if confidence < _cpplint_state.verbose_level:
+    return False
+
+  is_filtered = False
+  for one_filter in _Filters():
+    if one_filter.startswith('-'):
+      if category.startswith(one_filter[1:]):
+        is_filtered = True
+    elif one_filter.startswith('+'):
+      if category.startswith(one_filter[1:]):
+        is_filtered = False
+    else:
+      assert False  # should have been checked for in SetFilter.
+  if is_filtered:
+    return False
+
+  return True
+
+
+def Error(filename, linenum, category, confidence, message):
+  """Logs the fact we've found a lint error.
+
+  We log where the error was found, and also our confidence in the error,
+  that is, how certain we are this is a legitimate style regression, and
+  not a misidentification or a use that's sometimes justified.
+
+  False positives can be suppressed by the use of
+  "cpplint(category)"  comments on the offending line.  These are
+  parsed into _error_suppressions.
+
+  Args:
+    filename: The name of the file containing the error.
+    linenum: The number of the line containing the error.
+    category: A string used to describe the "category" this bug
+      falls under: "whitespace", say, or "runtime".  Categories
+      may have a hierarchy separated by slashes: "whitespace/indent".
+    confidence: A number from 1-5 representing a confidence score for
+      the error, with 5 meaning that we are certain of the problem,
+      and 1 meaning that it could be a legitimate construct.
+    message: The error message.
+  """
+  if _ShouldPrintError(category, confidence, linenum):
+    _cpplint_state.IncrementErrorCount(category)
+    if _cpplint_state.output_format == 'vs7':
+      sys.stderr.write('%s(%s): error cpplint: [%s] %s [%d]\n' % (
+          filename, linenum, category, message, confidence))
+    elif _cpplint_state.output_format == 'eclipse':
+      sys.stderr.write('%s:%s: warning: %s  [%s] [%d]\n' % (
+          filename, linenum, message, category, confidence))
+    else:
+      sys.stderr.write('%s:%s:  %s  [%s] [%d]\n' % (
+          filename, linenum, message, category, confidence))
+
+
+# Matches standard C++ escape sequences per 2.13.2.3 of the C++ standard.
+_RE_PATTERN_CLEANSE_LINE_ESCAPES = re.compile(
+    r'\\([abfnrtv?"\\\']|\d+|x[0-9a-fA-F]+)')
+# Match a single C style comment on the same line.
+_RE_PATTERN_C_COMMENTS = r'/\*(?:[^*]|\*(?!/))*\*/'
+# Matches multi-line C style comments.
+# This RE is a little bit more complicated than one might expect, because we
+# have to take care of space removals tools so we can handle comments inside
+# statements better.
+# The current rule is: We only clear spaces from both sides when we're at the
+# end of the line. Otherwise, we try to remove spaces from the right side,
+# if this doesn't work we try on left side but only if there's a non-character
+# on the right.
+_RE_PATTERN_CLEANSE_LINE_C_COMMENTS = re.compile(
+    r'(\s*' + _RE_PATTERN_C_COMMENTS + r'\s*$|' +
+    _RE_PATTERN_C_COMMENTS + r'\s+|' +
+    r'\s+' + _RE_PATTERN_C_COMMENTS + r'(?=\W)|' +
+    _RE_PATTERN_C_COMMENTS + r')')
+
+
+def IsCppString(line):
+  """Does line terminate so, that the next symbol is in string constant.
+
+  This function does not consider single-line nor multi-line comments.
+
+  Args:
+    line: is a partial line of code starting from the 0..n.
+
+  Returns:
+    True, if next character appended to 'line' is inside a
+    string constant.
+  """
+
+  line = line.replace(r'\\', 'XX')  # after this, \\" does not match to \"
+  return ((line.count('"') - line.count(r'\"') - line.count("'\"'")) & 1) == 1
+
+
+def CleanseRawStrings(raw_lines):
+  """Removes C++11 raw strings from lines.
+
+    Before:
+      static const char kData[] = R"(
+          multi-line string
+          )";
+
+    After:
+      static const char kData[] = ""
+          (replaced by blank line)
+          "";
+
+  Args:
+    raw_lines: list of raw lines.
+
+  Returns:
+    list of lines with C++11 raw strings replaced by empty strings.
+  """
+
+  delimiter = None
+  lines_without_raw_strings = []
+  for line in raw_lines:
+    if delimiter:
+      # Inside a raw string, look for the end
+      end = line.find(delimiter)
+      if end >= 0:
+        # Found the end of the string, match leading space for this
+        # line and resume copying the original lines, and also insert
+        # a "" on the last line.
+        leading_space = Match(r'^(\s*)\S', line)
+        line = leading_space.group(1) + '""' + line[end + len(delimiter):]
+        delimiter = None
+      else:
+        # Haven't found the end yet, append a blank line.
+        line = '""'
+
+    # Look for beginning of a raw string, and replace them with
+    # empty strings.  This is done in a loop to handle multiple raw
+    # strings on the same line.
+    while delimiter is None:
+      # Look for beginning of a raw string.
+      # See 2.14.15 [lex.string] for syntax.
+      #
+      # Once we have matched a raw string, we check the prefix of the
+      # line to make sure that the line is not part of a single line
+      # comment.  It's done this way because we remove raw strings
+      # before removing comments as opposed to removing comments
+      # before removing raw strings.  This is because there are some
+      # cpplint checks that requires the comments to be preserved, but
+      # we don't want to check comments that are inside raw strings.
+      matched = Match(r'^(.*?)\b(?:R|u8R|uR|UR|LR)"([^\s\\()]*)\((.*)$', line)
+      if (matched and
+          not Match(r'^([^\'"]|\'(\\.|[^\'])*\'|"(\\.|[^"])*")*//',
+                    matched.group(1))):
+        delimiter = ')' + matched.group(2) + '"'
+
+        end = matched.group(3).find(delimiter)
+        if end >= 0:
+          # Raw string ended on same line
+          line = (matched.group(1) + '""' +
+                  matched.group(3)[end + len(delimiter):])
+          delimiter = None
+        else:
+          # Start of a multi-line raw string
+          line = matched.group(1) + '""'
+      else:
+        break
+
+    lines_without_raw_strings.append(line)
+
+  # TODO(unknown): if delimiter is not None here, we might want to
+  # emit a warning for unterminated string.
+  return lines_without_raw_strings
+
+
+def FindNextMultiLineCommentStart(lines, lineix):
+  """Find the beginning marker for a multiline comment."""
+  while lineix < len(lines):
+    if lines[lineix].strip().startswith('/*'):
+      # Only return this marker if the comment goes beyond this line
+      if lines[lineix].strip().find('*/', 2) < 0:
+        return lineix
+    lineix += 1
+  return len(lines)
+
+
+def FindNextMultiLineCommentEnd(lines, lineix):
+  """We are inside a comment, find the end marker."""
+  while lineix < len(lines):
+    if lines[lineix].strip().endswith('*/'):
+      return lineix
+    lineix += 1
+  return len(lines)
+
+
+def RemoveMultiLineCommentsFromRange(lines, begin, end):
+  """Clears a range of lines for multi-line comments."""
+  # Having // <empty> comments makes the lines non-empty, so we will not get
+  # unnecessary blank line warnings later in the code.
+  for i in range(begin, end):
+    lines[i] = '/**/'
+
+
+def RemoveMultiLineComments(filename, lines, error):
+  """Removes multiline (c-style) comments from lines."""
+  lineix = 0
+  while lineix < len(lines):
+    lineix_begin = FindNextMultiLineCommentStart(lines, lineix)
+    if lineix_begin >= len(lines):
+      return
+    lineix_end = FindNextMultiLineCommentEnd(lines, lineix_begin)
+    if lineix_end >= len(lines):
+      error(filename, lineix_begin + 1, 'readability/multiline_comment', 5,
+            'Could not find end of multi-line comment')
+      return
+    RemoveMultiLineCommentsFromRange(lines, lineix_begin, lineix_end + 1)
+    lineix = lineix_end + 1
+
+
+def CleanseComments(line):
+  """Removes //-comments and single-line C-style /* */ comments.
+
+  Args:
+    line: A line of C++ source.
+
+  Returns:
+    The line with single-line comments removed.
+  """
+  commentpos = line.find('//')
+  if commentpos != -1 and not IsCppString(line[:commentpos]):
+    line = line[:commentpos].rstrip()
+  # get rid of /* ... */
+  return _RE_PATTERN_CLEANSE_LINE_C_COMMENTS.sub('', line)
+
+
+class CleansedLines(object):
+  """Holds 4 copies of all lines with different preprocessing applied to them.
+
+  1) elided member contains lines without strings and comments.
+  2) lines member contains lines without comments.
+  3) raw_lines member contains all the lines without processing.
+  4) lines_without_raw_strings member is same as raw_lines, but with C++11 raw
+     strings removed.
+  All these members are of <type 'list'>, and of the same length.
+  """
+
+  def __init__(self, lines):
+    self.elided = []
+    self.lines = []
+    self.raw_lines = lines
+    self.num_lines = len(lines)
+    self.lines_without_raw_strings = CleanseRawStrings(lines)
+    for linenum in range(len(self.lines_without_raw_strings)):
+      self.lines.append(CleanseComments(
+          self.lines_without_raw_strings[linenum]))
+      elided = self._CollapseStrings(self.lines_without_raw_strings[linenum])
+      self.elided.append(CleanseComments(elided))
+
+  def NumLines(self):
+    """Returns the number of lines represented."""
+    return self.num_lines
+
+  @staticmethod
+  def _CollapseStrings(elided):
+    """Collapses strings and chars on a line to simple "" or '' blocks.
+
+    We nix strings first so we're not fooled by text like '"http://"'
+
+    Args:
+      elided: The line being processed.
+
+    Returns:
+      The line with collapsed strings.
+    """
+    if _RE_PATTERN_INCLUDE.match(elided):
+      return elided
+
+    # Remove escaped characters first to make quote/single quote collapsing
+    # basic.  Things that look like escaped characters shouldn't occur
+    # outside of strings and chars.
+    elided = _RE_PATTERN_CLEANSE_LINE_ESCAPES.sub('', elided)
+
+    # Replace quoted strings and digit separators.  Both single quotes
+    # and double quotes are processed in the same loop, otherwise
+    # nested quotes wouldn't work.
+    collapsed = ''
+    while True:
+      # Find the first quote character
+      match = Match(r'^([^\'"]*)([\'"])(.*)$', elided)
+      if not match:
+        collapsed += elided
+        break
+      head, quote, tail = match.groups()
+
+      if quote == '"':
+        # Collapse double quoted strings
+        second_quote = tail.find('"')
+        if second_quote >= 0:
+          collapsed += head + '""'
+          elided = tail[second_quote + 1:]
+        else:
+          # Unmatched double quote, don't bother processing the rest
+          # of the line since this is probably a multiline string.
+          collapsed += elided
+          break
+      else:
+        # Found single quote, check nearby text to eliminate digit separators.
+        #
+        # There is no special handling for floating point here, because
+        # the integer/fractional/exponent parts would all be parsed
+        # correctly as long as there are digits on both sides of the
+        # separator.  So we are fine as long as we don't see something
+        # like "0.'3" (gcc 4.9.0 will not allow this literal).
+        if Search(r'\b(?:0[bBxX]?|[1-9])[0-9a-fA-F]*$', head):
+          match_literal = Match(r'^((?:\'?[0-9a-zA-Z_])*)(.*)$', "'" + tail)
+          collapsed += head + match_literal.group(1).replace("'", '')
+          elided = match_literal.group(2)
+        else:
+          second_quote = tail.find('\'')
+          if second_quote >= 0:
+            collapsed += head + "''"
+            elided = tail[second_quote + 1:]
+          else:
+            # Unmatched single quote
+            collapsed += elided
+            break
+
+    return collapsed
+
+
+def FindEndOfExpressionInLine(line, startpos, stack):
+  """Find the position just after the end of current parenthesized expression.
+
+  Args:
+    line: a CleansedLines line.
+    startpos: start searching at this position.
+    stack: nesting stack at startpos.
+
+  Returns:
+    On finding matching end: (index just after matching end, None)
+    On finding an unclosed expression: (-1, None)
+    Otherwise: (-1, new stack at end of this line)
+  """
+  for i in xrange(startpos, len(line)):
+    char = line[i]
+    if char in '([{':
+      # Found start of parenthesized expression, push to expression stack
+      stack.append(char)
+    elif char == '<':
+      # Found potential start of template argument list
+      if i > 0 and line[i - 1] == '<':
+        # Left shift operator
+        if stack and stack[-1] == '<':
+          stack.pop()
+          if not stack:
+            return (-1, None)
+      elif i > 0 and Search(r'\boperator\s*$', line[0:i]):
+        # operator<, don't add to stack
+        continue
+      else:
+        # Tentative start of template argument list
+        stack.append('<')
+    elif char in ')]}':
+      # Found end of parenthesized expression.
+      #
+      # If we are currently expecting a matching '>', the pending '<'
+      # must have been an operator.  Remove them from expression stack.
+      while stack and stack[-1] == '<':
+        stack.pop()
+      if not stack:
+        return (-1, None)
+      if ((stack[-1] == '(' and char == ')') or
+          (stack[-1] == '[' and char == ']') or
+          (stack[-1] == '{' and char == '}')):
+        stack.pop()
+        if not stack:
+          return (i + 1, None)
+      else:
+        # Mismatched parentheses
+        return (-1, None)
+    elif char == '>':
+      # Found potential end of template argument list.
+
+      # Ignore "->" and operator functions
+      if (i > 0 and
+          (line[i - 1] == '-' or Search(r'\boperator\s*$', line[0:i - 1]))):
+        continue
+
+      # Pop the stack if there is a matching '<'.  Otherwise, ignore
+      # this '>' since it must be an operator.
+      if stack:
+        if stack[-1] == '<':
+          stack.pop()
+          if not stack:
+            return (i + 1, None)
+    elif char == ';':
+      # Found something that look like end of statements.  If we are currently
+      # expecting a '>', the matching '<' must have been an operator, since
+      # template argument list should not contain statements.
+      while stack and stack[-1] == '<':
+        stack.pop()
+      if not stack:
+        return (-1, None)
+
+  # Did not find end of expression or unbalanced parentheses on this line
+  return (-1, stack)
+
+
+def CloseExpression(clean_lines, linenum, pos):
+  """If input points to ( or { or [ or <, finds the position that closes it.
+
+  If lines[linenum][pos] points to a '(' or '{' or '[' or '<', finds the
+  linenum/pos that correspond to the closing of the expression.
+
+  TODO(unknown): cpplint spends a fair bit of time matching parentheses.
+  Ideally we would want to index all opening and closing parentheses once
+  and have CloseExpression be just a simple lookup, but due to preprocessor
+  tricks, this is not so easy.
+
+  Args:
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    pos: A position on the line.
+
+  Returns:
+    A tuple (line, linenum, pos) pointer *past* the closing brace, or
+    (line, len(lines), -1) if we never find a close.  Note we ignore
+    strings and comments when matching; and the line we return is the
+    'cleansed' line at linenum.
+  """
+
+  line = clean_lines.elided[linenum]
+  if (line[pos] not in '({[<') or Match(r'<[<=]', line[pos:]):
+    return (line, clean_lines.NumLines(), -1)
+
+  # Check first line
+  (end_pos, stack) = FindEndOfExpressionInLine(line, pos, [])
+  if end_pos > -1:
+    return (line, linenum, end_pos)
+
+  # Continue scanning forward
+  while stack and linenum < clean_lines.NumLines() - 1:
+    linenum += 1
+    line = clean_lines.elided[linenum]
+    (end_pos, stack) = FindEndOfExpressionInLine(line, 0, stack)
+    if end_pos > -1:
+      return (line, linenum, end_pos)
+
+  # Did not find end of expression before end of file, give up
+  return (line, clean_lines.NumLines(), -1)
+
+
+def FindStartOfExpressionInLine(line, endpos, stack):
+  """Find position at the matching start of current expression.
+
+  This is almost the reverse of FindEndOfExpressionInLine, but note
+  that the input position and returned position differs by 1.
+
+  Args:
+    line: a CleansedLines line.
+    endpos: start searching at this position.
+    stack: nesting stack at endpos.
+
+  Returns:
+    On finding matching start: (index at matching start, None)
+    On finding an unclosed expression: (-1, None)
+    Otherwise: (-1, new stack at beginning of this line)
+  """
+  i = endpos
+  while i >= 0:
+    char = line[i]
+    if char in ')]}':
+      # Found end of expression, push to expression stack
+      stack.append(char)
+    elif char == '>':
+      # Found potential end of template argument list.
+      #
+      # Ignore it if it's a "->" or ">=" or "operator>"
+      if (i > 0 and
+          (line[i - 1] == '-' or
+           Match(r'\s>=\s', line[i - 1:]) or
+           Search(r'\boperator\s*$', line[0:i]))):
+        i -= 1
+      else:
+        stack.append('>')
+    elif char == '<':
+      # Found potential start of template argument list
+      if i > 0 and line[i - 1] == '<':
+        # Left shift operator
+        i -= 1
+      else:
+        # If there is a matching '>', we can pop the expression stack.
+        # Otherwise, ignore this '<' since it must be an operator.
+        if stack and stack[-1] == '>':
+          stack.pop()
+          if not stack:
+            return (i, None)
+    elif char in '([{':
+      # Found start of expression.
+      #
+      # If there are any unmatched '>' on the stack, they must be
+      # operators.  Remove those.
+      while stack and stack[-1] == '>':
+        stack.pop()
+      if not stack:
+        return (-1, None)
+      if ((char == '(' and stack[-1] == ')') or
+          (char == '[' and stack[-1] == ']') or
+          (char == '{' and stack[-1] == '}')):
+        stack.pop()
+        if not stack:
+          return (i, None)
+      else:
+        # Mismatched parentheses
+        return (-1, None)
+    elif char == ';':
+      # Found something that look like end of statements.  If we are currently
+      # expecting a '<', the matching '>' must have been an operator, since
+      # template argument list should not contain statements.
+      while stack and stack[-1] == '>':
+        stack.pop()
+      if not stack:
+        return (-1, None)
+
+    i -= 1
+
+  return (-1, stack)
+
+
+def ReverseCloseExpression(clean_lines, linenum, pos):
+  """If input points to ) or } or ] or >, finds the position that opens it.
+
+  If lines[linenum][pos] points to a ')' or '}' or ']' or '>', finds the
+  linenum/pos that correspond to the opening of the expression.
+
+  Args:
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    pos: A position on the line.
+
+  Returns:
+    A tuple (line, linenum, pos) pointer *at* the opening brace, or
+    (line, 0, -1) if we never find the matching opening brace.  Note
+    we ignore strings and comments when matching; and the line we
+    return is the 'cleansed' line at linenum.
+  """
+  line = clean_lines.elided[linenum]
+  if line[pos] not in ')}]>':
+    return (line, 0, -1)
+
+  # Check last line
+  (start_pos, stack) = FindStartOfExpressionInLine(line, pos, [])
+  if start_pos > -1:
+    return (line, linenum, start_pos)
+
+  # Continue scanning backward
+  while stack and linenum > 0:
+    linenum -= 1
+    line = clean_lines.elided[linenum]
+    (start_pos, stack) = FindStartOfExpressionInLine(line, len(line) - 1, stack)
+    if start_pos > -1:
+      return (line, linenum, start_pos)
+
+  # Did not find start of expression before beginning of file, give up
+  return (line, 0, -1)
+
+
+def CheckForCopyright(filename, lines, error):
+  """Logs an error if no Copyright message appears at the top of the file."""
+
+  # We'll say it should occur by line 10. Don't forget there's a
+  # placeholder line at the front.
+  for line in xrange(1, min(len(lines), 11)):
+    if re.search(r'Copyright', lines[line], re.I): break
+  else:                       # means no copyright line was found
+    error(filename, 0, 'legal/copyright', 5,
+          'No copyright message found.  '
+          'You should have a line: "Copyright [year] <Copyright Owner>"')
+
+
+def GetIndentLevel(line):
+  """Return the number of leading spaces in line.
+
+  Args:
+    line: A string to check.
+
+  Returns:
+    An integer count of leading spaces, possibly zero.
+  """
+  indent = Match(r'^( *)\S', line)
+  if indent:
+    return len(indent.group(1))
+  else:
+    return 0
+
+def PathSplitToList(path):
+  """Returns the path split into a list by the separator.
+
+  Args:
+    path: An absolute or relative path (e.g. '/a/b/c/' or '../a')
+
+  Returns:
+    A list of path components (e.g. ['a', 'b', 'c]).
+  """
+  lst = []
+  while True:
+    (head, tail) = os.path.split(path)
+    if head == path: # absolute paths end
+      lst.append(head)
+      break
+    if tail == path: # relative paths end
+      lst.append(tail)
+      break
+
+    path = head
+    lst.append(tail)
+
+  lst.reverse()
+  return lst
+
+def GetHeaderGuardCPPVariable(filename):
+  """Returns the CPP variable that should be used as a header guard.
+
+  Args:
+    filename: The name of a C++ header file.
+
+  Returns:
+    The CPP variable that should be used as a header guard in the
+    named file.
+
+  """
+
+  # Restores original filename in case that cpplint is invoked from Emacs's
+  # flymake.
+  filename = re.sub(r'_flymake\.h$', '.h', filename)
+  filename = re.sub(r'/\.flymake/([^/]*)$', r'/\1', filename)
+  # Replace 'c++' with 'cpp'.
+  filename = filename.replace('C++', 'cpp').replace('c++', 'cpp')
+
+  fileinfo = FileInfo(filename)
+  file_path_from_root = fileinfo.RepositoryName()
+
+  def FixupPathFromRoot():
+    if _root_debug:
+      sys.stderr.write("\n_root fixup, _root = '%s', repository name = '%s'\n"
+          %(_root, fileinfo.RepositoryName()))
+
+    # Process the file path with the --root flag if it was set.
+    if not _root:
+      if _root_debug:
+        sys.stderr.write("_root unspecified\n")
+      return file_path_from_root
+
+    def StripListPrefix(lst, prefix):
+      # f(['x', 'y'], ['w, z']) -> None  (not a valid prefix)
+      if lst[:len(prefix)] != prefix:
+        return None
+      # f(['a, 'b', 'c', 'd'], ['a', 'b']) -> ['c', 'd']
+      return lst[(len(prefix)):]
+
+    # root behavior:
+    #   --root=subdir , lstrips subdir from the header guard
+    maybe_path = StripListPrefix(PathSplitToList(file_path_from_root),
+                                 PathSplitToList(_root))
+
+    if _root_debug:
+      sys.stderr.write(("_root lstrip (maybe_path=%s, file_path_from_root=%s," +
+          " _root=%s)\n") %(maybe_path, file_path_from_root, _root))
+
+    if maybe_path:
+      return os.path.join(*maybe_path)
+
+    #   --root=.. , will prepend the outer directory to the header guard
+    full_path = fileinfo.FullName()
+    root_abspath = os.path.abspath(_root)
+
+    maybe_path = StripListPrefix(PathSplitToList(full_path),
+                                 PathSplitToList(root_abspath))
+
+    if _root_debug:
+      sys.stderr.write(("_root prepend (maybe_path=%s, full_path=%s, " +
+          "root_abspath=%s)\n") %(maybe_path, full_path, root_abspath))
+
+    if maybe_path:
+      return os.path.join(*maybe_path)
+
+    if _root_debug:
+      sys.stderr.write("_root ignore, returning %s\n" %(file_path_from_root))
+
+    #   --root=FAKE_DIR is ignored
+    return file_path_from_root
+
+  file_path_from_root = FixupPathFromRoot()
+  return re.sub(r'[^a-zA-Z0-9]', '_', file_path_from_root).upper() + '_'
+
+
+def CheckForHeaderGuard(filename, clean_lines, error):
+  """Checks that the file contains a header guard.
+
+  Logs an error if no #ifndef header guard is present.  For other
+  headers, checks that the full pathname is used.
+
+  Args:
+    filename: The name of the C++ header file.
+    clean_lines: A CleansedLines instance containing the file.
+    error: The function to call with any errors found.
+  """
+
+  # Don't check for header guards if there are error suppression
+  # comments somewhere in this file.
+  #
+  # Because this is silencing a warning for a nonexistent line, we
+  # only support the very specific NOLINT(build/header_guard) syntax,
+  # and not the general NOLINT or NOLINT(*) syntax.
+  raw_lines = clean_lines.lines_without_raw_strings
+  for i in raw_lines:
+    if Search(r'//\s*NOLINT\(build/header_guard\)', i):
+      return
+
+  cppvar = GetHeaderGuardCPPVariable(filename)
+
+  ifndef = ''
+  ifndef_linenum = 0
+  define = ''
+  endif = ''
+  endif_linenum = 0
+  for linenum, line in enumerate(raw_lines):
+    linesplit = line.split()
+    if len(linesplit) >= 2:
+      # find the first occurrence of #ifndef and #define, save arg
+      if not ifndef and linesplit[0] == '#ifndef':
+        # set ifndef to the header guard presented on the #ifndef line.
+        ifndef = linesplit[1]
+        ifndef_linenum = linenum
+      if not define and linesplit[0] == '#define':
+        define = linesplit[1]
+    # find the last occurrence of #endif, save entire line
+    if line.startswith('#endif'):
+      endif = line
+      endif_linenum = linenum
+
+  if not ifndef or not define or ifndef != define:
+    error(filename, 0, 'build/header_guard', 5,
+          'No #ifndef header guard found, suggested CPP variable is: %s' %
+          cppvar)
+    return
+
+  # The guard should be PATH_FILE_H_, but we also allow PATH_FILE_H__
+  # for backward compatibility.
+  if ifndef != cppvar:
+    error_level = 0
+    if ifndef != cppvar + '_':
+      error_level = 5
+
+    ParseNolintSuppressions(filename, raw_lines[ifndef_linenum], ifndef_linenum,
+                            error)
+    error(filename, ifndef_linenum, 'build/header_guard', error_level,
+          '#ifndef header guard has wrong style, please use: %s' % cppvar)
+
+  # Check for "//" comments on endif line.
+  ParseNolintSuppressions(filename, raw_lines[endif_linenum], endif_linenum,
+                          error)
+  match = Match(r'#endif\s*//\s*' + cppvar + r'(_)?\b', endif)
+  if match:
+    if match.group(1) == '_':
+      # Issue low severity warning for deprecated double trailing underscore
+      error(filename, endif_linenum, 'build/header_guard', 0,
+            '#endif line should be "#endif  // %s"' % cppvar)
+    return
+
+  # Didn't find the corresponding "//" comment.  If this file does not
+  # contain any "//" comments at all, it could be that the compiler
+  # only wants "/**/" comments, look for those instead.
+  no_single_line_comments = True
+  for i in xrange(1, len(raw_lines) - 1):
+    line = raw_lines[i]
+    if Match(r'^(?:(?:\'(?:\.|[^\'])*\')|(?:"(?:\.|[^"])*")|[^\'"])*//', line):
+      no_single_line_comments = False
+      break
+
+  if no_single_line_comments:
+    match = Match(r'#endif\s*/\*\s*' + cppvar + r'(_)?\s*\*/', endif)
+    if match:
+      if match.group(1) == '_':
+        # Low severity warning for double trailing underscore
+        error(filename, endif_linenum, 'build/header_guard', 0,
+              '#endif line should be "#endif  /* %s */"' % cppvar)
+      return
+
+  # Didn't find anything
+  error(filename, endif_linenum, 'build/header_guard', 5,
+        '#endif line should be "#endif  // %s"' % cppvar)
+
+
+def CheckHeaderFileIncluded(filename, include_state, error):
+  """Logs an error if a .cc file does not include its header."""
+
+  # Do not check test files
+  fileinfo = FileInfo(filename)
+  if Search(_TEST_FILE_SUFFIX, fileinfo.BaseName()):
+    return
+
+  headerfile = filename[0:len(filename) - len(fileinfo.Extension())] + '.h'
+  if not os.path.exists(headerfile):
+    return
+  headername = FileInfo(headerfile).RepositoryName()
+  first_include = 0
+  for section_list in include_state.include_list:
+    for f in section_list:
+      if headername in f[0] or f[0] in headername:
         return
-#ifdef CATCH_PLATFORM_MAC
-            !isDebuggerActive() &&
-#endif
-#if !(defined(__DJGPP__) && defined(__STRICT_ANSI__))
-            isatty(STDOUT_FILENO)
-#else
-            false
-#endif
-            ;
-    }
-    IColourImpl* platformColourInstance() {
-        ErrnoGuard guard;
-        IConfigPtr config = getCurrentContext().getConfig();
-        UseColour::YesOrNo colourMode = config
-            ? config->useColour()
-            : UseColour::Auto;
-        if( colourMode == UseColour::Auto )
-            colourMode = useColourOnPlatform()
-                ? UseColour::Yes
-                : UseColour::No;
-        return colourMode == UseColour::Yes
-            ? PosixColourImpl::instance()
-            : NoColourImpl::instance();
-    }
-
-} // end anon namespace
-} // end namespace Catch
-
-#else  // not Windows or ANSI ///////////////////////////////////////////////
-
-namespace Catch {
-
-    static IColourImpl* platformColourInstance() { return NoColourImpl::instance(); }
-
-} // end namespace Catch
-
-#endif // Windows/ ANSI/ None
-
-namespace Catch {
-
-    Colour::Colour( Code _colourCode ) { use( _colourCode ); }
-    Colour::Colour( Colour&& rhs ) noexcept {
-        m_moved = rhs.m_moved;
-        rhs.m_moved = true;
-    }
-    Colour& Colour::operator=( Colour&& rhs ) noexcept {
-        m_moved = rhs.m_moved;
-        rhs.m_moved  = true;
-        return *this;
-    }
-
-    Colour::~Colour(){ if( !m_moved ) use( None ); }
-
-    void Colour::use( Code _colourCode ) {
-        static IColourImpl* impl = platformColourInstance();
-        impl->use( _colourCode );
-    }
-
-    std::ostream& operator << ( std::ostream& os, Colour const& ) {
-        return os;
-    }
-
-} // end namespace Catch
-
-#if defined(__clang__)
-#    pragma clang diagnostic pop
-#endif
-
-// end catch_console_colour.cpp
-// start catch_context.cpp
-
-namespace Catch {
-
-    class Context : public IMutableContext, NonCopyable {
-
-    public: // IContext
-        virtual IResultCapture* getResultCapture() override {
-            return m_resultCapture;
-        }
-        virtual IRunner* getRunner() override {
-            return m_runner;
-        }
-
-        virtual IConfigPtr const& getConfig() const override {
-            return m_config;
-        }
-
-        virtual ~Context() override;
-
-    public: // IMutableContext
-        virtual void setResultCapture( IResultCapture* resultCapture ) override {
-            m_resultCapture = resultCapture;
-        }
-        virtual void setRunner( IRunner* runner ) override {
-            m_runner = runner;
-        }
-        virtual void setConfig( IConfigPtr const& config ) override {
-            m_config = config;
-        }
-
-        friend IMutableContext& getCurrentMutableContext();
-
-    private:
-        IConfigPtr m_config;
-        IRunner* m_runner = nullptr;
-        IResultCapture* m_resultCapture = nullptr;
-    };
-
-    IMutableContext *IMutableContext::currentContext = nullptr;
-
-    void IMutableContext::createContext()
-    {
-        currentContext = new Context();
-    }
-
-    void cleanUpContext() {
-        delete IMutableContext::currentContext;
-        IMutableContext::currentContext = nullptr;
-    }
-    IContext::~IContext() = default;
-    IMutableContext::~IMutableContext() = default;
-    Context::~Context() = default;
-}
-// end catch_context.cpp
-// start catch_debug_console.cpp
-
-// start catch_debug_console.h
-
-#include <string>
-
-namespace Catch {
-    void writeToDebugConsole( std::string const& text );
-}
-
-// end catch_debug_console.h
-#ifdef CATCH_PLATFORM_WINDOWS
-
-    namespace Catch {
-        void writeToDebugConsole( std::string const& text ) {
-            ::OutputDebugStringA( text.c_str() );
-        }
-    }
-
-#else
-
-    namespace Catch {
-        void writeToDebugConsole( std::string const& text ) {
-            // !TBD: Need a version for Mac/ XCode and other IDEs
-            Catch::cout() << text;
-        }
-    }
-
-#endif // Platform
-// end catch_debug_console.cpp
-// start catch_debugger.cpp
-
-#ifdef CATCH_PLATFORM_MAC
-
-#  include <assert.h>
-#  include <stdbool.h>
-#  include <sys/types.h>
-#  include <unistd.h>
-#  include <sys/sysctl.h>
-#  include <cstddef>
-#  include <ostream>
-
-namespace Catch {
-
-        // The following function is taken directly from the following technical note:
-        // http://developer.apple.com/library/mac/#qa/qa2004/qa1361.html
-
-        // Returns true if the current process is being debugged (either
-        // running under the debugger or has a debugger attached post facto).
-        bool isDebuggerActive(){
-
-            int                 mib[4];
-            struct kinfo_proc   info;
-            std::size_t         size;
-
-            // Initialize the flags so that, if sysctl fails for some bizarre
-            // reason, we get a predictable result.
-
-            info.kp_proc.p_flag = 0;
-
-            // Initialize mib, which tells sysctl the info we want, in this case
-            // we're looking for information about a specific process ID.
-
-            mib[0] = CTL_KERN;
-            mib[1] = KERN_PROC;
-            mib[2] = KERN_PROC_PID;
-            mib[3] = getpid();
-
-            // Call sysctl.
-
-            size = sizeof(info);
-            if( sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, nullptr, 0) != 0 ) {
-                Catch::cerr() << "\n** Call to sysctl failed - unable to determine if debugger is active **\n" << std::endl;
-                return false;
-            }
-
-            // We're being debugged if the P_TRACED flag is set.
-
-            return ( (info.kp_proc.p_flag & P_TRACED) != 0 );
-        }
-    } // namespace Catch
-
-#elif defined(CATCH_PLATFORM_LINUX)
-    #include <fstream>
-    #include <string>
-
-    namespace Catch{
-        // The standard POSIX way of detecting a debugger is to attempt to
-        // ptrace() the process, but this needs to be done from a child and not
-        // this process itself to still allow attaching to this process later
-        // if wanted, so is rather heavy. Under Linux we have the PID of the
-        // "debugger" (which doesn't need to be gdb, of course, it could also
-        // be strace, for example) in /proc/$PID/status, so just get it from
-        // there instead.
-        bool isDebuggerActive(){
-            // Libstdc++ has a bug, where std::ifstream sets errno to 0
-            // This way our users can properly assert over errno values
-            ErrnoGuard guard;
-            std::ifstream in("/proc/self/status");
-            for( std::string line; std::getline(in, line); ) {
-                static const int PREFIX_LEN = 11;
-                if( line.compare(0, PREFIX_LEN, "TracerPid:\t") == 0 ) {
-                    // We're traced if the PID is not 0 and no other PID starts
-                    // with 0 digit, so it's enough to check for just a single
-                    // character.
-                    return line.length() > PREFIX_LEN && line[PREFIX_LEN] != '0';
-                }
-            }
-
-            return false;
-        }
-    } // namespace Catch
-#elif defined(_MSC_VER)
-    extern "C" __declspec(dllimport) int __stdcall IsDebuggerPresent();
-    namespace Catch {
-        bool isDebuggerActive() {
-            return IsDebuggerPresent() != 0;
-        }
-    }
-#elif defined(__MINGW32__)
-    extern "C" __declspec(dllimport) int __stdcall IsDebuggerPresent();
-    namespace Catch {
-        bool isDebuggerActive() {
-            return IsDebuggerPresent() != 0;
-        }
-    }
-#else
-    namespace Catch {
-       bool isDebuggerActive() { return false; }
-    }
-#endif // Platform
-// end catch_debugger.cpp
-// start catch_decomposer.cpp
-
-namespace Catch {
-
-    ITransientExpression::~ITransientExpression() = default;
-
-    void formatReconstructedExpression( std::ostream &os, std::string const& lhs, StringRef op, std::string const& rhs ) {
-        if( lhs.size() + rhs.size() < 40 &&
-                lhs.find('\n') == std::string::npos &&
-                rhs.find('\n') == std::string::npos )
-            os << lhs << " " << op << " " << rhs;
-        else
-            os << lhs << "\n" << op << "\n" << rhs;
-    }
-}
-// end catch_decomposer.cpp
-// start catch_errno_guard.cpp
-
-#include <cerrno>
-
-namespace Catch {
-        ErrnoGuard::ErrnoGuard():m_oldErrno(errno){}
-        ErrnoGuard::~ErrnoGuard() { errno = m_oldErrno; }
-}
-// end catch_errno_guard.cpp
-// start catch_exception_translator_registry.cpp
-
-// start catch_exception_translator_registry.h
-
-#include <vector>
-#include <string>
-#include <memory>
-
-namespace Catch {
-
-    class ExceptionTranslatorRegistry : public IExceptionTranslatorRegistry {
-    public:
-        ~ExceptionTranslatorRegistry();
-        virtual void registerTranslator( const IExceptionTranslator* translator );
-        virtual std::string translateActiveException() const override;
-        std::string tryTranslators() const;
-
-    private:
-        std::vector<std::unique_ptr<IExceptionTranslator const>> m_translators;
-    };
-}
-
-// end catch_exception_translator_registry.h
-#ifdef __OBJC__
-#import "Foundation/Foundation.h"
-#endif
-
-namespace Catch {
-
-    ExceptionTranslatorRegistry::~ExceptionTranslatorRegistry() {
-    }
-
-    void ExceptionTranslatorRegistry::registerTranslator( const IExceptionTranslator* translator ) {
-        m_translators.push_back( std::unique_ptr<const IExceptionTranslator>( translator ) );
-    }
-
-    std::string ExceptionTranslatorRegistry::translateActiveException() const {
-        try {
-#ifdef __OBJC__
-            // In Objective-C try objective-c exceptions first
-            @try {
-                return tryTranslators();
-            }
-            @catch (NSException *exception) {
-                return Catch::Detail::stringify( [exception description] );
-            }
-#else
-            // Compiling a mixed mode project with MSVC means that CLR
-            // exceptions will be caught in (...) as well. However, these
-            // do not fill-in std::current_exception and thus lead to crash
-            // when attempting rethrow.
-            // /EHa switch also causes structured exceptions to be caught
-            // here, but they fill-in current_exception properly, so
-            // at worst the output should be a little weird, instead of
-            // causing a crash.
-            if (std::current_exception() == nullptr) {
-                return "Non C++ exception. Possibly a CLR exception.";
-            }
-            return tryTranslators();
-#endif
-        }
-        catch( TestFailureException& ) {
-            std::rethrow_exception(std::current_exception());
-        }
-        catch( std::exception& ex ) {
-            return ex.what();
-        }
-        catch( std::string& msg ) {
-            return msg;
-        }
-        catch( const char* msg ) {
-            return msg;
-        }
-        catch(...) {
-            return "Unknown exception";
-        }
-    }
-
-    std::string ExceptionTranslatorRegistry::tryTranslators() const {
-        if( m_translators.empty() )
-            std::rethrow_exception(std::current_exception());
-        else
-            return m_translators[0]->translate( m_translators.begin()+1, m_translators.end() );
-    }
-}
-// end catch_exception_translator_registry.cpp
-// start catch_fatal_condition.cpp
-
-#if defined(__GNUC__)
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-#endif
-
-#if defined( CATCH_CONFIG_WINDOWS_SEH ) || defined( CATCH_CONFIG_POSIX_SIGNALS )
-
-namespace {
-    // Report the error condition
-    void reportFatal( char const * const message ) {
-        Catch::getCurrentContext().getResultCapture()->handleFatalErrorCondition( message );
-    }
-}
-
-#endif // signals/SEH handling
-
-#if defined( CATCH_CONFIG_WINDOWS_SEH )
-
-namespace Catch {
-    struct SignalDefs { DWORD id; const char* name; };
-
-    // There is no 1-1 mapping between signals and windows exceptions.
-    // Windows can easily distinguish between SO and SigSegV,
-    // but SigInt, SigTerm, etc are handled differently.
-    static SignalDefs signalDefs[] = {
-        { EXCEPTION_ILLEGAL_INSTRUCTION,  "SIGILL - Illegal instruction signal" },
-        { EXCEPTION_STACK_OVERFLOW, "SIGSEGV - Stack overflow" },
-        { EXCEPTION_ACCESS_VIOLATION, "SIGSEGV - Segmentation violation signal" },
-        { EXCEPTION_INT_DIVIDE_BY_ZERO, "Divide by zero error" },
-    };
-
-    LONG CALLBACK FatalConditionHandler::handleVectoredException(PEXCEPTION_POINTERS ExceptionInfo) {
-        for (auto const& def : signalDefs) {
-            if (ExceptionInfo->ExceptionRecord->ExceptionCode == def.id) {
-                reportFatal(def.name);
-            }
-        }
-        // If its not an exception we care about, pass it along.
-        // This stops us from eating debugger breaks etc.
-        return EXCEPTION_CONTINUE_SEARCH;
-    }
-
-    FatalConditionHandler::FatalConditionHandler() {
-        isSet = true;
-        // 32k seems enough for Catch to handle stack overflow,
-        // but the value was found experimentally, so there is no strong guarantee
-        guaranteeSize = 32 * 1024;
-        exceptionHandlerHandle = nullptr;
-        // Register as first handler in current chain
-        exceptionHandlerHandle = AddVectoredExceptionHandler(1, handleVectoredException);
-        // Pass in guarantee size to be filled
-        SetThreadStackGuarantee(&guaranteeSize);
-    }
-
-    void FatalConditionHandler::reset() {
-        if (isSet) {
-            RemoveVectoredExceptionHandler(exceptionHandlerHandle);
-            SetThreadStackGuarantee(&guaranteeSize);
-            exceptionHandlerHandle = nullptr;
-            isSet = false;
-        }
-    }
-
-    FatalConditionHandler::~FatalConditionHandler() {
-        reset();
-    }
-
-bool FatalConditionHandler::isSet = false;
-ULONG FatalConditionHandler::guaranteeSize = 0;
-PVOID FatalConditionHandler::exceptionHandlerHandle = nullptr;
-
-} // namespace Catch
-
-#elif defined( CATCH_CONFIG_POSIX_SIGNALS )
-
-namespace Catch {
-
-    struct SignalDefs {
-        int id;
-        const char* name;
-    };
-    static SignalDefs signalDefs[] = {
-        { SIGINT,  "SIGINT - Terminal interrupt signal" },
-        { SIGILL,  "SIGILL - Illegal instruction signal" },
-        { SIGFPE,  "SIGFPE - Floating point error signal" },
-        { SIGSEGV, "SIGSEGV - Segmentation violation signal" },
-        { SIGTERM, "SIGTERM - Termination request signal" },
-        { SIGABRT, "SIGABRT - Abort (abnormal termination) signal" }
-    };
-
-    void FatalConditionHandler::handleSignal( int sig ) {
-        char const * name = "<unknown signal>";
-        for (auto const& def : signalDefs) {
-            if (sig == def.id) {
-                name = def.name;
-                break;
-            }
-        }
-        reset();
-        reportFatal(name);
-        raise( sig );
-    }
-
-    FatalConditionHandler::FatalConditionHandler() {
-        isSet = true;
-        stack_t sigStack;
-        sigStack.ss_sp = altStackMem;
-        sigStack.ss_size = SIGSTKSZ;
-        sigStack.ss_flags = 0;
-        sigaltstack(&sigStack, &oldSigStack);
-        struct sigaction sa = { };
-
-        sa.sa_handler = handleSignal;
-        sa.sa_flags = SA_ONSTACK;
-        for (std::size_t i = 0; i < sizeof(signalDefs)/sizeof(SignalDefs); ++i) {
-            sigaction(signalDefs[i].id, &sa, &oldSigActions[i]);
-        }
-    }
-
-    FatalConditionHandler::~FatalConditionHandler() {
-        reset();
-    }
-
-    void FatalConditionHandler::reset() {
-        if( isSet ) {
-            // Set signals back to previous values -- hopefully nobody overwrote them in the meantime
-            for( std::size_t i = 0; i < sizeof(signalDefs)/sizeof(SignalDefs); ++i ) {
-                sigaction(signalDefs[i].id, &oldSigActions[i], nullptr);
-            }
-            // Return the old stack
-            sigaltstack(&oldSigStack, nullptr);
-            isSet = false;
-        }
-    }
-
-    bool FatalConditionHandler::isSet = false;
-    struct sigaction FatalConditionHandler::oldSigActions[sizeof(signalDefs)/sizeof(SignalDefs)] = {};
-    stack_t FatalConditionHandler::oldSigStack = {};
-    char FatalConditionHandler::altStackMem[SIGSTKSZ] = {};
-
-} // namespace Catch
-
-#else
-
-namespace Catch {
-    void FatalConditionHandler::reset() {}
-}
-
-#endif // signals/SEH handling
-
-#if defined(__GNUC__)
-#    pragma GCC diagnostic pop
-#endif
-// end catch_fatal_condition.cpp
-// start catch_interfaces_capture.cpp
-
-namespace Catch {
-    IResultCapture::~IResultCapture() = default;
-}
-// end catch_interfaces_capture.cpp
-// start catch_interfaces_config.cpp
-
-namespace Catch {
-    IConfig::~IConfig() = default;
-}
-// end catch_interfaces_config.cpp
-// start catch_interfaces_exception.cpp
-
-namespace Catch {
-    IExceptionTranslator::~IExceptionTranslator() = default;
-    IExceptionTranslatorRegistry::~IExceptionTranslatorRegistry() = default;
-}
-// end catch_interfaces_exception.cpp
-// start catch_interfaces_registry_hub.cpp
-
-namespace Catch {
-    IRegistryHub::~IRegistryHub() = default;
-    IMutableRegistryHub::~IMutableRegistryHub() = default;
-}
-// end catch_interfaces_registry_hub.cpp
-// start catch_interfaces_reporter.cpp
-
-// start catch_reporter_multi.h
-
-namespace Catch {
-
-    class MultipleReporters : public IStreamingReporter {
-        using Reporters = std::vector<IStreamingReporterPtr>;
-        Reporters m_reporters;
-
-    public:
-        void add( IStreamingReporterPtr&& reporter );
-
-    public: // IStreamingReporter
-
-        ReporterPreferences getPreferences() const override;
-
-        void noMatchingTestCases( std::string const& spec ) override;
-
-        static std::set<Verbosity> getSupportedVerbosities();
-
-        void benchmarkStarting( BenchmarkInfo const& benchmarkInfo ) override;
-        void benchmarkEnded( BenchmarkStats const& benchmarkStats ) override;
-
-        void testRunStarting( TestRunInfo const& testRunInfo ) override;
-        void testGroupStarting( GroupInfo const& groupInfo ) override;
-        void testCaseStarting( TestCaseInfo const& testInfo ) override;
-        void sectionStarting( SectionInfo const& sectionInfo ) override;
-        void assertionStarting( AssertionInfo const& assertionInfo ) override;
-
-        // The return value indicates if the messages buffer should be cleared:
-        bool assertionEnded( AssertionStats const& assertionStats ) override;
-        void sectionEnded( SectionStats const& sectionStats ) override;
-        void testCaseEnded( TestCaseStats const& testCaseStats ) override;
-        void testGroupEnded( TestGroupStats const& testGroupStats ) override;
-        void testRunEnded( TestRunStats const& testRunStats ) override;
-
-        void skipTest( TestCaseInfo const& testInfo ) override;
-        bool isMulti() const override;
-
-    };
-
-} // end namespace Catch
-
-// end catch_reporter_multi.h
-namespace Catch {
-
-    ReporterConfig::ReporterConfig( IConfigPtr const& _fullConfig )
-    :   m_stream( &_fullConfig->stream() ), m_fullConfig( _fullConfig ) {}
-
-    ReporterConfig::ReporterConfig( IConfigPtr const& _fullConfig, std::ostream& _stream )
-    :   m_stream( &_stream ), m_fullConfig( _fullConfig ) {}
-
-    std::ostream& ReporterConfig::stream() const { return *m_stream; }
-    IConfigPtr ReporterConfig::fullConfig() const { return m_fullConfig; }
-
-    TestRunInfo::TestRunInfo( std::string const& _name ) : name( _name ) {}
-
-    GroupInfo::GroupInfo(  std::string const& _name,
-                           std::size_t _groupIndex,
-                           std::size_t _groupsCount )
-    :   name( _name ),
-        groupIndex( _groupIndex ),
-        groupsCounts( _groupsCount )
-    {}
-
-     AssertionStats::AssertionStats( AssertionResult const& _assertionResult,
-                                     std::vector<MessageInfo> const& _infoMessages,
-                                     Totals const& _totals )
-    :   assertionResult( _assertionResult ),
-        infoMessages( _infoMessages ),
-        totals( _totals )
-    {
-        assertionResult.m_resultData.lazyExpression.m_transientExpression = _assertionResult.m_resultData.lazyExpression.m_transientExpression;
-
-        if( assertionResult.hasMessage() ) {
-            // Copy message into messages list.
-            // !TBD This should have been done earlier, somewhere
-            MessageBuilder builder( assertionResult.getTestMacroName(), assertionResult.getSourceInfo(), assertionResult.getResultType() );
-            builder << assertionResult.getMessage();
-            builder.m_info.message = builder.m_stream.str();
-
-            infoMessages.push_back( builder.m_info );
-        }
-    }
-
-     AssertionStats::~AssertionStats() = default;
-
-    SectionStats::SectionStats(  SectionInfo const& _sectionInfo,
-                                 Counts const& _assertions,
-                                 double _durationInSeconds,
-                                 bool _missingAssertions )
-    :   sectionInfo( _sectionInfo ),
-        assertions( _assertions ),
-        durationInSeconds( _durationInSeconds ),
-        missingAssertions( _missingAssertions )
-    {}
-
-    SectionStats::~SectionStats() = default;
-
-    TestCaseStats::TestCaseStats(  TestCaseInfo const& _testInfo,
-                                   Totals const& _totals,
-                                   std::string const& _stdOut,
-                                   std::string const& _stdErr,
-                                   bool _aborting )
-    : testInfo( _testInfo ),
-        totals( _totals ),
-        stdOut( _stdOut ),
-        stdErr( _stdErr ),
-        aborting( _aborting )
-    {}
-
-    TestCaseStats::~TestCaseStats() = default;
-
-    TestGroupStats::TestGroupStats( GroupInfo const& _groupInfo,
-                                    Totals const& _totals,
-                                    bool _aborting )
-    :   groupInfo( _groupInfo ),
-        totals( _totals ),
-        aborting( _aborting )
-    {}
-
-    TestGroupStats::TestGroupStats( GroupInfo const& _groupInfo )
-    :   groupInfo( _groupInfo ),
-        aborting( false )
-    {}
-
-    TestGroupStats::~TestGroupStats() = default;
-
-    TestRunStats::TestRunStats(   TestRunInfo const& _runInfo,
-                    Totals const& _totals,
-                    bool _aborting )
-    :   runInfo( _runInfo ),
-        totals( _totals ),
-        aborting( _aborting )
-    {}
-
-    TestRunStats::~TestRunStats() = default;
-
-    void IStreamingReporter::fatalErrorEncountered( StringRef ) {}
-    bool IStreamingReporter::isMulti() const { return false; }
-
-    IReporterFactory::~IReporterFactory() = default;
-    IReporterRegistry::~IReporterRegistry() = default;
-
-    void addReporter( IStreamingReporterPtr& existingReporter, IStreamingReporterPtr&& additionalReporter ) {
-
-        if( !existingReporter ) {
-            existingReporter = std::move( additionalReporter );
-            return;
-        }
-
-        MultipleReporters* multi = nullptr;
-
-        if( existingReporter->isMulti() ) {
-            multi = static_cast<MultipleReporters*>( existingReporter.get() );
-        }
-        else {
-            auto newMulti = std::unique_ptr<MultipleReporters>( new MultipleReporters );
-            newMulti->add( std::move( existingReporter ) );
-            multi = newMulti.get();
-            existingReporter = std::move( newMulti );
-        }
-        multi->add( std::move( additionalReporter ) );
-    }
-
-} // end namespace Catch
-// end catch_interfaces_reporter.cpp
-// start catch_interfaces_runner.cpp
-
-namespace Catch {
-    IRunner::~IRunner() = default;
-}
-// end catch_interfaces_runner.cpp
-// start catch_interfaces_testcase.cpp
-
-namespace Catch {
-    ITestInvoker::~ITestInvoker() = default;
-    ITestCaseRegistry::~ITestCaseRegistry() = default;
-}
-// end catch_interfaces_testcase.cpp
-// start catch_leak_detector.cpp
-
-#ifdef CATCH_CONFIG_WINDOWS_CRTDBG
-#include <crtdbg.h>
-
-namespace Catch {
-
-	LeakDetector::LeakDetector() {
-		int flag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
-		flag |= _CRTDBG_LEAK_CHECK_DF;
-		flag |= _CRTDBG_ALLOC_MEM_DF;
-		_CrtSetDbgFlag(flag);
-		_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
-		_CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
-		// Change this to leaking allocation's number to break there
-		_CrtSetBreakAlloc(-1);
-	}
-}
-
-#else
-
-    Catch::LeakDetector::LeakDetector() {}
-
-#endif
-// end catch_leak_detector.cpp
-// start catch_list.cpp
-
-// start catch_list.h
-
-#include <set>
-
-namespace Catch {
-
-    std::size_t listTests( Config const& config );
-
-    std::size_t listTestsNamesOnly( Config const& config );
-
-    struct TagInfo {
-        void add( std::string const& spelling );
-        std::string all() const;
-
-        std::set<std::string> spellings;
-        std::size_t count = 0;
-    };
-
-    std::size_t listTags( Config const& config );
-
-    std::size_t listReporters( Config const& /*config*/ );
-
-    Option<std::size_t> list( Config const& config );
-
-} // end namespace Catch
-
-// end catch_list.h
-// start catch_text.h
-
-namespace Catch {
-    using namespace clara::TextFlow;
-}
-
-// end catch_text.h
-#include <limits>
-#include <algorithm>
-#include <iomanip>
-
-namespace Catch {
-
-    std::size_t listTests( Config const& config ) {
-        TestSpec testSpec = config.testSpec();
-        if( config.hasTestFilters() )
-            Catch::cout() << "Matching test cases:\n";
-        else {
-            Catch::cout() << "All available test cases:\n";
-        }
-
-        auto matchedTestCases = filterTests( getAllTestCasesSorted( config ), testSpec, config );
-        for( auto const& testCaseInfo : matchedTestCases ) {
-            Colour::Code colour = testCaseInfo.isHidden()
-                ? Colour::SecondaryText
-                : Colour::None;
-            Colour colourGuard( colour );
-
-            Catch::cout() << Column( testCaseInfo.name ).initialIndent( 2 ).indent( 4 ) << "\n";
-            if( config.verbosity() >= Verbosity::High ) {
-                Catch::cout() << Column( Catch::Detail::stringify( testCaseInfo.lineInfo ) ).indent(4) << std::endl;
-                std::string description = testCaseInfo.description;
-                if( description.empty() )
-                    description = "(NO DESCRIPTION)";
-                Catch::cout() << Column( description ).indent(4) << std::endl;
-            }
-            if( !testCaseInfo.tags.empty() )
-                Catch::cout() << Column( testCaseInfo.tagsAsString() ).indent( 6 ) << "\n";
-        }
-
-        if( !config.hasTestFilters() )
-            Catch::cout() << pluralise( matchedTestCases.size(), "test case" ) << '\n' << std::endl;
-        else
-            Catch::cout() << pluralise( matchedTestCases.size(), "matching test case" ) << '\n' << std::endl;
-        return matchedTestCases.size();
-    }
-
-    std::size_t listTestsNamesOnly( Config const& config ) {
-        TestSpec testSpec = config.testSpec();
-        std::size_t matchedTests = 0;
-        std::vector<TestCase> matchedTestCases = filterTests( getAllTestCasesSorted( config ), testSpec, config );
-        for( auto const& testCaseInfo : matchedTestCases ) {
-            matchedTests++;
-            if( startsWith( testCaseInfo.name, '#' ) )
-               Catch::cout() << '"' << testCaseInfo.name << '"';
-            else
-               Catch::cout() << testCaseInfo.name;
-            if ( config.verbosity() >= Verbosity::High )
-                Catch::cout() << "\t@" << testCaseInfo.lineInfo;
-            Catch::cout() << std::endl;
-        }
-        return matchedTests;
-    }
-
-    void TagInfo::add( std::string const& spelling ) {
-        ++count;
-        spellings.insert( spelling );
-    }
-
-    std::string TagInfo::all() const {
-        std::string out;
-        for( auto const& spelling : spellings )
-            out += "[" + spelling + "]";
-        return out;
-    }
-
-    std::size_t listTags( Config const& config ) {
-        TestSpec testSpec = config.testSpec();
-        if( config.hasTestFilters() )
-            Catch::cout() << "Tags for matching test cases:\n";
-        else {
-            Catch::cout() << "All available tags:\n";
-        }
-
-        std::map<std::string, TagInfo> tagCounts;
-
-        std::vector<TestCase> matchedTestCases = filterTests( getAllTestCasesSorted( config ), testSpec, config );
-        for( auto const& testCase : matchedTestCases ) {
-            for( auto const& tagName : testCase.getTestCaseInfo().tags ) {
-                std::string lcaseTagName = toLower( tagName );
-                auto countIt = tagCounts.find( lcaseTagName );
-                if( countIt == tagCounts.end() )
-                    countIt = tagCounts.insert( std::make_pair( lcaseTagName, TagInfo() ) ).first;
-                countIt->second.add( tagName );
-            }
-        }
-
-        for( auto const& tagCount : tagCounts ) {
-            ReusableStringStream rss;
-            rss << "  " << std::setw(2) << tagCount.second.count << "  ";
-            auto str = rss.str();
-            auto wrapper = Column( tagCount.second.all() )
-                                                    .initialIndent( 0 )
-                                                    .indent( str.size() )
-                                                    .width( CATCH_CONFIG_CONSOLE_WIDTH-10 );
-            Catch::cout() << str << wrapper << '\n';
-        }
-        Catch::cout() << pluralise( tagCounts.size(), "tag" ) << '\n' << std::endl;
-        return tagCounts.size();
-    }
-
-    std::size_t listReporters( Config const& /*config*/ ) {
-        Catch::cout() << "Available reporters:\n";
-        IReporterRegistry::FactoryMap const& factories = getRegistryHub().getReporterRegistry().getFactories();
-        std::size_t maxNameLen = 0;
-        for( auto const& factoryKvp : factories )
-            maxNameLen = (std::max)( maxNameLen, factoryKvp.first.size() );
-
-        for( auto const& factoryKvp : factories ) {
-            Catch::cout()
-                    << Column( factoryKvp.first + ":" )
-                            .indent(2)
-                            .width( 5+maxNameLen )
-                    +  Column( factoryKvp.second->getDescription() )
-                            .initialIndent(0)
-                            .indent(2)
-                            .width( CATCH_CONFIG_CONSOLE_WIDTH - maxNameLen-8 )
-                    << "\n";
-        }
-        Catch::cout() << std::endl;
-        return factories.size();
-    }
-
-    Option<std::size_t> list( Config const& config ) {
-        Option<std::size_t> listedCount;
-        if( config.listTests() )
-            listedCount = listedCount.valueOr(0) + listTests( config );
-        if( config.listTestNamesOnly() )
-            listedCount = listedCount.valueOr(0) + listTestsNamesOnly( config );
-        if( config.listTags() )
-            listedCount = listedCount.valueOr(0) + listTags( config );
-        if( config.listReporters() )
-            listedCount = listedCount.valueOr(0) + listReporters( config );
-        return listedCount;
-    }
-
-} // end namespace Catch
-// end catch_list.cpp
-// start catch_matchers.cpp
-
-namespace Catch {
-namespace Matchers {
-    namespace Impl {
-
-        std::string MatcherUntypedBase::toString() const {
-            if( m_cachedToString.empty() )
-                m_cachedToString = describe();
-            return m_cachedToString;
-        }
-
-        MatcherUntypedBase::~MatcherUntypedBase() = default;
-
-    } // namespace Impl
-} // namespace Matchers
-
-using namespace Matchers;
-using Matchers::Impl::MatcherBase;
-
-} // namespace Catch
-// end catch_matchers.cpp
-// start catch_matchers_floating.cpp
-
-#include <cstdlib>
-#include <cstdint>
-#include <cstring>
-#include <stdexcept>
-
-namespace Catch {
-namespace Matchers {
-namespace Floating {
-enum class FloatingPointKind : uint8_t {
-    Float,
-    Double
-};
-}
-}
-}
-
-namespace {
-
-template <typename T>
-struct Converter;
-
-template <>
-struct Converter<float> {
-    static_assert(sizeof(float) == sizeof(int32_t), "Important ULP matcher assumption violated");
-    Converter(float f) {
-        std::memcpy(&i, &f, sizeof(f));
-    }
-    int32_t i;
-};
-
-template <>
-struct Converter<double> {
-    static_assert(sizeof(double) == sizeof(int64_t), "Important ULP matcher assumption violated");
-    Converter(double d) {
-        std::memcpy(&i, &d, sizeof(d));
-    }
-    int64_t i;
-};
-
-template <typename T>
-auto convert(T t) -> Converter<T> {
-    return Converter<T>(t);
-}
-
-template <typename FP>
-bool almostEqualUlps(FP lhs, FP rhs, int maxUlpDiff) {
-    // Comparison with NaN should always be false.
-    // This way we can rule it out before getting into the ugly details
-    if (std::isnan(lhs) || std::isnan(rhs)) {
-        return false;
-    }
-
-    auto lc = convert(lhs);
-    auto rc = convert(rhs);
-
-    if ((lc.i < 0) != (rc.i < 0)) {
-        // Potentially we can have +0 and -0
-        return lhs == rhs;
-    }
-
-    auto ulpDiff = std::abs(lc.i - rc.i);
-    return ulpDiff <= maxUlpDiff;
-}
-
-}
-
-namespace Catch {
-namespace Matchers {
-namespace Floating {
-    WithinAbsMatcher::WithinAbsMatcher(double target, double margin)
-        :m_target{ target }, m_margin{ margin } {
-        if (m_margin < 0) {
-            throw std::domain_error("Allowed margin difference has to be >= 0");
-        }
-    }
-
-    // Performs equivalent check of std::fabs(lhs - rhs) <= margin
-    // But without the subtraction to allow for INFINITY in comparison
-    bool WithinAbsMatcher::match(double const& matchee) const {
-        return (matchee + m_margin >= m_target) && (m_target + m_margin >= m_margin);
-    }
-
-    std::string WithinAbsMatcher::describe() const {
-        return "is within " + ::Catch::Detail::stringify(m_margin) + " of " + ::Catch::Detail::stringify(m_target);
-    }
-
-    WithinUlpsMatcher::WithinUlpsMatcher(double target, int ulps, FloatingPointKind baseType)
-        :m_target{ target }, m_ulps{ ulps }, m_type{ baseType } {
-        if (m_ulps < 0) {
-            throw std::domain_error("Allowed ulp difference has to be >= 0");
-        }
-    }
-
-    bool WithinUlpsMatcher::match(double const& matchee) const {
-        switch (m_type) {
-        case FloatingPointKind::Float:
-            return almostEqualUlps<float>(static_cast<float>(matchee), static_cast<float>(m_target), m_ulps);
-        case FloatingPointKind::Double:
-            return almostEqualUlps<double>(matchee, m_target, m_ulps);
-        default:
-            throw std::domain_error("Unknown FloatingPointKind value");
-        }
-    }
-
-    std::string WithinUlpsMatcher::describe() const {
-        return "is within " + std::to_string(m_ulps) + " ULPs of " + ::Catch::Detail::stringify(m_target) + ((m_type == FloatingPointKind::Float)? "f" : "");
-    }
-
-}// namespace Floating
-
-Floating::WithinUlpsMatcher WithinULP(double target, int maxUlpDiff) {
-    return Floating::WithinUlpsMatcher(target, maxUlpDiff, Floating::FloatingPointKind::Double);
-}
-
-Floating::WithinUlpsMatcher WithinULP(float target, int maxUlpDiff) {
-    return Floating::WithinUlpsMatcher(target, maxUlpDiff, Floating::FloatingPointKind::Float);
-}
-
-Floating::WithinAbsMatcher WithinAbs(double target, double margin) {
-    return Floating::WithinAbsMatcher(target, margin);
-}
-
-} // namespace Matchers
-} // namespace Catch
-
-// end catch_matchers_floating.cpp
-// start catch_matchers_string.cpp
-
-#include <regex>
-
-namespace Catch {
-namespace Matchers {
-
-    namespace StdString {
-
-        CasedString::CasedString( std::string const& str, CaseSensitive::Choice caseSensitivity )
-        :   m_caseSensitivity( caseSensitivity ),
-            m_str( adjustString( str ) )
-        {}
-        std::string CasedString::adjustString( std::string const& str ) const {
-            return m_caseSensitivity == CaseSensitive::No
-                   ? toLower( str )
-                   : str;
-        }
-        std::string CasedString::caseSensitivitySuffix() const {
-            return m_caseSensitivity == CaseSensitive::No
-                   ? " (case insensitive)"
-                   : std::string();
-        }
-
-        StringMatcherBase::StringMatcherBase( std::string const& operation, CasedString const& comparator )
-        : m_comparator( comparator ),
-          m_operation( operation ) {
-        }
-
-        std::string StringMatcherBase::describe() const {
-            std::string description;
-            description.reserve(5 + m_operation.size() + m_comparator.m_str.size() +
-                                        m_comparator.caseSensitivitySuffix().size());
-            description += m_operation;
-            description += ": \"";
-            description += m_comparator.m_str;
-            description += "\"";
-            description += m_comparator.caseSensitivitySuffix();
-            return description;
-        }
-
-        EqualsMatcher::EqualsMatcher( CasedString const& comparator ) : StringMatcherBase( "equals", comparator ) {}
-
-        bool EqualsMatcher::match( std::string const& source ) const {
-            return m_comparator.adjustString( source ) == m_comparator.m_str;
-        }
-
-        ContainsMatcher::ContainsMatcher( CasedString const& comparator ) : StringMatcherBase( "contains", comparator ) {}
-
-        bool ContainsMatcher::match( std::string const& source ) const {
-            return contains( m_comparator.adjustString( source ), m_comparator.m_str );
-        }
-
-        StartsWithMatcher::StartsWithMatcher( CasedString const& comparator ) : StringMatcherBase( "starts with", comparator ) {}
-
-        bool StartsWithMatcher::match( std::string const& source ) const {
-            return startsWith( m_comparator.adjustString( source ), m_comparator.m_str );
-        }
-
-        EndsWithMatcher::EndsWithMatcher( CasedString const& comparator ) : StringMatcherBase( "ends with", comparator ) {}
-
-        bool EndsWithMatcher::match( std::string const& source ) const {
-            return endsWith( m_comparator.adjustString( source ), m_comparator.m_str );
-        }
-
-        RegexMatcher::RegexMatcher(std::string regex, CaseSensitive::Choice caseSensitivity): m_regex(std::move(regex)), m_caseSensitivity(caseSensitivity) {}
-
-        bool RegexMatcher::match(std::string const& matchee) const {
-            auto flags = std::regex::ECMAScript; // ECMAScript is the default syntax option anyway
-            if (m_caseSensitivity == CaseSensitive::Choice::No) {
-                flags |= std::regex::icase;
-            }
-            auto reg = std::regex(m_regex, flags);
-            return std::regex_match(matchee, reg);
-        }
-
-        std::string RegexMatcher::describe() const {
-            return "matches " + ::Catch::Detail::stringify(m_regex) + ((m_caseSensitivity == CaseSensitive::Choice::Yes)? " case sensitively" : " case insensitively");
-        }
-
-    } // namespace StdString
-
-    StdString::EqualsMatcher Equals( std::string const& str, CaseSensitive::Choice caseSensitivity ) {
-        return StdString::EqualsMatcher( StdString::CasedString( str, caseSensitivity) );
-    }
-    StdString::ContainsMatcher Contains( std::string const& str, CaseSensitive::Choice caseSensitivity ) {
-        return StdString::ContainsMatcher( StdString::CasedString( str, caseSensitivity) );
-    }
-    StdString::EndsWithMatcher EndsWith( std::string const& str, CaseSensitive::Choice caseSensitivity ) {
-        return StdString::EndsWithMatcher( StdString::CasedString( str, caseSensitivity) );
-    }
-    StdString::StartsWithMatcher StartsWith( std::string const& str, CaseSensitive::Choice caseSensitivity ) {
-        return StdString::StartsWithMatcher( StdString::CasedString( str, caseSensitivity) );
-    }
-
-    StdString::RegexMatcher Matches(std::string const& regex, CaseSensitive::Choice caseSensitivity) {
-        return StdString::RegexMatcher(regex, caseSensitivity);
-    }
-
-} // namespace Matchers
-} // namespace Catch
-// end catch_matchers_string.cpp
-// start catch_message.cpp
-
-// start catch_uncaught_exceptions.h
-
-namespace Catch {
-    bool uncaught_exceptions();
-} // end namespace Catch
-
-// end catch_uncaught_exceptions.h
-namespace Catch {
-
-    MessageInfo::MessageInfo(   std::string const& _macroName,
-                                SourceLineInfo const& _lineInfo,
-                                ResultWas::OfType _type )
-    :   macroName( _macroName ),
-        lineInfo( _lineInfo ),
-        type( _type ),
-        sequence( ++globalCount )
-    {}
-
-    bool MessageInfo::operator==( MessageInfo const& other ) const {
-        return sequence == other.sequence;
-    }
-
-    bool MessageInfo::operator<( MessageInfo const& other ) const {
-        return sequence < other.sequence;
-    }
-
-    // This may need protecting if threading support is added
-    unsigned int MessageInfo::globalCount = 0;
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    Catch::MessageBuilder::MessageBuilder( std::string const& macroName,
-                                           SourceLineInfo const& lineInfo,
-                                           ResultWas::OfType type )
-        :m_info(macroName, lineInfo, type) {}
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    ScopedMessage::ScopedMessage( MessageBuilder const& builder )
-    : m_info( builder.m_info )
-    {
-        m_info.message = builder.m_stream.str();
-        getResultCapture().pushScopedMessage( m_info );
-    }
-
-    ScopedMessage::~ScopedMessage() {
-        if ( !uncaught_exceptions() ){
-            getResultCapture().popScopedMessage(m_info);
-        }
-    }
-} // end namespace Catch
-// end catch_message.cpp
-// start catch_random_number_generator.cpp
-
-// start catch_random_number_generator.h
-
-#include <algorithm>
-
-namespace Catch {
-
-    struct IConfig;
-
-    void seedRng( IConfig const& config );
-
-    unsigned int rngSeed();
-
-    struct RandomNumberGenerator {
-        using result_type = unsigned int;
-
-        static constexpr result_type (min)() { return 0; }
-        static constexpr result_type (max)() { return 1000000; }
-
-        result_type operator()( result_type n ) const;
-        result_type operator()() const;
-
-        template<typename V>
-        static void shuffle( V& vector ) {
-            RandomNumberGenerator rng;
-            std::shuffle( vector.begin(), vector.end(), rng );
-        }
-    };
-
-}
-
-// end catch_random_number_generator.h
-#include <cstdlib>
-
-namespace Catch {
-
-    void seedRng( IConfig const& config ) {
-        if( config.rngSeed() != 0 )
-            std::srand( config.rngSeed() );
-    }
-    unsigned int rngSeed() {
-        return getCurrentContext().getConfig()->rngSeed();
-    }
-
-    RandomNumberGenerator::result_type RandomNumberGenerator::operator()( result_type n ) const {
-        return std::rand() % n;
-    }
-    RandomNumberGenerator::result_type RandomNumberGenerator::operator()() const {
-        return std::rand() % (max)();
-    }
-
-}
-// end catch_random_number_generator.cpp
-// start catch_registry_hub.cpp
-
-// start catch_test_case_registry_impl.h
-
-#include <vector>
-#include <set>
-#include <algorithm>
-#include <ios>
-
-namespace Catch {
-
-    class TestCase;
-    struct IConfig;
-
-    std::vector<TestCase> sortTests( IConfig const& config, std::vector<TestCase> const& unsortedTestCases );
-    bool matchTest( TestCase const& testCase, TestSpec const& testSpec, IConfig const& config );
-
-    void enforceNoDuplicateTestCases( std::vector<TestCase> const& functions );
-
-    std::vector<TestCase> filterTests( std::vector<TestCase> const& testCases, TestSpec const& testSpec, IConfig const& config );
-    std::vector<TestCase> const& getAllTestCasesSorted( IConfig const& config );
-
-    class TestRegistry : public ITestCaseRegistry {
-    public:
-        virtual ~TestRegistry() = default;
-
-        virtual void registerTest( TestCase const& testCase );
-
-        std::vector<TestCase> const& getAllTests() const override;
-        std::vector<TestCase> const& getAllTestsSorted( IConfig const& config ) const override;
-
-    private:
-        std::vector<TestCase> m_functions;
-        mutable RunTests::InWhatOrder m_currentSortOrder = RunTests::InDeclarationOrder;
-        mutable std::vector<TestCase> m_sortedFunctions;
-        std::size_t m_unnamedCount = 0;
-        std::ios_base::Init m_ostreamInit; // Forces cout/ cerr to be initialised
-    };
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    class TestInvokerAsFunction : public ITestInvoker {
-        void(*m_testAsFunction)();
-    public:
-        TestInvokerAsFunction( void(*testAsFunction)() ) noexcept;
-
-        void invoke() const override;
-    };
-
-    std::string extractClassName( StringRef const& classOrQualifiedMethodName );
-
-    ///////////////////////////////////////////////////////////////////////////
-
-} // end namespace Catch
-
-// end catch_test_case_registry_impl.h
-// start catch_reporter_registry.h
-
-#include <map>
-
-namespace Catch {
-
-    class ReporterRegistry : public IReporterRegistry {
-
-    public:
-
-        ~ReporterRegistry() override;
-
-        IStreamingReporterPtr create( std::string const& name, IConfigPtr const& config ) const override;
-
-        void registerReporter( std::string const& name, IReporterFactoryPtr const& factory );
-        void registerListener( IReporterFactoryPtr const& factory );
-
-        FactoryMap const& getFactories() const override;
-        Listeners const& getListeners() const override;
-
-    private:
-        FactoryMap m_factories;
-        Listeners m_listeners;
-    };
-}
-
-// end catch_reporter_registry.h
-// start catch_tag_alias_registry.h
-
-// start catch_tag_alias.h
-
-#include <string>
-
-namespace Catch {
-
-    struct TagAlias {
-        TagAlias(std::string const& _tag, SourceLineInfo _lineInfo);
-
-        std::string tag;
-        SourceLineInfo lineInfo;
-    };
-
-} // end namespace Catch
-
-// end catch_tag_alias.h
-#include <map>
-
-namespace Catch {
-
-    class TagAliasRegistry : public ITagAliasRegistry {
-    public:
-        ~TagAliasRegistry() override;
-        TagAlias const* find( std::string const& alias ) const override;
-        std::string expandAliases( std::string const& unexpandedTestSpec ) const override;
-        void add( std::string const& alias, std::string const& tag, SourceLineInfo const& lineInfo );
-
-    private:
-        std::map<std::string, TagAlias> m_registry;
-    };
-
-} // end namespace Catch
-
-// end catch_tag_alias_registry.h
-// start catch_startup_exception_registry.h
-
-#include <vector>
-#include <exception>
-
-namespace Catch {
-
-    class StartupExceptionRegistry {
-    public:
-        void add(std::exception_ptr const& exception) noexcept;
-        std::vector<std::exception_ptr> const& getExceptions() const noexcept;
-    private:
-        std::vector<std::exception_ptr> m_exceptions;
-    };
-
-} // end namespace Catch
-
-// end catch_startup_exception_registry.h
-namespace Catch {
-
-    namespace {
-
-        class RegistryHub : public IRegistryHub, public IMutableRegistryHub,
-                            private NonCopyable {
-
-        public: // IRegistryHub
-            RegistryHub() = default;
-            IReporterRegistry const& getReporterRegistry() const override {
-                return m_reporterRegistry;
-            }
-            ITestCaseRegistry const& getTestCaseRegistry() const override {
-                return m_testCaseRegistry;
-            }
-            IExceptionTranslatorRegistry& getExceptionTranslatorRegistry() override {
-                return m_exceptionTranslatorRegistry;
-            }
-            ITagAliasRegistry const& getTagAliasRegistry() const override {
-                return m_tagAliasRegistry;
-            }
-            StartupExceptionRegistry const& getStartupExceptionRegistry() const override {
-                return m_exceptionRegistry;
-            }
-
-        public: // IMutableRegistryHub
-            void registerReporter( std::string const& name, IReporterFactoryPtr const& factory ) override {
-                m_reporterRegistry.registerReporter( name, factory );
-            }
-            void registerListener( IReporterFactoryPtr const& factory ) override {
-                m_reporterRegistry.registerListener( factory );
-            }
-            void registerTest( TestCase const& testInfo ) override {
-                m_testCaseRegistry.registerTest( testInfo );
-            }
-            void registerTranslator( const IExceptionTranslator* translator ) override {
-                m_exceptionTranslatorRegistry.registerTranslator( translator );
-            }
-            void registerTagAlias( std::string const& alias, std::string const& tag, SourceLineInfo const& lineInfo ) override {
-                m_tagAliasRegistry.add( alias, tag, lineInfo );
-            }
-            void registerStartupException() noexcept override {
-                m_exceptionRegistry.add(std::current_exception());
-            }
-
-        private:
-            TestRegistry m_testCaseRegistry;
-            ReporterRegistry m_reporterRegistry;
-            ExceptionTranslatorRegistry m_exceptionTranslatorRegistry;
-            TagAliasRegistry m_tagAliasRegistry;
-            StartupExceptionRegistry m_exceptionRegistry;
-        };
-
-        // Single, global, instance
-        RegistryHub*& getTheRegistryHub() {
-            static RegistryHub* theRegistryHub = nullptr;
-            if( !theRegistryHub )
-                theRegistryHub = new RegistryHub();
-            return theRegistryHub;
-        }
-    }
-
-    IRegistryHub& getRegistryHub() {
-        return *getTheRegistryHub();
-    }
-    IMutableRegistryHub& getMutableRegistryHub() {
-        return *getTheRegistryHub();
-    }
-    void cleanUp() {
-        delete getTheRegistryHub();
-        getTheRegistryHub() = nullptr;
-        cleanUpContext();
-        ReusableStringStream::cleanup();
-    }
-    std::string translateActiveException() {
-        return getRegistryHub().getExceptionTranslatorRegistry().translateActiveException();
-    }
-
-} // end namespace Catch
-// end catch_registry_hub.cpp
-// start catch_reporter_registry.cpp
-
-namespace Catch {
-
-    ReporterRegistry::~ReporterRegistry() = default;
-
-    IStreamingReporterPtr ReporterRegistry::create( std::string const& name, IConfigPtr const& config ) const {
-        auto it =  m_factories.find( name );
-        if( it == m_factories.end() )
-            return nullptr;
-        return it->second->create( ReporterConfig( config ) );
-    }
-
-    void ReporterRegistry::registerReporter( std::string const& name, IReporterFactoryPtr const& factory ) {
-        m_factories.emplace(name, factory);
-    }
-    void ReporterRegistry::registerListener( IReporterFactoryPtr const& factory ) {
-        m_listeners.push_back( factory );
-    }
-
-    IReporterRegistry::FactoryMap const& ReporterRegistry::getFactories() const {
-        return m_factories;
-    }
-    IReporterRegistry::Listeners const& ReporterRegistry::getListeners() const {
-        return m_listeners;
-    }
-
-}
-// end catch_reporter_registry.cpp
-// start catch_result_type.cpp
-
-namespace Catch {
-
-    bool isOk( ResultWas::OfType resultType ) {
-        return ( resultType & ResultWas::FailureBit ) == 0;
-    }
-    bool isJustInfo( int flags ) {
-        return flags == ResultWas::Info;
-    }
-
-    ResultDisposition::Flags operator | ( ResultDisposition::Flags lhs, ResultDisposition::Flags rhs ) {
-        return static_cast<ResultDisposition::Flags>( static_cast<int>( lhs ) | static_cast<int>( rhs ) );
-    }
-
-    bool shouldContinueOnFailure( int flags )    { return ( flags & ResultDisposition::ContinueOnFailure ) != 0; }
-    bool shouldSuppressFailure( int flags )      { return ( flags & ResultDisposition::SuppressFail ) != 0; }
-
-} // end namespace Catch
-// end catch_result_type.cpp
-// start catch_run_context.cpp
-
-#include <cassert>
-#include <algorithm>
-#include <sstream>
-
-namespace Catch {
-
-    class RedirectedStream {
-        std::ostream& m_originalStream;
-        std::ostream& m_redirectionStream;
-        std::streambuf* m_prevBuf;
-
-    public:
-        RedirectedStream( std::ostream& originalStream, std::ostream& redirectionStream )
-        :   m_originalStream( originalStream ),
-            m_redirectionStream( redirectionStream ),
-            m_prevBuf( m_originalStream.rdbuf() )
-        {
-            m_originalStream.rdbuf( m_redirectionStream.rdbuf() );
-        }
-        ~RedirectedStream() {
-            m_originalStream.rdbuf( m_prevBuf );
-        }
-    };
-
-    class RedirectedStdOut {
-        ReusableStringStream m_rss;
-        RedirectedStream m_cout;
-    public:
-        RedirectedStdOut() : m_cout( Catch::cout(), m_rss.get() ) {}
-        auto str() const -> std::string { return m_rss.str(); }
-    };
-
-    // StdErr has two constituent streams in C++, std::cerr and std::clog
-    // This means that we need to redirect 2 streams into 1 to keep proper
-    // order of writes
-    class RedirectedStdErr {
-        ReusableStringStream m_rss;
-        RedirectedStream m_cerr;
-        RedirectedStream m_clog;
-    public:
-        RedirectedStdErr()
-        :   m_cerr( Catch::cerr(), m_rss.get() ),
-            m_clog( Catch::clog(), m_rss.get() )
-        {}
-        auto str() const -> std::string { return m_rss.str(); }
-    };
-
-    RunContext::RunContext(IConfigPtr const& _config, IStreamingReporterPtr&& reporter)
-    :   m_runInfo(_config->name()),
-        m_context(getCurrentMutableContext()),
-        m_config(_config),
-        m_reporter(std::move(reporter)),
-        m_lastAssertionInfo{ StringRef(), SourceLineInfo("",0), StringRef(), ResultDisposition::Normal },
-        m_includeSuccessfulResults( m_config->includeSuccessfulResults() )
-    {
-        m_context.setRunner(this);
-        m_context.setConfig(m_config);
-        m_context.setResultCapture(this);
-        m_reporter->testRunStarting(m_runInfo);
-    }
-
-    RunContext::~RunContext() {
-        m_reporter->testRunEnded(TestRunStats(m_runInfo, m_totals, aborting()));
-    }
-
-    void RunContext::testGroupStarting(std::string const& testSpec, std::size_t groupIndex, std::size_t groupsCount) {
-        m_reporter->testGroupStarting(GroupInfo(testSpec, groupIndex, groupsCount));
-    }
-
-    void RunContext::testGroupEnded(std::string const& testSpec, Totals const& totals, std::size_t groupIndex, std::size_t groupsCount) {
-        m_reporter->testGroupEnded(TestGroupStats(GroupInfo(testSpec, groupIndex, groupsCount), totals, aborting()));
-    }
-
-    Totals RunContext::runTest(TestCase const& testCase) {
-        Totals prevTotals = m_totals;
-
-        std::string redirectedCout;
-        std::string redirectedCerr;
-
-        auto const& testInfo = testCase.getTestCaseInfo();
-
-        m_reporter->testCaseStarting(testInfo);
-
-        m_activeTestCase = &testCase;
-
-        ITracker& rootTracker = m_trackerContext.startRun();
-        assert(rootTracker.isSectionTracker());
-        static_cast<SectionTracker&>(rootTracker).addInitialFilters(m_config->getSectionsToRun());
-        do {
-            m_trackerContext.startCycle();
-            m_testCaseTracker = &SectionTracker::acquire(m_trackerContext, TestCaseTracking::NameAndLocation(testInfo.name, testInfo.lineInfo));
-            runCurrentTest(redirectedCout, redirectedCerr);
-        } while (!m_testCaseTracker->isSuccessfullyCompleted() && !aborting());
-
-        Totals deltaTotals = m_totals.delta(prevTotals);
-        if (testInfo.expectedToFail() && deltaTotals.testCases.passed > 0) {
-            deltaTotals.assertions.failed++;
-            deltaTotals.testCases.passed--;
-            deltaTotals.testCases.failed++;
-        }
-        m_totals.testCases += deltaTotals.testCases;
-        m_reporter->testCaseEnded(TestCaseStats(testInfo,
-                                  deltaTotals,
-                                  redirectedCout,
-                                  redirectedCerr,
-                                  aborting()));
-
-        m_activeTestCase = nullptr;
-        m_testCaseTracker = nullptr;
-
-        return deltaTotals;
-    }
-
-    IConfigPtr RunContext::config() const {
-        return m_config;
-    }
-
-    IStreamingReporter& RunContext::reporter() const {
-        return *m_reporter;
-    }
-
-    void RunContext::assertionEnded(AssertionResult const & result) {
-        if (result.getResultType() == ResultWas::Ok) {
-            m_totals.assertions.passed++;
-            m_lastAssertionPassed = true;
-        } else if (!result.isOk()) {
-            m_lastAssertionPassed = false;
-            if( m_activeTestCase->getTestCaseInfo().okToFail() )
-                m_totals.assertions.failedButOk++;
-            else
-                m_totals.assertions.failed++;
-        }
-        else {
-            m_lastAssertionPassed = true;
-        }
-
-        // We have no use for the return value (whether messages should be cleared), because messages were made scoped
-        // and should be let to clear themselves out.
-        static_cast<void>(m_reporter->assertionEnded(AssertionStats(result, m_messages, m_totals)));
-
-        // Reset working state
-        resetAssertionInfo();
-        m_lastResult = result;
-    }
-    void RunContext::resetAssertionInfo() {
-        m_lastAssertionInfo.macroName = StringRef();
-        m_lastAssertionInfo.capturedExpression = "{Unknown expression after the reported line}"_sr;
-    }
-
-    bool RunContext::sectionStarted(SectionInfo const & sectionInfo, Counts & assertions) {
-        ITracker& sectionTracker = SectionTracker::acquire(m_trackerContext, TestCaseTracking::NameAndLocation(sectionInfo.name, sectionInfo.lineInfo));
-        if (!sectionTracker.isOpen())
-            return false;
-        m_activeSections.push_back(&sectionTracker);
-
-        m_lastAssertionInfo.lineInfo = sectionInfo.lineInfo;
-
-        m_reporter->sectionStarting(sectionInfo);
-
-        assertions = m_totals.assertions;
-
-        return true;
-    }
-
-    bool RunContext::testForMissingAssertions(Counts& assertions) {
-        if (assertions.total() != 0)
-            return false;
-        if (!m_config->warnAboutMissingAssertions())
-            return false;
-        if (m_trackerContext.currentTracker().hasChildren())
-            return false;
-        m_totals.assertions.failed++;
-        assertions.failed++;
-        return true;
-    }
-
-    void RunContext::sectionEnded(SectionEndInfo const & endInfo) {
-        Counts assertions = m_totals.assertions - endInfo.prevAssertions;
-        bool missingAssertions = testForMissingAssertions(assertions);
-
-        if (!m_activeSections.empty()) {
-            m_activeSections.back()->close();
-            m_activeSections.pop_back();
-        }
-
-        m_reporter->sectionEnded(SectionStats(endInfo.sectionInfo, assertions, endInfo.durationInSeconds, missingAssertions));
-        m_messages.clear();
-    }
-
-    void RunContext::sectionEndedEarly(SectionEndInfo const & endInfo) {
-        if (m_unfinishedSections.empty())
-            m_activeSections.back()->fail();
-        else
-            m_activeSections.back()->close();
-        m_activeSections.pop_back();
-
-        m_unfinishedSections.push_back(endInfo);
-    }
-    void RunContext::benchmarkStarting( BenchmarkInfo const& info ) {
-        m_reporter->benchmarkStarting( info );
-    }
-    void RunContext::benchmarkEnded( BenchmarkStats const& stats ) {
-        m_reporter->benchmarkEnded( stats );
-    }
-
-    void RunContext::pushScopedMessage(MessageInfo const & message) {
-        m_messages.push_back(message);
-    }
-
-    void RunContext::popScopedMessage(MessageInfo const & message) {
-        m_messages.erase(std::remove(m_messages.begin(), m_messages.end(), message), m_messages.end());
-    }
-
-    std::string RunContext::getCurrentTestName() const {
-        return m_activeTestCase
-            ? m_activeTestCase->getTestCaseInfo().name
-            : std::string();
-    }
-
-    const AssertionResult * RunContext::getLastResult() const {
-        return &(*m_lastResult);
-    }
-
-    void RunContext::exceptionEarlyReported() {
-        m_shouldReportUnexpected = false;
-    }
-
-    void RunContext::handleFatalErrorCondition( StringRef message ) {
-        // First notify reporter that bad things happened
-        m_reporter->fatalErrorEncountered(message);
-
-        // Don't rebuild the result -- the stringification itself can cause more fatal errors
-        // Instead, fake a result data.
-        AssertionResultData tempResult( ResultWas::FatalErrorCondition, { false } );
-        tempResult.message = message;
-        AssertionResult result(m_lastAssertionInfo, tempResult);
-
-        assertionEnded(result);
-
-        handleUnfinishedSections();
-
-        // Recreate section for test case (as we will lose the one that was in scope)
-        auto const& testCaseInfo = m_activeTestCase->getTestCaseInfo();
-        SectionInfo testCaseSection(testCaseInfo.lineInfo, testCaseInfo.name, testCaseInfo.description);
-
-        Counts assertions;
-        assertions.failed = 1;
-        SectionStats testCaseSectionStats(testCaseSection, assertions, 0, false);
-        m_reporter->sectionEnded(testCaseSectionStats);
-
-        auto const& testInfo = m_activeTestCase->getTestCaseInfo();
-
-        Totals deltaTotals;
-        deltaTotals.testCases.failed = 1;
-        deltaTotals.assertions.failed = 1;
-        m_reporter->testCaseEnded(TestCaseStats(testInfo,
-                                  deltaTotals,
-                                  std::string(),
-                                  std::string(),
-                                  false));
-        m_totals.testCases.failed++;
-        testGroupEnded(std::string(), m_totals, 1, 1);
-        m_reporter->testRunEnded(TestRunStats(m_runInfo, m_totals, false));
-    }
-
-    bool RunContext::lastAssertionPassed() {
-         return m_lastAssertionPassed;
-    }
-
-    void RunContext::assertionPassed() {
-        m_lastAssertionPassed = true;
-        ++m_totals.assertions.passed;
-        resetAssertionInfo();
-    }
-
-    bool RunContext::aborting() const {
-        return m_totals.assertions.failed == static_cast<std::size_t>(m_config->abortAfter());
-    }
-
-    void RunContext::runCurrentTest(std::string & redirectedCout, std::string & redirectedCerr) {
-        auto const& testCaseInfo = m_activeTestCase->getTestCaseInfo();
-        SectionInfo testCaseSection(testCaseInfo.lineInfo, testCaseInfo.name, testCaseInfo.description);
-        m_reporter->sectionStarting(testCaseSection);
-        Counts prevAssertions = m_totals.assertions;
-        double duration = 0;
-        m_shouldReportUnexpected = true;
-        m_lastAssertionInfo = { "TEST_CASE"_sr, testCaseInfo.lineInfo, StringRef(), ResultDisposition::Normal };
-
-        seedRng(*m_config);
-
-        Timer timer;
-        try {
-            if (m_reporter->getPreferences().shouldRedirectStdOut) {
-                RedirectedStdOut redirectedStdOut;
-                RedirectedStdErr redirectedStdErr;
-                timer.start();
-                invokeActiveTestCase();
-                redirectedCout += redirectedStdOut.str();
-                redirectedCerr += redirectedStdErr.str();
-
-            } else {
-                timer.start();
-                invokeActiveTestCase();
-            }
-            duration = timer.getElapsedSeconds();
-        } catch (TestFailureException&) {
-            // This just means the test was aborted due to failure
-        } catch (...) {
-            // Under CATCH_CONFIG_FAST_COMPILE, unexpected exceptions under REQUIRE assertions
-            // are reported without translation at the point of origin.
-            if( m_shouldReportUnexpected ) {
-                AssertionReaction dummyReaction;
-                handleUnexpectedInflightException( m_lastAssertionInfo, translateActiveException(), dummyReaction );
-            }
-        }
-        Counts assertions = m_totals.assertions - prevAssertions;
-        bool missingAssertions = testForMissingAssertions(assertions);
-
-        m_testCaseTracker->close();
-        handleUnfinishedSections();
-        m_messages.clear();
-
-        SectionStats testCaseSectionStats(testCaseSection, assertions, duration, missingAssertions);
-        m_reporter->sectionEnded(testCaseSectionStats);
-    }
-
-    void RunContext::invokeActiveTestCase() {
-        FatalConditionHandler fatalConditionHandler; // Handle signals
-        m_activeTestCase->invoke();
-        fatalConditionHandler.reset();
-    }
-
-    void RunContext::handleUnfinishedSections() {
-        // If sections ended prematurely due to an exception we stored their
-        // infos here so we can tear them down outside the unwind process.
-        for (auto it = m_unfinishedSections.rbegin(),
-             itEnd = m_unfinishedSections.rend();
-             it != itEnd;
-             ++it)
-            sectionEnded(*it);
-        m_unfinishedSections.clear();
-    }
-
-    void RunContext::handleExpr(
-        AssertionInfo const& info,
-        ITransientExpression const& expr,
-        AssertionReaction& reaction
-    ) {
-        m_reporter->assertionStarting( info );
-
-        bool negated = isFalseTest( info.resultDisposition );
-        bool result = expr.getResult() != negated;
-
-        if( result ) {
-            if (!m_includeSuccessfulResults) {
-                assertionPassed();
-            }
-            else {
-                reportExpr(info, ResultWas::Ok, &expr, negated);
-            }
-        }
-        else {
-            reportExpr(info, ResultWas::ExpressionFailed, &expr, negated );
-            populateReaction( reaction );
-        }
-    }
-    void RunContext::reportExpr(
-            AssertionInfo const &info,
-            ResultWas::OfType resultType,
-            ITransientExpression const *expr,
-            bool negated ) {
-
-        m_lastAssertionInfo = info;
-        AssertionResultData data( resultType, LazyExpression( negated ) );
-
-        AssertionResult assertionResult{ info, data };
-        assertionResult.m_resultData.lazyExpression.m_transientExpression = expr;
-
-        assertionEnded( assertionResult );
-    }
-
-    void RunContext::handleMessage(
-            AssertionInfo const& info,
-            ResultWas::OfType resultType,
-            StringRef const& message,
-            AssertionReaction& reaction
-    ) {
-        m_reporter->assertionStarting( info );
-
-        m_lastAssertionInfo = info;
-
-        AssertionResultData data( resultType, LazyExpression( false ) );
-        data.message = message;
-        AssertionResult assertionResult{ m_lastAssertionInfo, data };
-        assertionEnded( assertionResult );
-        if( !assertionResult.isOk() )
-            populateReaction( reaction );
-    }
-    void RunContext::handleUnexpectedExceptionNotThrown(
-            AssertionInfo const& info,
-            AssertionReaction& reaction
-    ) {
-        handleNonExpr(info, Catch::ResultWas::DidntThrowException, reaction);
-    }
-
-    void RunContext::handleUnexpectedInflightException(
-            AssertionInfo const& info,
-            std::string const& message,
-            AssertionReaction& reaction
-    ) {
-        m_lastAssertionInfo = info;
-
-        AssertionResultData data( ResultWas::ThrewException, LazyExpression( false ) );
-        data.message = message;
-        AssertionResult assertionResult{ info, data };
-        assertionEnded( assertionResult );
-        populateReaction( reaction );
-    }
-
-    void RunContext::populateReaction( AssertionReaction& reaction ) {
-        reaction.shouldDebugBreak = m_config->shouldDebugBreak();
-        reaction.shouldThrow = aborting() || (m_lastAssertionInfo.resultDisposition & ResultDisposition::Normal);
-    }
-
-    void RunContext::handleIncomplete(
-            AssertionInfo const& info
-    ) {
-        m_lastAssertionInfo = info;
-
-        AssertionResultData data( ResultWas::ThrewException, LazyExpression( false ) );
-        data.message = "Exception translation was disabled by CATCH_CONFIG_FAST_COMPILE";
-        AssertionResult assertionResult{ info, data };
-        assertionEnded( assertionResult );
-    }
-    void RunContext::handleNonExpr(
-            AssertionInfo const &info,
-            ResultWas::OfType resultType,
-            AssertionReaction &reaction
-    ) {
-        m_lastAssertionInfo = info;
-
-        AssertionResultData data( resultType, LazyExpression( false ) );
-        AssertionResult assertionResult{ info, data };
-        assertionEnded( assertionResult );
-
-        if( !assertionResult.isOk() )
-            populateReaction( reaction );
-    }
-
-    IResultCapture& getResultCapture() {
-        if (auto* capture = getCurrentContext().getResultCapture())
-            return *capture;
-        else
-            CATCH_INTERNAL_ERROR("No result capture instance");
-    }
-}
-// end catch_run_context.cpp
-// start catch_section.cpp
-
-namespace Catch {
-
-    Section::Section( SectionInfo const& info )
-    :   m_info( info ),
-        m_sectionIncluded( getResultCapture().sectionStarted( m_info, m_assertions ) )
-    {
-        m_timer.start();
-    }
-
-    Section::~Section() {
-        if( m_sectionIncluded ) {
-            SectionEndInfo endInfo( m_info, m_assertions, m_timer.getElapsedSeconds() );
-            if( uncaught_exceptions() )
-                getResultCapture().sectionEndedEarly( endInfo );
-            else
-                getResultCapture().sectionEnded( endInfo );
-        }
-    }
-
-    // This indicates whether the section should be executed or not
-    Section::operator bool() const {
-        return m_sectionIncluded;
-    }
-
-} // end namespace Catch
-// end catch_section.cpp
-// start catch_section_info.cpp
-
-namespace Catch {
-
-    SectionInfo::SectionInfo
-        (   SourceLineInfo const& _lineInfo,
-            std::string const& _name,
-            std::string const& _description )
-    :   name( _name ),
-        description( _description ),
-        lineInfo( _lineInfo )
-    {}
-
-    SectionEndInfo::SectionEndInfo( SectionInfo const& _sectionInfo, Counts const& _prevAssertions, double _durationInSeconds )
-    : sectionInfo( _sectionInfo ), prevAssertions( _prevAssertions ), durationInSeconds( _durationInSeconds )
-    {}
-
-} // end namespace Catch
-// end catch_section_info.cpp
-// start catch_session.cpp
-
-// start catch_session.h
-
-#include <memory>
-
-namespace Catch {
-
-    class Session : NonCopyable {
-    public:
-
-        Session();
-        ~Session() override;
-
-        void showHelp() const;
-        void libIdentify();
-
-        int applyCommandLine( int argc, char const * const * argv );
-
-        void useConfigData( ConfigData const& configData );
-
-        int run( int argc, char* argv[] );
-    #if defined(CATCH_CONFIG_WCHAR) && defined(WIN32) && defined(UNICODE)
-        int run( int argc, wchar_t* const argv[] );
-    #endif
-        int run();
-
-        clara::Parser const& cli() const;
-        void cli( clara::Parser const& newParser );
-        ConfigData& configData();
-        Config& config();
-    private:
-        int runInternal();
-
-        clara::Parser m_cli;
-        ConfigData m_configData;
-        std::shared_ptr<Config> m_config;
-        bool m_startupExceptions = false;
-    };
-
-} // end namespace Catch
-
-// end catch_session.h
-// start catch_version.h
-
-#include <iosfwd>
-
-namespace Catch {
-
-    // Versioning information
-    struct Version {
-        Version( Version const& ) = delete;
-        Version& operator=( Version const& ) = delete;
-        Version(    unsigned int _majorVersion,
-                    unsigned int _minorVersion,
-                    unsigned int _patchNumber,
-                    char const * const _branchName,
-                    unsigned int _buildNumber );
-
-        unsigned int const majorVersion;
-        unsigned int const minorVersion;
-        unsigned int const patchNumber;
-
-        // buildNumber is only used if branchName is not null
-        char const * const branchName;
-        unsigned int const buildNumber;
-
-        friend std::ostream& operator << ( std::ostream& os, Version const& version );
-    };
-
-    Version const& libraryVersion();
-}
-
-// end catch_version.h
-#include <cstdlib>
-#include <iomanip>
-
-namespace Catch {
-
-    namespace {
-        const int MaxExitCode = 255;
-
-        IStreamingReporterPtr createReporter(std::string const& reporterName, IConfigPtr const& config) {
-            auto reporter = Catch::getRegistryHub().getReporterRegistry().create(reporterName, config);
-            CATCH_ENFORCE(reporter, "No reporter registered with name: '" << reporterName << "'");
-
-            return reporter;
-        }
-
-#ifndef CATCH_CONFIG_DEFAULT_REPORTER
-#define CATCH_CONFIG_DEFAULT_REPORTER "console"
-#endif
-
-        IStreamingReporterPtr makeReporter(std::shared_ptr<Config> const& config) {
-            auto const& reporterNames = config->getReporterNames();
-            if (reporterNames.empty())
-                return createReporter(CATCH_CONFIG_DEFAULT_REPORTER, config);
-
-            IStreamingReporterPtr reporter;
-            for (auto const& name : reporterNames)
-                addReporter(reporter, createReporter(name, config));
-            return reporter;
-        }
-
-#undef CATCH_CONFIG_DEFAULT_REPORTER
-
-        void addListeners(IStreamingReporterPtr& reporters, IConfigPtr const& config) {
-            auto const& listeners = Catch::getRegistryHub().getReporterRegistry().getListeners();
-            for (auto const& listener : listeners)
-                addReporter(reporters, listener->create(Catch::ReporterConfig(config)));
-        }
-
-        Catch::Totals runTests(std::shared_ptr<Config> const& config) {
-            IStreamingReporterPtr reporter = makeReporter(config);
-            addListeners(reporter, config);
-
-            RunContext context(config, std::move(reporter));
-
-            Totals totals;
-
-            context.testGroupStarting(config->name(), 1, 1);
-
-            TestSpec testSpec = config->testSpec();
-
-            auto const& allTestCases = getAllTestCasesSorted(*config);
-            for (auto const& testCase : allTestCases) {
-                if (!context.aborting() && matchTest(testCase, testSpec, *config))
-                    totals += context.runTest(testCase);
-                else
-                    context.reporter().skipTest(testCase);
-            }
-
-            if (config->warnAboutNoTests() && totals.testCases.total() == 0) {
-                ReusableStringStream testConfig;
-
-                bool first = true;
-                for (const auto& input : config->getTestsOrTags()) {
-                    if (!first) { testConfig << ' '; }
-                    first = false;
-                    testConfig << input;
-                }
-
-                context.reporter().noMatchingTestCases(testConfig.str());
-                totals.error = -1;
-            }
-
-            context.testGroupEnded(config->name(), totals, 1, 1);
-            return totals;
-        }
-
-        void applyFilenamesAsTags(Catch::IConfig const& config) {
-            auto& tests = const_cast<std::vector<TestCase>&>(getAllTestCasesSorted(config));
-            for (auto& testCase : tests) {
-                auto tags = testCase.tags;
-
-                std::string filename = testCase.lineInfo.file;
-                auto lastSlash = filename.find_last_of("\\/");
-                if (lastSlash != std::string::npos) {
-                    filename.erase(0, lastSlash);
-                    filename[0] = '#';
-                }
-
-                auto lastDot = filename.find_last_of('.');
-                if (lastDot != std::string::npos) {
-                    filename.erase(lastDot);
-                }
-
-                tags.push_back(std::move(filename));
-                setTags(testCase, tags);
-            }
-        }
-
-    } // anon namespace
-
-    Session::Session() {
-        static bool alreadyInstantiated = false;
-        if( alreadyInstantiated ) {
-            try         { CATCH_INTERNAL_ERROR( "Only one instance of Catch::Session can ever be used" ); }
-            catch(...)  { getMutableRegistryHub().registerStartupException(); }
-        }
-
-        const auto& exceptions = getRegistryHub().getStartupExceptionRegistry().getExceptions();
-        if ( !exceptions.empty() ) {
-            m_startupExceptions = true;
-            Colour colourGuard( Colour::Red );
-            Catch::cerr() << "Errors occurred during startup!" << '\n';
-            // iterate over all exceptions and notify user
-            for ( const auto& ex_ptr : exceptions ) {
-                try {
-                    std::rethrow_exception(ex_ptr);
-                } catch ( std::exception const& ex ) {
-                    Catch::cerr() << Column( ex.what() ).indent(2) << '\n';
-                }
-            }
-        }
-
-        alreadyInstantiated = true;
-        m_cli = makeCommandLineParser( m_configData );
-    }
-    Session::~Session() {
-        Catch::cleanUp();
-    }
-
-    void Session::showHelp() const {
-        Catch::cout()
-                << "\nCatch v" << libraryVersion() << "\n"
-                << m_cli << std::endl
-                << "For more detailed usage please see the project docs\n" << std::endl;
-    }
-    void Session::libIdentify() {
-        Catch::cout()
-                << std::left << std::setw(16) << "description: " << "A Catch test executable\n"
-                << std::left << std::setw(16) << "category: " << "testframework\n"
-                << std::left << std::setw(16) << "framework: " << "Catch Test\n"
-                << std::left << std::setw(16) << "version: " << libraryVersion() << std::endl;
-    }
-
-    int Session::applyCommandLine( int argc, char const * const * argv ) {
-        if( m_startupExceptions )
-            return 1;
-
-        auto result = m_cli.parse( clara::Args( argc, argv ) );
-        if( !result ) {
-            Catch::cerr()
-                << Colour( Colour::Red )
-                << "\nError(s) in input:\n"
-                << Column( result.errorMessage() ).indent( 2 )
-                << "\n\n";
-            Catch::cerr() << "Run with -? for usage\n" << std::endl;
-            return MaxExitCode;
-        }
-
-        if( m_configData.showHelp )
-            showHelp();
-        if( m_configData.libIdentify )
-            libIdentify();
-        m_config.reset();
-        return 0;
-    }
-
-    void Session::useConfigData( ConfigData const& configData ) {
-        m_configData = configData;
-        m_config.reset();
-    }
-
-    int Session::run( int argc, char* argv[] ) {
-        if( m_startupExceptions )
-            return 1;
-        int returnCode = applyCommandLine( argc, argv );
-        if( returnCode == 0 )
-            returnCode = run();
-        return returnCode;
-    }
-
-#if defined(CATCH_CONFIG_WCHAR) && defined(WIN32) && defined(UNICODE)
-    int Session::run( int argc, wchar_t* const argv[] ) {
-
-        char **utf8Argv = new char *[ argc ];
-
-        for ( int i = 0; i < argc; ++i ) {
-            int bufSize = WideCharToMultiByte( CP_UTF8, 0, argv[i], -1, NULL, 0, NULL, NULL );
-
-            utf8Argv[ i ] = new char[ bufSize ];
-
-            WideCharToMultiByte( CP_UTF8, 0, argv[i], -1, utf8Argv[i], bufSize, NULL, NULL );
-        }
-
-        int returnCode = run( argc, utf8Argv );
-
-        for ( int i = 0; i < argc; ++i )
-            delete [] utf8Argv[ i ];
-
-        delete [] utf8Argv;
-
-        return returnCode;
-    }
-#endif
-    int Session::run() {
-        if( ( m_configData.waitForKeypress & WaitForKeypress::BeforeStart ) != 0 ) {
-            Catch::cout() << "...waiting for enter/ return before starting" << std::endl;
-            static_cast<void>(std::getchar());
-        }
-        int exitCode = runInternal();
-        if( ( m_configData.waitForKeypress & WaitForKeypress::BeforeExit ) != 0 ) {
-            Catch::cout() << "...waiting for enter/ return before exiting, with code: " << exitCode << std::endl;
-            static_cast<void>(std::getchar());
-        }
-        return exitCode;
-    }
-
-    clara::Parser const& Session::cli() const {
-        return m_cli;
-    }
-    void Session::cli( clara::Parser const& newParser ) {
-        m_cli = newParser;
-    }
-    ConfigData& Session::configData() {
-        return m_configData;
-    }
-    Config& Session::config() {
-        if( !m_config )
-            m_config = std::make_shared<Config>( m_configData );
-        return *m_config;
-    }
-
-    int Session::runInternal() {
-        if( m_startupExceptions )
-            return 1;
-
-        if( m_configData.showHelp || m_configData.libIdentify )
-            return 0;
-
-        try
-        {
-            config(); // Force config to be constructed
-
-            seedRng( *m_config );
-
-            if( m_configData.filenamesAsTags )
-                applyFilenamesAsTags( *m_config );
-
-            // Handle list request
-            if( Option<std::size_t> listed = list( config() ) )
-                return static_cast<int>( *listed );
-
-            auto totals = runTests( m_config );
-            // Note that on unices only the lower 8 bits are usually used, clamping
-            // the return value to 255 prevents false negative when some multiple
-            // of 256 tests has failed
-            return (std::min) (MaxExitCode, (std::max) (totals.error, static_cast<int>(totals.assertions.failed)));
-        }
-        catch( std::exception& ex ) {
-            Catch::cerr() << ex.what() << std::endl;
-            return MaxExitCode;
-        }
-    }
-
-} // end namespace Catch
-// end catch_session.cpp
-// start catch_startup_exception_registry.cpp
-
-namespace Catch {
-    void StartupExceptionRegistry::add( std::exception_ptr const& exception ) noexcept {
-        try {
-            m_exceptions.push_back(exception);
-        }
-        catch(...) {
-            // If we run out of memory during start-up there's really not a lot more we can do about it
-            std::terminate();
-        }
-    }
-
-    std::vector<std::exception_ptr> const& StartupExceptionRegistry::getExceptions() const noexcept {
-        return m_exceptions;
-    }
-
-} // end namespace Catch
-// end catch_startup_exception_registry.cpp
-// start catch_stream.cpp
-
-#include <cstdio>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <memory>
-
-#if defined(__clang__)
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wexit-time-destructors"
-#endif
-
-namespace Catch {
-
-    Catch::IStream::~IStream() = default;
-
-    namespace detail { namespace {
-        template<typename WriterF, std::size_t bufferSize=256>
-        class StreamBufImpl : public std::streambuf {
-            char data[bufferSize];
-            WriterF m_writer;
-
-        public:
-            StreamBufImpl() {
-                setp( data, data + sizeof(data) );
-            }
-
-            ~StreamBufImpl() noexcept {
-                StreamBufImpl::sync();
-            }
-
-        private:
-            int overflow( int c ) override {
-                sync();
-
-                if( c != EOF ) {
-                    if( pbase() == epptr() )
-                        m_writer( std::string( 1, static_cast<char>( c ) ) );
-                    else
-                        sputc( static_cast<char>( c ) );
-                }
-                return 0;
-            }
-
-            int sync() override {
-                if( pbase() != pptr() ) {
-                    m_writer( std::string( pbase(), static_cast<std::string::size_type>( pptr() - pbase() ) ) );
-                    setp( pbase(), epptr() );
-                }
-                return 0;
-            }
-        };
-
-        ///////////////////////////////////////////////////////////////////////////
-
-        struct OutputDebugWriter {
-
-            void operator()( std::string const&str ) {
-                writeToDebugConsole( str );
-            }
-        };
-
-        ///////////////////////////////////////////////////////////////////////////
-
-        class FileStream : public IStream {
-            mutable std::ofstream m_ofs;
-        public:
-            FileStream( StringRef filename ) {
-                m_ofs.open( filename.c_str() );
-                CATCH_ENFORCE( !m_ofs.fail(), "Unable to open file: '" << filename << "'" );
-            }
-            ~FileStream() override = default;
-        public: // IStream
-            std::ostream& stream() const override {
-                return m_ofs;
-            }
-        };
-
-        ///////////////////////////////////////////////////////////////////////////
-
-        class CoutStream : public IStream {
-            mutable std::ostream m_os;
-        public:
-            // Store the streambuf from cout up-front because
-            // cout may get redirected when running tests
-            CoutStream() : m_os( Catch::cout().rdbuf() ) {}
-            ~CoutStream() override = default;
-
-        public: // IStream
-            std::ostream& stream() const override { return m_os; }
-        };
-
-        ///////////////////////////////////////////////////////////////////////////
-
-        class DebugOutStream : public IStream {
-            std::unique_ptr<StreamBufImpl<OutputDebugWriter>> m_streamBuf;
-            mutable std::ostream m_os;
-        public:
-            DebugOutStream()
-            :   m_streamBuf( new StreamBufImpl<OutputDebugWriter>() ),
-                m_os( m_streamBuf.get() )
-            {}
-
-            ~DebugOutStream() override = default;
-
-        public: // IStream
-            std::ostream& stream() const override { return m_os; }
-        };
-
-    }} // namespace anon::detail
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    auto makeStream( StringRef const &filename ) -> IStream const* {
-        if( filename.empty() )
-            return new detail::CoutStream();
-        else if( filename[0] == '%' ) {
-            if( filename == "%debug" )
-                return new detail::DebugOutStream();
-            else
-                CATCH_ERROR( "Unrecognised stream: '" << filename << "'" );
-        }
-        else
-            return new detail::FileStream( filename );
-    }
-
-    // This class encapsulates the idea of a pool of ostringstreams that can be reused.
-    struct StringStreams {
-        std::vector<std::unique_ptr<std::ostringstream>> m_streams;
-        std::vector<std::size_t> m_unused;
-        std::ostringstream m_referenceStream; // Used for copy state/ flags from
-        static StringStreams* s_instance;
-
-        auto add() -> std::size_t {
-            if( m_unused.empty() ) {
-                m_streams.push_back( std::unique_ptr<std::ostringstream>( new std::ostringstream ) );
-                return m_streams.size()-1;
-            }
-            else {
-                auto index = m_unused.back();
-                m_unused.pop_back();
-                return index;
-            }
-        }
-
-        void release( std::size_t index ) {
-            m_streams[index]->copyfmt( m_referenceStream ); // Restore initial flags and other state
-            m_unused.push_back(index);
-        }
-
-        // !TBD: put in TLS
-        static auto instance() -> StringStreams& {
-            if( !s_instance )
-                s_instance = new StringStreams();
-            return *s_instance;
-        }
-        static void cleanup() {
-            delete s_instance;
-            s_instance = nullptr;
-        }
-    };
-
-    StringStreams* StringStreams::s_instance = nullptr;
-
-    void ReusableStringStream::cleanup() {
-        StringStreams::cleanup();
-    }
-
-    ReusableStringStream::ReusableStringStream()
-    :   m_index( StringStreams::instance().add() ),
-        m_oss( StringStreams::instance().m_streams[m_index].get() )
-    {}
-
-    ReusableStringStream::~ReusableStringStream() {
-        static_cast<std::ostringstream*>( m_oss )->str("");
-        m_oss->clear();
-        StringStreams::instance().release( m_index );
-    }
-
-    auto ReusableStringStream::str() const -> std::string {
-        return static_cast<std::ostringstream*>( m_oss )->str();
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-
-#ifndef CATCH_CONFIG_NOSTDOUT // If you #define this you must implement these functions
-    std::ostream& cout() { return std::cout; }
-    std::ostream& cerr() { return std::cerr; }
-    std::ostream& clog() { return std::clog; }
-#endif
-}
-
-#if defined(__clang__)
-#    pragma clang diagnostic pop
-#endif
-// end catch_stream.cpp
-// start catch_string_manip.cpp
-
-#include <algorithm>
-#include <ostream>
-#include <cstring>
-#include <cctype>
-
-namespace Catch {
-
-    bool startsWith( std::string const& s, std::string const& prefix ) {
-        return s.size() >= prefix.size() && std::equal(prefix.begin(), prefix.end(), s.begin());
-    }
-    bool startsWith( std::string const& s, char prefix ) {
-        return !s.empty() && s[0] == prefix;
-    }
-    bool endsWith( std::string const& s, std::string const& suffix ) {
-        return s.size() >= suffix.size() && std::equal(suffix.rbegin(), suffix.rend(), s.rbegin());
-    }
-    bool endsWith( std::string const& s, char suffix ) {
-        return !s.empty() && s[s.size()-1] == suffix;
-    }
-    bool contains( std::string const& s, std::string const& infix ) {
-        return s.find( infix ) != std::string::npos;
-    }
-    char toLowerCh(char c) {
-        return static_cast<char>( std::tolower( c ) );
-    }
-    void toLowerInPlace( std::string& s ) {
-        std::transform( s.begin(), s.end(), s.begin(), toLowerCh );
-    }
-    std::string toLower( std::string const& s ) {
-        std::string lc = s;
-        toLowerInPlace( lc );
-        return lc;
-    }
-    std::string trim( std::string const& str ) {
-        static char const* whitespaceChars = "\n\r\t ";
-        std::string::size_type start = str.find_first_not_of( whitespaceChars );
-        std::string::size_type end = str.find_last_not_of( whitespaceChars );
-
-        return start != std::string::npos ? str.substr( start, 1+end-start ) : std::string();
-    }
-
-    bool replaceInPlace( std::string& str, std::string const& replaceThis, std::string const& withThis ) {
-        bool replaced = false;
-        std::size_t i = str.find( replaceThis );
-        while( i != std::string::npos ) {
-            replaced = true;
-            str = str.substr( 0, i ) + withThis + str.substr( i+replaceThis.size() );
-            if( i < str.size()-withThis.size() )
-                i = str.find( replaceThis, i+withThis.size() );
-            else
-                i = std::string::npos;
-        }
-        return replaced;
-    }
-
-    pluralise::pluralise( std::size_t count, std::string const& label )
-    :   m_count( count ),
-        m_label( label )
-    {}
-
-    std::ostream& operator << ( std::ostream& os, pluralise const& pluraliser ) {
-        os << pluraliser.m_count << ' ' << pluraliser.m_label;
-        if( pluraliser.m_count != 1 )
-            os << 's';
-        return os;
-    }
-
-}
-// end catch_string_manip.cpp
-// start catch_stringref.cpp
-
-#if defined(__clang__)
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wexit-time-destructors"
-#endif
-
-#include <ostream>
-#include <cstring>
-#include <cstdint>
-
-namespace {
-    const uint32_t byte_2_lead = 0xC0;
-    const uint32_t byte_3_lead = 0xE0;
-    const uint32_t byte_4_lead = 0xF0;
-}
-
-namespace Catch {
-    StringRef::StringRef( char const* rawChars ) noexcept
-    : StringRef( rawChars, static_cast<StringRef::size_type>(std::strlen(rawChars) ) )
-    {}
-
-    StringRef::operator std::string() const {
-        return std::string( m_start, m_size );
-    }
-
-    void StringRef::swap( StringRef& other ) noexcept {
-        std::swap( m_start, other.m_start );
-        std::swap( m_size, other.m_size );
-        std::swap( m_data, other.m_data );
-    }
-
-    auto StringRef::c_str() const -> char const* {
-        if( isSubstring() )
-           const_cast<StringRef*>( this )->takeOwnership();
-        return m_start;
-    }
-    auto StringRef::currentData() const noexcept -> char const* {
-        return m_start;
-    }
-
-    auto StringRef::isOwned() const noexcept -> bool {
-        return m_data != nullptr;
-    }
-    auto StringRef::isSubstring() const noexcept -> bool {
-        return m_start[m_size] != '\0';
-    }
-
-    void StringRef::takeOwnership() {
-        if( !isOwned() ) {
-            m_data = new char[m_size+1];
-            memcpy( m_data, m_start, m_size );
-            m_data[m_size] = '\0';
-            m_start = m_data;
-        }
-    }
-    auto StringRef::substr( size_type start, size_type size ) const noexcept -> StringRef {
-        if( start < m_size )
-            return StringRef( m_start+start, size );
-        else
-            return StringRef();
-    }
-    auto StringRef::operator == ( StringRef const& other ) const noexcept -> bool {
-        return
-            size() == other.size() &&
-            (std::strncmp( m_start, other.m_start, size() ) == 0);
-    }
-    auto StringRef::operator != ( StringRef const& other ) const noexcept -> bool {
-        return !operator==( other );
-    }
-
-    auto StringRef::operator[](size_type index) const noexcept -> char {
-        return m_start[index];
-    }
-
-    auto StringRef::numberOfCharacters() const noexcept -> size_type {
-        size_type noChars = m_size;
-        // Make adjustments for uft encodings
-        for( size_type i=0; i < m_size; ++i ) {
-            char c = m_start[i];
-            if( ( c & byte_2_lead ) == byte_2_lead ) {
-                noChars--;
-                if (( c & byte_3_lead ) == byte_3_lead )
-                    noChars--;
-                if( ( c & byte_4_lead ) == byte_4_lead )
-                    noChars--;
-            }
-        }
-        return noChars;
-    }
-
-    auto operator + ( StringRef const& lhs, StringRef const& rhs ) -> std::string {
-        std::string str;
-        str.reserve( lhs.size() + rhs.size() );
-        str += lhs;
-        str += rhs;
-        return str;
-    }
-    auto operator + ( StringRef const& lhs, const char* rhs ) -> std::string {
-        return std::string( lhs ) + std::string( rhs );
-    }
-    auto operator + ( char const* lhs, StringRef const& rhs ) -> std::string {
-        return std::string( lhs ) + std::string( rhs );
-    }
-
-    auto operator << ( std::ostream& os, StringRef const& str ) -> std::ostream& {
-        return os.write(str.currentData(), str.size());
-    }
-
-    auto operator+=( std::string& lhs, StringRef const& rhs ) -> std::string& {
-        lhs.append(rhs.currentData(), rhs.size());
-        return lhs;
-    }
-
-} // namespace Catch
-
-#if defined(__clang__)
-#    pragma clang diagnostic pop
-#endif
-// end catch_stringref.cpp
-// start catch_tag_alias.cpp
-
-namespace Catch {
-    TagAlias::TagAlias(std::string const & _tag, SourceLineInfo _lineInfo): tag(_tag), lineInfo(_lineInfo) {}
-}
-// end catch_tag_alias.cpp
-// start catch_tag_alias_autoregistrar.cpp
-
-namespace Catch {
-
-    RegistrarForTagAliases::RegistrarForTagAliases(char const* alias, char const* tag, SourceLineInfo const& lineInfo) {
-        try {
-            getMutableRegistryHub().registerTagAlias(alias, tag, lineInfo);
-        } catch (...) {
-            // Do not throw when constructing global objects, instead register the exception to be processed later
-            getMutableRegistryHub().registerStartupException();
-        }
-    }
-
-}
-// end catch_tag_alias_autoregistrar.cpp
-// start catch_tag_alias_registry.cpp
-
-#include <sstream>
-
-namespace Catch {
-
-    TagAliasRegistry::~TagAliasRegistry() {}
-
-    TagAlias const* TagAliasRegistry::find( std::string const& alias ) const {
-        auto it = m_registry.find( alias );
-        if( it != m_registry.end() )
-            return &(it->second);
-        else
-            return nullptr;
-    }
-
-    std::string TagAliasRegistry::expandAliases( std::string const& unexpandedTestSpec ) const {
-        std::string expandedTestSpec = unexpandedTestSpec;
-        for( auto const& registryKvp : m_registry ) {
-            std::size_t pos = expandedTestSpec.find( registryKvp.first );
-            if( pos != std::string::npos ) {
-                expandedTestSpec =  expandedTestSpec.substr( 0, pos ) +
-                                    registryKvp.second.tag +
-                                    expandedTestSpec.substr( pos + registryKvp.first.size() );
-            }
-        }
-        return expandedTestSpec;
-    }
-
-    void TagAliasRegistry::add( std::string const& alias, std::string const& tag, SourceLineInfo const& lineInfo ) {
-        CATCH_ENFORCE( startsWith(alias, "[@") && endsWith(alias, ']'),
-                      "error: tag alias, '" << alias << "' is not of the form [@alias name].\n" << lineInfo );
-
-        CATCH_ENFORCE( m_registry.insert(std::make_pair(alias, TagAlias(tag, lineInfo))).second,
-                      "error: tag alias, '" << alias << "' already registered.\n"
-                      << "\tFirst seen at: " << find(alias)->lineInfo << "\n"
-                      << "\tRedefined at: " << lineInfo );
-    }
-
-    ITagAliasRegistry::~ITagAliasRegistry() {}
-
-    ITagAliasRegistry const& ITagAliasRegistry::get() {
-        return getRegistryHub().getTagAliasRegistry();
-    }
-
-} // end namespace Catch
-// end catch_tag_alias_registry.cpp
-// start catch_test_case_info.cpp
-
-#include <cctype>
-#include <exception>
-#include <algorithm>
-#include <sstream>
-
-namespace Catch {
-
-    TestCaseInfo::SpecialProperties parseSpecialTag( std::string const& tag ) {
-        if( startsWith( tag, '.' ) ||
-            tag == "!hide" )
-            return TestCaseInfo::IsHidden;
-        else if( tag == "!throws" )
-            return TestCaseInfo::Throws;
-        else if( tag == "!shouldfail" )
-            return TestCaseInfo::ShouldFail;
-        else if( tag == "!mayfail" )
-            return TestCaseInfo::MayFail;
-        else if( tag == "!nonportable" )
-            return TestCaseInfo::NonPortable;
-        else if( tag == "!benchmark" )
-            return static_cast<TestCaseInfo::SpecialProperties>( TestCaseInfo::Benchmark | TestCaseInfo::IsHidden );
-        else
-            return TestCaseInfo::None;
-    }
-    bool isReservedTag( std::string const& tag ) {
-        return parseSpecialTag( tag ) == TestCaseInfo::None && tag.size() > 0 && !std::isalnum( tag[0] );
-    }
-    void enforceNotReservedTag( std::string const& tag, SourceLineInfo const& _lineInfo ) {
-        CATCH_ENFORCE( !isReservedTag(tag),
-                      "Tag name: [" << tag << "] is not allowed.\n"
-                      << "Tag names starting with non alpha-numeric characters are reserved\n"
-                      << _lineInfo );
-    }
-
-    TestCase makeTestCase(  ITestInvoker* _testCase,
-                            std::string const& _className,
-                            NameAndTags const& nameAndTags,
-                            SourceLineInfo const& _lineInfo )
-    {
-        bool isHidden = false;
-
-        // Parse out tags
-        std::vector<std::string> tags;
-        std::string desc, tag;
-        bool inTag = false;
-        std::string _descOrTags = nameAndTags.tags;
-        for (char c : _descOrTags) {
-            if( !inTag ) {
-                if( c == '[' )
-                    inTag = true;
-                else
-                    desc += c;
-            }
-            else {
-                if( c == ']' ) {
-                    TestCaseInfo::SpecialProperties prop = parseSpecialTag( tag );
-                    if( ( prop & TestCaseInfo::IsHidden ) != 0 )
-                        isHidden = true;
-                    else if( prop == TestCaseInfo::None )
-                        enforceNotReservedTag( tag, _lineInfo );
-
-                    tags.push_back( tag );
-                    tag.clear();
-                    inTag = false;
-                }
-                else
-                    tag += c;
-            }
-        }
-        if( isHidden ) {
-            tags.push_back( "." );
-        }
-
-        TestCaseInfo info( nameAndTags.name, _className, desc, tags, _lineInfo );
-        return TestCase( _testCase, std::move(info) );
-    }
-
-    void setTags( TestCaseInfo& testCaseInfo, std::vector<std::string> tags ) {
-        std::sort(begin(tags), end(tags));
-        tags.erase(std::unique(begin(tags), end(tags)), end(tags));
-        testCaseInfo.lcaseTags.clear();
-
-        for( auto const& tag : tags ) {
-            std::string lcaseTag = toLower( tag );
-            testCaseInfo.properties = static_cast<TestCaseInfo::SpecialProperties>( testCaseInfo.properties | parseSpecialTag( lcaseTag ) );
-            testCaseInfo.lcaseTags.push_back( lcaseTag );
-        }
-        testCaseInfo.tags = std::move(tags);
-    }
-
-    TestCaseInfo::TestCaseInfo( std::string const& _name,
-                                std::string const& _className,
-                                std::string const& _description,
-                                std::vector<std::string> const& _tags,
-                                SourceLineInfo const& _lineInfo )
-    :   name( _name ),
-        className( _className ),
-        description( _description ),
-        lineInfo( _lineInfo ),
-        properties( None )
-    {
-        setTags( *this, _tags );
-    }
-
-    bool TestCaseInfo::isHidden() const {
-        return ( properties & IsHidden ) != 0;
-    }
-    bool TestCaseInfo::throws() const {
-        return ( properties & Throws ) != 0;
-    }
-    bool TestCaseInfo::okToFail() const {
-        return ( properties & (ShouldFail | MayFail ) ) != 0;
-    }
-    bool TestCaseInfo::expectedToFail() const {
-        return ( properties & (ShouldFail ) ) != 0;
-    }
-
-    std::string TestCaseInfo::tagsAsString() const {
-        std::string ret;
-        // '[' and ']' per tag
-        std::size_t full_size = 2 * tags.size();
-        for (const auto& tag : tags) {
-            full_size += tag.size();
-        }
-        ret.reserve(full_size);
-        for (const auto& tag : tags) {
-            ret.push_back('[');
-            ret.append(tag);
-            ret.push_back(']');
-        }
-
-        return ret;
-    }
-
-    TestCase::TestCase( ITestInvoker* testCase, TestCaseInfo&& info ) : TestCaseInfo( std::move(info) ), test( testCase ) {}
-
-    TestCase TestCase::withName( std::string const& _newName ) const {
-        TestCase other( *this );
-        other.name = _newName;
-        return other;
-    }
-
-    void TestCase::invoke() const {
-        test->invoke();
-    }
-
-    bool TestCase::operator == ( TestCase const& other ) const {
-        return  test.get() == other.test.get() &&
-                name == other.name &&
-                className == other.className;
-    }
-
-    bool TestCase::operator < ( TestCase const& other ) const {
-        return name < other.name;
-    }
-
-    TestCaseInfo const& TestCase::getTestCaseInfo() const
-    {
-        return *this;
-    }
-
-} // end namespace Catch
-// end catch_test_case_info.cpp
-// start catch_test_case_registry_impl.cpp
-
-#include <sstream>
-
-namespace Catch {
-
-    std::vector<TestCase> sortTests( IConfig const& config, std::vector<TestCase> const& unsortedTestCases ) {
-
-        std::vector<TestCase> sorted = unsortedTestCases;
-
-        switch( config.runOrder() ) {
-            case RunTests::InLexicographicalOrder:
-                std::sort( sorted.begin(), sorted.end() );
-                break;
-            case RunTests::InRandomOrder:
-                seedRng( config );
-                RandomNumberGenerator::shuffle( sorted );
-                break;
-            case RunTests::InDeclarationOrder:
-                // already in declaration order
-                break;
-        }
-        return sorted;
-    }
-    bool matchTest( TestCase const& testCase, TestSpec const& testSpec, IConfig const& config ) {
-        return testSpec.matches( testCase ) && ( config.allowThrows() || !testCase.throws() );
-    }
-
-    void enforceNoDuplicateTestCases( std::vector<TestCase> const& functions ) {
-        std::set<TestCase> seenFunctions;
-        for( auto const& function : functions ) {
-            auto prev = seenFunctions.insert( function );
-            CATCH_ENFORCE( prev.second,
-                    "error: TEST_CASE( \"" << function.name << "\" ) already defined.\n"
-                    << "\tFirst seen at " << prev.first->getTestCaseInfo().lineInfo << "\n"
-                    << "\tRedefined at " << function.getTestCaseInfo().lineInfo );
-        }
-    }
-
-    std::vector<TestCase> filterTests( std::vector<TestCase> const& testCases, TestSpec const& testSpec, IConfig const& config ) {
-        std::vector<TestCase> filtered;
-        filtered.reserve( testCases.size() );
-        for( auto const& testCase : testCases )
-            if( matchTest( testCase, testSpec, config ) )
-                filtered.push_back( testCase );
-        return filtered;
-    }
-    std::vector<TestCase> const& getAllTestCasesSorted( IConfig const& config ) {
-        return getRegistryHub().getTestCaseRegistry().getAllTestsSorted( config );
-    }
-
-    void TestRegistry::registerTest( TestCase const& testCase ) {
-        std::string name = testCase.getTestCaseInfo().name;
-        if( name.empty() ) {
-            ReusableStringStream rss;
-            rss << "Anonymous test case " << ++m_unnamedCount;
-            return registerTest( testCase.withName( rss.str() ) );
-        }
-        m_functions.push_back( testCase );
-    }
-
-    std::vector<TestCase> const& TestRegistry::getAllTests() const {
-        return m_functions;
-    }
-    std::vector<TestCase> const& TestRegistry::getAllTestsSorted( IConfig const& config ) const {
-        if( m_sortedFunctions.empty() )
-            enforceNoDuplicateTestCases( m_functions );
-
-        if(  m_currentSortOrder != config.runOrder() || m_sortedFunctions.empty() ) {
-            m_sortedFunctions = sortTests( config, m_functions );
-            m_currentSortOrder = config.runOrder();
-        }
-        return m_sortedFunctions;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    TestInvokerAsFunction::TestInvokerAsFunction( void(*testAsFunction)() ) noexcept : m_testAsFunction( testAsFunction ) {}
-
-    void TestInvokerAsFunction::invoke() const {
-        m_testAsFunction();
-    }
-
-    std::string extractClassName( StringRef const& classOrQualifiedMethodName ) {
-        std::string className = classOrQualifiedMethodName;
-        if( startsWith( className, '&' ) )
-        {
-            std::size_t lastColons = className.rfind( "::" );
-            std::size_t penultimateColons = className.rfind( "::", lastColons-1 );
-            if( penultimateColons == std::string::npos )
-                penultimateColons = 1;
-            className = className.substr( penultimateColons, lastColons-penultimateColons );
-        }
-        return className;
-    }
-
-} // end namespace Catch
-// end catch_test_case_registry_impl.cpp
-// start catch_test_case_tracker.cpp
-
-#include <algorithm>
-#include <assert.h>
-#include <stdexcept>
-#include <memory>
-#include <sstream>
-
-#if defined(__clang__)
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wexit-time-destructors"
-#endif
-
-namespace Catch {
-namespace TestCaseTracking {
-
-    NameAndLocation::NameAndLocation( std::string const& _name, SourceLineInfo const& _location )
-    :   name( _name ),
-        location( _location )
-    {}
-
-    ITracker::~ITracker() = default;
-
-    TrackerContext& TrackerContext::instance() {
-        static TrackerContext s_instance;
-        return s_instance;
-    }
-
-    ITracker& TrackerContext::startRun() {
-        m_rootTracker = std::make_shared<SectionTracker>( NameAndLocation( "{root}", CATCH_INTERNAL_LINEINFO ), *this, nullptr );
-        m_currentTracker = nullptr;
-        m_runState = Executing;
-        return *m_rootTracker;
-    }
-
-    void TrackerContext::endRun() {
-        m_rootTracker.reset();
-        m_currentTracker = nullptr;
-        m_runState = NotStarted;
-    }
-
-    void TrackerContext::startCycle() {
-        m_currentTracker = m_rootTracker.get();
-        m_runState = Executing;
-    }
-    void TrackerContext::completeCycle() {
-        m_runState = CompletedCycle;
-    }
-
-    bool TrackerContext::completedCycle() const {
-        return m_runState == CompletedCycle;
-    }
-    ITracker& TrackerContext::currentTracker() {
-        return *m_currentTracker;
-    }
-    void TrackerContext::setCurrentTracker( ITracker* tracker ) {
-        m_currentTracker = tracker;
-    }
-
-    TrackerBase::TrackerHasName::TrackerHasName( NameAndLocation const& nameAndLocation ) : m_nameAndLocation( nameAndLocation ) {}
-    bool TrackerBase::TrackerHasName::operator ()( ITrackerPtr const& tracker ) const {
-        return
-            tracker->nameAndLocation().name == m_nameAndLocation.name &&
-            tracker->nameAndLocation().location == m_nameAndLocation.location;
-    }
-
-    TrackerBase::TrackerBase( NameAndLocation const& nameAndLocation, TrackerContext& ctx, ITracker* parent )
-    :   m_nameAndLocation( nameAndLocation ),
-        m_ctx( ctx ),
-        m_parent( parent )
-    {}
-
-    NameAndLocation const& TrackerBase::nameAndLocation() const {
-        return m_nameAndLocation;
-    }
-    bool TrackerBase::isComplete() const {
-        return m_runState == CompletedSuccessfully || m_runState == Failed;
-    }
-    bool TrackerBase::isSuccessfullyCompleted() const {
-        return m_runState == CompletedSuccessfully;
-    }
-    bool TrackerBase::isOpen() const {
-        return m_runState != NotStarted && !isComplete();
-    }
-    bool TrackerBase::hasChildren() const {
-        return !m_children.empty();
-    }
-
-    void TrackerBase::addChild( ITrackerPtr const& child ) {
-        m_children.push_back( child );
-    }
-
-    ITrackerPtr TrackerBase::findChild( NameAndLocation const& nameAndLocation ) {
-        auto it = std::find_if( m_children.begin(), m_children.end(), TrackerHasName( nameAndLocation ) );
-        return( it != m_children.end() )
-            ? *it
-            : nullptr;
-    }
-    ITracker& TrackerBase::parent() {
-        assert( m_parent ); // Should always be non-null except for root
-        return *m_parent;
-    }
-
-    void TrackerBase::openChild() {
-        if( m_runState != ExecutingChildren ) {
-            m_runState = ExecutingChildren;
-            if( m_parent )
-                m_parent->openChild();
-        }
-    }
-
-    bool TrackerBase::isSectionTracker() const { return false; }
-    bool TrackerBase::isIndexTracker() const { return false; }
-
-    void TrackerBase::open() {
-        m_runState = Executing;
-        moveToThis();
-        if( m_parent )
-            m_parent->openChild();
-    }
-
-    void TrackerBase::close() {
-
-        // Close any still open children (e.g. generators)
-        while( &m_ctx.currentTracker() != this )
-            m_ctx.currentTracker().close();
-
-        switch( m_runState ) {
-            case NeedsAnotherRun:
-                break;
-
-            case Executing:
-                m_runState = CompletedSuccessfully;
-                break;
-            case ExecutingChildren:
-                if( m_children.empty() || m_children.back()->isComplete() )
-                    m_runState = CompletedSuccessfully;
-                break;
-
-            case NotStarted:
-            case CompletedSuccessfully:
-            case Failed:
-                CATCH_INTERNAL_ERROR( "Illogical state: " << m_runState );
-
-            default:
-                CATCH_INTERNAL_ERROR( "Unknown state: " << m_runState );
-        }
-        moveToParent();
-        m_ctx.completeCycle();
-    }
-    void TrackerBase::fail() {
-        m_runState = Failed;
-        if( m_parent )
-            m_parent->markAsNeedingAnotherRun();
-        moveToParent();
-        m_ctx.completeCycle();
-    }
-    void TrackerBase::markAsNeedingAnotherRun() {
-        m_runState = NeedsAnotherRun;
-    }
-
-    void TrackerBase::moveToParent() {
-        assert( m_parent );
-        m_ctx.setCurrentTracker( m_parent );
-    }
-    void TrackerBase::moveToThis() {
-        m_ctx.setCurrentTracker( this );
-    }
-
-    SectionTracker::SectionTracker( NameAndLocation const& nameAndLocation, TrackerContext& ctx, ITracker* parent )
-    :   TrackerBase( nameAndLocation, ctx, parent )
-    {
-        if( parent ) {
-            while( !parent->isSectionTracker() )
-                parent = &parent->parent();
-
-            SectionTracker& parentSection = static_cast<SectionTracker&>( *parent );
-            addNextFilters( parentSection.m_filters );
-        }
-    }
-
-    bool SectionTracker::isSectionTracker() const { return true; }
-
-    SectionTracker& SectionTracker::acquire( TrackerContext& ctx, NameAndLocation const& nameAndLocation ) {
-        std::shared_ptr<SectionTracker> section;
-
-        ITracker& currentTracker = ctx.currentTracker();
-        if( ITrackerPtr childTracker = currentTracker.findChild( nameAndLocation ) ) {
-            assert( childTracker );
-            assert( childTracker->isSectionTracker() );
-            section = std::static_pointer_cast<SectionTracker>( childTracker );
-        }
-        else {
-            section = std::make_shared<SectionTracker>( nameAndLocation, ctx, &currentTracker );
-            currentTracker.addChild( section );
-        }
-        if( !ctx.completedCycle() )
-            section->tryOpen();
-        return *section;
-    }
-
-    void SectionTracker::tryOpen() {
-        if( !isComplete() && (m_filters.empty() || m_filters[0].empty() ||  m_filters[0] == m_nameAndLocation.name ) )
-            open();
-    }
-
-    void SectionTracker::addInitialFilters( std::vector<std::string> const& filters ) {
-        if( !filters.empty() ) {
-            m_filters.push_back(""); // Root - should never be consulted
-            m_filters.push_back(""); // Test Case - not a section filter
-            m_filters.insert( m_filters.end(), filters.begin(), filters.end() );
-        }
-    }
-    void SectionTracker::addNextFilters( std::vector<std::string> const& filters ) {
-        if( filters.size() > 1 )
-            m_filters.insert( m_filters.end(), ++filters.begin(), filters.end() );
-    }
-
-    IndexTracker::IndexTracker( NameAndLocation const& nameAndLocation, TrackerContext& ctx, ITracker* parent, int size )
-    :   TrackerBase( nameAndLocation, ctx, parent ),
-        m_size( size )
-    {}
-
-    bool IndexTracker::isIndexTracker() const { return true; }
-
-    IndexTracker& IndexTracker::acquire( TrackerContext& ctx, NameAndLocation const& nameAndLocation, int size ) {
-        std::shared_ptr<IndexTracker> tracker;
-
-        ITracker& currentTracker = ctx.currentTracker();
-        if( ITrackerPtr childTracker = currentTracker.findChild( nameAndLocation ) ) {
-            assert( childTracker );
-            assert( childTracker->isIndexTracker() );
-            tracker = std::static_pointer_cast<IndexTracker>( childTracker );
-        }
-        else {
-            tracker = std::make_shared<IndexTracker>( nameAndLocation, ctx, &currentTracker, size );
-            currentTracker.addChild( tracker );
-        }
-
-        if( !ctx.completedCycle() && !tracker->isComplete() ) {
-            if( tracker->m_runState != ExecutingChildren && tracker->m_runState != NeedsAnotherRun )
-                tracker->moveNext();
-            tracker->open();
-        }
-
-        return *tracker;
-    }
-
-    int IndexTracker::index() const { return m_index; }
-
-    void IndexTracker::moveNext() {
-        m_index++;
-        m_children.clear();
-    }
-
-    void IndexTracker::close() {
-        TrackerBase::close();
-        if( m_runState == CompletedSuccessfully && m_index < m_size-1 )
-            m_runState = Executing;
-    }
-
-} // namespace TestCaseTracking
-
-using TestCaseTracking::ITracker;
-using TestCaseTracking::TrackerContext;
-using TestCaseTracking::SectionTracker;
-using TestCaseTracking::IndexTracker;
-
-} // namespace Catch
-
-#if defined(__clang__)
-#    pragma clang diagnostic pop
-#endif
-// end catch_test_case_tracker.cpp
-// start catch_test_registry.cpp
-
-namespace Catch {
-
-    auto makeTestInvoker( void(*testAsFunction)() ) noexcept -> ITestInvoker* {
-        return new(std::nothrow) TestInvokerAsFunction( testAsFunction );
-    }
-
-    NameAndTags::NameAndTags( StringRef const& name_ , StringRef const& tags_ ) noexcept : name( name_ ), tags( tags_ ) {}
-
-    AutoReg::AutoReg( ITestInvoker* invoker, SourceLineInfo const& lineInfo, StringRef const& classOrMethod, NameAndTags const& nameAndTags ) noexcept {
-        try {
-            getMutableRegistryHub()
-                    .registerTest(
-                        makeTestCase(
-                            invoker,
-                            extractClassName( classOrMethod ),
-                            nameAndTags,
-                            lineInfo));
-        } catch (...) {
-            // Do not throw when constructing global objects, instead register the exception to be processed later
-            getMutableRegistryHub().registerStartupException();
-        }
-    }
-
-    AutoReg::~AutoReg() = default;
-}
-// end catch_test_registry.cpp
-// start catch_test_spec.cpp
-
-#include <algorithm>
-#include <string>
-#include <vector>
-#include <memory>
-
-namespace Catch {
-
-    TestSpec::Pattern::~Pattern() = default;
-    TestSpec::NamePattern::~NamePattern() = default;
-    TestSpec::TagPattern::~TagPattern() = default;
-    TestSpec::ExcludedPattern::~ExcludedPattern() = default;
-
-    TestSpec::NamePattern::NamePattern( std::string const& name )
-    : m_wildcardPattern( toLower( name ), CaseSensitive::No )
-    {}
-    bool TestSpec::NamePattern::matches( TestCaseInfo const& testCase ) const {
-        return m_wildcardPattern.matches( toLower( testCase.name ) );
-    }
-
-    TestSpec::TagPattern::TagPattern( std::string const& tag ) : m_tag( toLower( tag ) ) {}
-    bool TestSpec::TagPattern::matches( TestCaseInfo const& testCase ) const {
-        return std::find(begin(testCase.lcaseTags),
-                         end(testCase.lcaseTags),
-                         m_tag) != end(testCase.lcaseTags);
-    }
-
-    TestSpec::ExcludedPattern::ExcludedPattern( PatternPtr const& underlyingPattern ) : m_underlyingPattern( underlyingPattern ) {}
-    bool TestSpec::ExcludedPattern::matches( TestCaseInfo const& testCase ) const { return !m_underlyingPattern->matches( testCase ); }
-
-    bool TestSpec::Filter::matches( TestCaseInfo const& testCase ) const {
-        // All patterns in a filter must match for the filter to be a match
-        for( auto const& pattern : m_patterns ) {
-            if( !pattern->matches( testCase ) )
-                return false;
-        }
-        return true;
-    }
-
-    bool TestSpec::hasFilters() const {
-        return !m_filters.empty();
-    }
-    bool TestSpec::matches( TestCaseInfo const& testCase ) const {
-        // A TestSpec matches if any filter matches
-        for( auto const& filter : m_filters )
-            if( filter.matches( testCase ) )
-                return true;
-        return false;
-    }
-}
-// end catch_test_spec.cpp
-// start catch_test_spec_parser.cpp
-
-namespace Catch {
-
-    TestSpecParser::TestSpecParser( ITagAliasRegistry const& tagAliases ) : m_tagAliases( &tagAliases ) {}
-
-    TestSpecParser& TestSpecParser::parse( std::string const& arg ) {
-        m_mode = None;
-        m_exclusion = false;
-        m_start = std::string::npos;
-        m_arg = m_tagAliases->expandAliases( arg );
-        m_escapeChars.clear();
-        for( m_pos = 0; m_pos < m_arg.size(); ++m_pos )
-            visitChar( m_arg[m_pos] );
-        if( m_mode == Name )
-            addPattern<TestSpec::NamePattern>();
-        return *this;
-    }
-    TestSpec TestSpecParser::testSpec() {
-        addFilter();
-        return m_testSpec;
-    }
-
-    void TestSpecParser::visitChar( char c ) {
-        if( m_mode == None ) {
-            switch( c ) {
-            case ' ': return;
-            case '~': m_exclusion = true; return;
-            case '[': return startNewMode( Tag, ++m_pos );
-            case '"': return startNewMode( QuotedName, ++m_pos );
-            case '\\': return escape();
-            default: startNewMode( Name, m_pos ); break;
-            }
-        }
-        if( m_mode == Name ) {
-            if( c == ',' ) {
-                addPattern<TestSpec::NamePattern>();
-                addFilter();
-            }
-            else if( c == '[' ) {
-                if( subString() == "exclude:" )
-                    m_exclusion = true;
-                else
-                    addPattern<TestSpec::NamePattern>();
-                startNewMode( Tag, ++m_pos );
-            }
-            else if( c == '\\' )
-                escape();
-        }
-        else if( m_mode == EscapedName )
-            m_mode = Name;
-        else if( m_mode == QuotedName && c == '"' )
-            addPattern<TestSpec::NamePattern>();
-        else if( m_mode == Tag && c == ']' )
-            addPattern<TestSpec::TagPattern>();
-    }
-    void TestSpecParser::startNewMode( Mode mode, std::size_t start ) {
-        m_mode = mode;
-        m_start = start;
-    }
-    void TestSpecParser::escape() {
-        if( m_mode == None )
-            m_start = m_pos;
-        m_mode = EscapedName;
-        m_escapeChars.push_back( m_pos );
-    }
-    std::string TestSpecParser::subString() const { return m_arg.substr( m_start, m_pos - m_start ); }
-
-    void TestSpecParser::addFilter() {
-        if( !m_currentFilter.m_patterns.empty() ) {
-            m_testSpec.m_filters.push_back( m_currentFilter );
-            m_currentFilter = TestSpec::Filter();
-        }
-    }
-
-    TestSpec parseTestSpec( std::string const& arg ) {
-        return TestSpecParser( ITagAliasRegistry::get() ).parse( arg ).testSpec();
-    }
-
-} // namespace Catch
-// end catch_test_spec_parser.cpp
-// start catch_timer.cpp
-
-#include <chrono>
-
-namespace Catch {
-
-    auto getCurrentNanosecondsSinceEpoch() -> uint64_t {
-        return std::chrono::duration_cast<std::chrono::nanoseconds>( std::chrono::high_resolution_clock::now().time_since_epoch() ).count();
-    }
-
-    auto estimateClockResolution() -> uint64_t {
-        uint64_t sum = 0;
-        static const uint64_t iterations = 1000000;
-
-        for( std::size_t i = 0; i < iterations; ++i ) {
-
-            uint64_t ticks;
-            uint64_t baseTicks = getCurrentNanosecondsSinceEpoch();
-            do {
-                ticks = getCurrentNanosecondsSinceEpoch();
-            }
-            while( ticks == baseTicks );
-
-            auto delta = ticks - baseTicks;
-            sum += delta;
-        }
-
-        // We're just taking the mean, here. To do better we could take the std. dev and exclude outliers
-        // - and potentially do more iterations if there's a high variance.
-        return sum/iterations;
-    }
-    auto getEstimatedClockResolution() -> uint64_t {
-        static auto s_resolution = estimateClockResolution();
-        return s_resolution;
-    }
-
-    void Timer::start() {
-       m_nanoseconds = getCurrentNanosecondsSinceEpoch();
-    }
-    auto Timer::getElapsedNanoseconds() const -> uint64_t {
-        return getCurrentNanosecondsSinceEpoch() - m_nanoseconds;
-    }
-    auto Timer::getElapsedMicroseconds() const -> uint64_t {
-        return getElapsedNanoseconds()/1000;
-    }
-    auto Timer::getElapsedMilliseconds() const -> unsigned int {
-        return static_cast<unsigned int>(getElapsedMicroseconds()/1000);
-    }
-    auto Timer::getElapsedSeconds() const -> double {
-        return getElapsedMicroseconds()/1000000.0;
-    }
-
-} // namespace Catch
-// end catch_timer.cpp
-// start catch_tostring.cpp
-
-#if defined(__clang__)
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wexit-time-destructors"
-#    pragma clang diagnostic ignored "-Wglobal-constructors"
-#endif
-
-// Enable specific decls locally
-#if !defined(CATCH_CONFIG_ENABLE_CHRONO_STRINGMAKER)
-#define CATCH_CONFIG_ENABLE_CHRONO_STRINGMAKER
-#endif
-
-#include <cmath>
-#include <iomanip>
-
-namespace Catch {
-
-namespace Detail {
-
-    const std::string unprintableString = "{?}";
-
-    namespace {
-        const int hexThreshold = 255;
-
-        struct Endianness {
-            enum Arch { Big, Little };
-
-            static Arch which() {
-                union _{
-                    int asInt;
-                    char asChar[sizeof (int)];
-                } u;
-
-                u.asInt = 1;
-                return ( u.asChar[sizeof(int)-1] == 1 ) ? Big : Little;
-            }
-        };
-    }
-
-    std::string rawMemoryToString( const void *object, std::size_t size ) {
-        // Reverse order for little endian architectures
-        int i = 0, end = static_cast<int>( size ), inc = 1;
-        if( Endianness::which() == Endianness::Little ) {
-            i = end-1;
-            end = inc = -1;
-        }
-
-        unsigned char const *bytes = static_cast<unsigned char const *>(object);
-        ReusableStringStream rss;
-        rss << "0x" << std::setfill('0') << std::hex;
-        for( ; i != end; i += inc )
-             rss << std::setw(2) << static_cast<unsigned>(bytes[i]);
-       return rss.str();
-    }
-}
-
-template<typename T>
-std::string fpToString( T value, int precision ) {
-    if (std::isnan(value)) {
-        return "nan";
-    }
-
-    ReusableStringStream rss;
-    rss << std::setprecision( precision )
-        << std::fixed
-        << value;
-    std::string d = rss.str();
-    std::size_t i = d.find_last_not_of( '0' );
-    if( i != std::string::npos && i != d.size()-1 ) {
-        if( d[i] == '.' )
-            i++;
-        d = d.substr( 0, i+1 );
-    }
-    return d;
-}
-
-//// ======================================================= ////
-//
-//   Out-of-line defs for full specialization of StringMaker
-//
-//// ======================================================= ////
-
-std::string StringMaker<std::string>::convert(const std::string& str) {
-    if (!getCurrentContext().getConfig()->showInvisibles()) {
-        return '"' + str + '"';
-    }
-
-    std::string s("\"");
-    for (char c : str) {
-        switch (c) {
-        case '\n':
-            s.append("\\n");
-            break;
-        case '\t':
-            s.append("\\t");
-            break;
-        default:
-            s.push_back(c);
-            break;
-        }
-    }
-    s.append("\"");
-    return s;
-}
-
-#ifdef CATCH_CONFIG_WCHAR
-std::string StringMaker<std::wstring>::convert(const std::wstring& wstr) {
-    std::string s;
-    s.reserve(wstr.size());
-    for (auto c : wstr) {
-        s += (c <= 0xff) ? static_cast<char>(c) : '?';
-    }
-    return ::Catch::Detail::stringify(s);
-}
-#endif
-
-std::string StringMaker<char const*>::convert(char const* str) {
-    if (str) {
-        return ::Catch::Detail::stringify(std::string{ str });
-    } else {
-        return{ "{null string}" };
-    }
-}
-std::string StringMaker<char*>::convert(char* str) {
-    if (str) {
-        return ::Catch::Detail::stringify(std::string{ str });
-    } else {
-        return{ "{null string}" };
-    }
-}
-#ifdef CATCH_CONFIG_WCHAR
-std::string StringMaker<wchar_t const*>::convert(wchar_t const * str) {
-    if (str) {
-        return ::Catch::Detail::stringify(std::wstring{ str });
-    } else {
-        return{ "{null string}" };
-    }
-}
-std::string StringMaker<wchar_t *>::convert(wchar_t * str) {
-    if (str) {
-        return ::Catch::Detail::stringify(std::wstring{ str });
-    } else {
-        return{ "{null string}" };
-    }
-}
-#endif
-
-std::string StringMaker<int>::convert(int value) {
-    return ::Catch::Detail::stringify(static_cast<long long>(value));
-}
-std::string StringMaker<long>::convert(long value) {
-    return ::Catch::Detail::stringify(static_cast<long long>(value));
-}
-std::string StringMaker<long long>::convert(long long value) {
-    ReusableStringStream rss;
-    rss << value;
-    if (value > Detail::hexThreshold) {
-        rss << " (0x" << std::hex << value << ')';
-    }
-    return rss.str();
-}
-
-std::string StringMaker<unsigned int>::convert(unsigned int value) {
-    return ::Catch::Detail::stringify(static_cast<unsigned long long>(value));
-}
-std::string StringMaker<unsigned long>::convert(unsigned long value) {
-    return ::Catch::Detail::stringify(static_cast<unsigned long long>(value));
-}
-std::string StringMaker<unsigned long long>::convert(unsigned long long value) {
-    ReusableStringStream rss;
-    rss << value;
-    if (value > Detail::hexThreshold) {
-        rss << " (0x" << std::hex << value << ')';
-    }
-    return rss.str();
-}
-
-std::string StringMaker<bool>::convert(bool b) {
-    return b ? "true" : "false";
-}
-
-std::string StringMaker<char>::convert(char value) {
-    if (value == '\r') {
-        return "'\\r'";
-    } else if (value == '\f') {
-        return "'\\f'";
-    } else if (value == '\n') {
-        return "'\\n'";
-    } else if (value == '\t') {
-        return "'\\t'";
-    } else if ('\0' <= value && value < ' ') {
-        return ::Catch::Detail::stringify(static_cast<unsigned int>(value));
-    } else {
-        char chstr[] = "' '";
-        chstr[1] = value;
-        return chstr;
-    }
-}
-std::string StringMaker<signed char>::convert(signed char c) {
-    return ::Catch::Detail::stringify(static_cast<char>(c));
-}
-std::string StringMaker<unsigned char>::convert(unsigned char c) {
-    return ::Catch::Detail::stringify(static_cast<char>(c));
-}
-
-std::string StringMaker<std::nullptr_t>::convert(std::nullptr_t) {
-    return "nullptr";
-}
-
-std::string StringMaker<float>::convert(float value) {
-    return fpToString(value, 5) + 'f';
-}
-std::string StringMaker<double>::convert(double value) {
-    return fpToString(value, 10);
-}
-
-std::string ratio_string<std::atto>::symbol() { return "a"; }
-std::string ratio_string<std::femto>::symbol() { return "f"; }
-std::string  ratio_string<std::pico>::symbol() { return "p"; }
-std::string  ratio_string<std::nano>::symbol() { return "n"; }
-std::string ratio_string<std::micro>::symbol() { return "u"; }
-std::string ratio_string<std::milli>::symbol() { return "m"; }
-
-} // end namespace Catch
-
-#if defined(__clang__)
-#    pragma clang diagnostic pop
-#endif
-
-// end catch_tostring.cpp
-// start catch_totals.cpp
-
-namespace Catch {
-
-    Counts Counts::operator - ( Counts const& other ) const {
-        Counts diff;
-        diff.passed = passed - other.passed;
-        diff.failed = failed - other.failed;
-        diff.failedButOk = failedButOk - other.failedButOk;
-        return diff;
-    }
-
-    Counts& Counts::operator += ( Counts const& other ) {
-        passed += other.passed;
-        failed += other.failed;
-        failedButOk += other.failedButOk;
-        return *this;
-    }
-
-    std::size_t Counts::total() const {
-        return passed + failed + failedButOk;
-    }
-    bool Counts::allPassed() const {
-        return failed == 0 && failedButOk == 0;
-    }
-    bool Counts::allOk() const {
-        return failed == 0;
-    }
-
-    Totals Totals::operator - ( Totals const& other ) const {
-        Totals diff;
-        diff.assertions = assertions - other.assertions;
-        diff.testCases = testCases - other.testCases;
-        return diff;
-    }
-
-    Totals& Totals::operator += ( Totals const& other ) {
-        assertions += other.assertions;
-        testCases += other.testCases;
-        return *this;
-    }
-
-    Totals Totals::delta( Totals const& prevTotals ) const {
-        Totals diff = *this - prevTotals;
-        if( diff.assertions.failed > 0 )
-            ++diff.testCases.failed;
-        else if( diff.assertions.failedButOk > 0 )
-            ++diff.testCases.failedButOk;
-        else
-            ++diff.testCases.passed;
-        return diff;
-    }
-
-}
-// end catch_totals.cpp
-// start catch_uncaught_exceptions.cpp
-
-#include <exception>
-
-namespace Catch {
-    bool uncaught_exceptions() {
-#if defined(CATCH_CONFIG_CPP17_UNCAUGHT_EXCEPTIONS)
-        return std::uncaught_exceptions() > 0;
-#else
-        return std::uncaught_exception();
-#endif
+      if not first_include:
+        first_include = f[1]
+
+  error(filename, first_include, 'build/include', 5,
+        '%s should include its header file %s' % (fileinfo.RepositoryName(),
+                                                  headername))
+
+
+def CheckForBadCharacters(filename, lines, error):
+  """Logs an error for each line containing bad characters.
+
+  Two kinds of bad characters:
+
+  1. Unicode replacement characters: These indicate that either the file
+  contained invalid UTF-8 (likely) or Unicode replacement characters (which
+  it shouldn't).  Note that it's possible for this to throw off line
+  numbering if the invalid UTF-8 occurred adjacent to a newline.
+
+  2. NUL bytes.  These are problematic for some tools.
+
+  Args:
+    filename: The name of the current file.
+    lines: An array of strings, each representing a line of the file.
+    error: The function to call with any errors found.
+  """
+  for linenum, line in enumerate(lines):
+    if u'\ufffd' in line:
+      error(filename, linenum, 'readability/utf8', 5,
+            'Line contains invalid UTF-8 (or Unicode replacement character).')
+    if '\0' in line:
+      error(filename, linenum, 'readability/nul', 5, 'Line contains NUL byte.')
+
+
+def CheckForNewlineAtEOF(filename, lines, error):
+  """Logs an error if there is no newline char at the end of the file.
+
+  Args:
+    filename: The name of the current file.
+    lines: An array of strings, each representing a line of the file.
+    error: The function to call with any errors found.
+  """
+
+  # The array lines() was created by adding two newlines to the
+  # original file (go figure), then splitting on \n.
+  # To verify that the file ends in \n, we just have to make sure the
+  # last-but-two element of lines() exists and is empty.
+  if len(lines) < 3 or lines[-2]:
+    error(filename, len(lines) - 2, 'whitespace/ending_newline', 5,
+          'Could not find a newline character at the end of the file.')
+
+
+def CheckForMultilineCommentsAndStrings(filename, clean_lines, linenum, error):
+  """Logs an error if we see /* ... */ or "..." that extend past one line.
+
+  /* ... */ comments are legit inside macros, for one line.
+  Otherwise, we prefer // comments, so it's ok to warn about the
+  other.  Likewise, it's ok for strings to extend across multiple
+  lines, as long as a line continuation character (backslash)
+  terminates each line. Although not currently prohibited by the C++
+  style guide, it's ugly and unnecessary. We don't do well with either
+  in this lint program, so we warn about both.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+
+  # Remove all \\ (escaped backslashes) from the line. They are OK, and the
+  # second (escaped) slash may trigger later \" detection erroneously.
+  line = line.replace('\\\\', '')
+
+  if line.count('/*') > line.count('*/'):
+    error(filename, linenum, 'readability/multiline_comment', 5,
+          'Complex multi-line /*...*/-style comment found. '
+          'Lint may give bogus warnings.  '
+          'Consider replacing these with //-style comments, '
+          'with #if 0...#endif, '
+          'or with more clearly structured multi-line comments.')
+
+  if (line.count('"') - line.count('\\"')) % 2:
+    error(filename, linenum, 'readability/multiline_string', 5,
+          'Multi-line string ("...") found.  This lint script doesn\'t '
+          'do well with such strings, and may give bogus warnings.  '
+          'Use C++11 raw strings or concatenation instead.')
+
+
+# (non-threadsafe name, thread-safe alternative, validation pattern)
+#
+# The validation pattern is used to eliminate false positives such as:
+#  _rand();               // false positive due to substring match.
+#  ->rand();              // some member function rand().
+#  ACMRandom rand(seed);  // some variable named rand.
+#  ISAACRandom rand();    // another variable named rand.
+#
+# Basically we require the return value of these functions to be used
+# in some expression context on the same line by matching on some
+# operator before the function name.  This eliminates constructors and
+# member function calls.
+_UNSAFE_FUNC_PREFIX = r'(?:[-+*/=%^&|(<]\s*|>\s+)'
+_THREADING_LIST = (
+    ('asctime(', 'asctime_r(', _UNSAFE_FUNC_PREFIX + r'asctime\([^)]+\)'),
+    ('ctime(', 'ctime_r(', _UNSAFE_FUNC_PREFIX + r'ctime\([^)]+\)'),
+    ('getgrgid(', 'getgrgid_r(', _UNSAFE_FUNC_PREFIX + r'getgrgid\([^)]+\)'),
+    ('getgrnam(', 'getgrnam_r(', _UNSAFE_FUNC_PREFIX + r'getgrnam\([^)]+\)'),
+    ('getlogin(', 'getlogin_r(', _UNSAFE_FUNC_PREFIX + r'getlogin\(\)'),
+    ('getpwnam(', 'getpwnam_r(', _UNSAFE_FUNC_PREFIX + r'getpwnam\([^)]+\)'),
+    ('getpwuid(', 'getpwuid_r(', _UNSAFE_FUNC_PREFIX + r'getpwuid\([^)]+\)'),
+    ('gmtime(', 'gmtime_r(', _UNSAFE_FUNC_PREFIX + r'gmtime\([^)]+\)'),
+    ('localtime(', 'localtime_r(', _UNSAFE_FUNC_PREFIX + r'localtime\([^)]+\)'),
+    ('rand(', 'rand_r(', _UNSAFE_FUNC_PREFIX + r'rand\(\)'),
+    ('strtok(', 'strtok_r(',
+     _UNSAFE_FUNC_PREFIX + r'strtok\([^)]+\)'),
+    ('ttyname(', 'ttyname_r(', _UNSAFE_FUNC_PREFIX + r'ttyname\([^)]+\)'),
+    )
+
+
+def CheckPosixThreading(filename, clean_lines, linenum, error):
+  """Checks for calls to thread-unsafe functions.
+
+  Much code has been originally written without consideration of
+  multi-threading. Also, engineers are relying on their old experience;
+  they have learned posix before threading extensions were added. These
+  tests guide the engineers to use thread-safe functions (when using
+  posix directly).
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+  for single_thread_func, multithread_safe_func, pattern in _THREADING_LIST:
+    # Additional pattern matching check to confirm that this is the
+    # function we are looking for
+    if Search(pattern, line):
+      error(filename, linenum, 'runtime/threadsafe_fn', 2,
+            'Consider using ' + multithread_safe_func +
+            '...) instead of ' + single_thread_func +
+            '...) for improved thread safety.')
+
+
+def CheckVlogArguments(filename, clean_lines, linenum, error):
+  """Checks that VLOG() is only used for defining a logging level.
+
+  For example, VLOG(2) is correct. VLOG(INFO), VLOG(WARNING), VLOG(ERROR), and
+  VLOG(FATAL) are not.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+  if Search(r'\bVLOG\((INFO|ERROR|WARNING|DFATAL|FATAL)\)', line):
+    error(filename, linenum, 'runtime/vlog', 5,
+          'VLOG() should be used with numeric verbosity level.  '
+          'Use LOG() if you want symbolic severity levels.')
+
+# Matches invalid increment: *count++, which moves pointer instead of
+# incrementing a value.
+_RE_PATTERN_INVALID_INCREMENT = re.compile(
+    r'^\s*\*\w+(\+\+|--);')
+
+
+def CheckInvalidIncrement(filename, clean_lines, linenum, error):
+  """Checks for invalid increment *count++.
+
+  For example following function:
+  void increment_counter(int* count) {
+    *count++;
   }
-} // end namespace Catch
-// end catch_uncaught_exceptions.cpp
-// start catch_version.cpp
-
-#include <ostream>
-
-namespace Catch {
-
-    Version::Version
-        (   unsigned int _majorVersion,
-            unsigned int _minorVersion,
-            unsigned int _patchNumber,
-            char const * const _branchName,
-            unsigned int _buildNumber )
-    :   majorVersion( _majorVersion ),
-        minorVersion( _minorVersion ),
-        patchNumber( _patchNumber ),
-        branchName( _branchName ),
-        buildNumber( _buildNumber )
-    {}
-
-    std::ostream& operator << ( std::ostream& os, Version const& version ) {
-        os  << version.majorVersion << '.'
-            << version.minorVersion << '.'
-            << version.patchNumber;
-        // branchName is never null -> 0th char is \0 if it is empty
-        if (version.branchName[0]) {
-            os << '-' << version.branchName
-               << '.' << version.buildNumber;
-        }
-        return os;
-    }
-
-    Version const& libraryVersion() {
-        static Version version( 2, 2, 1, "", 0 );
-        return version;
-    }
-
-}
-// end catch_version.cpp
-// start catch_wildcard_pattern.cpp
-
-#include <sstream>
-
-namespace Catch {
-
-    WildcardPattern::WildcardPattern( std::string const& pattern,
-                                      CaseSensitive::Choice caseSensitivity )
-    :   m_caseSensitivity( caseSensitivity ),
-        m_pattern( adjustCase( pattern ) )
-    {
-        if( startsWith( m_pattern, '*' ) ) {
-            m_pattern = m_pattern.substr( 1 );
-            m_wildcard = WildcardAtStart;
-        }
-        if( endsWith( m_pattern, '*' ) ) {
-            m_pattern = m_pattern.substr( 0, m_pattern.size()-1 );
-            m_wildcard = static_cast<WildcardPosition>( m_wildcard | WildcardAtEnd );
-        }
-    }
-
-    bool WildcardPattern::matches( std::string const& str ) const {
-        switch( m_wildcard ) {
-            case NoWildcard:
-                return m_pattern == adjustCase( str );
-            case WildcardAtStart:
-                return endsWith( adjustCase( str ), m_pattern );
-            case WildcardAtEnd:
-                return startsWith( adjustCase( str ), m_pattern );
-            case WildcardAtBothEnds:
-                return contains( adjustCase( str ), m_pattern );
-            default:
-                CATCH_INTERNAL_ERROR( "Unknown enum" );
-        }
-    }
-
-    std::string WildcardPattern::adjustCase( std::string const& str ) const {
-        return m_caseSensitivity == CaseSensitive::No ? toLower( str ) : str;
-    }
-}
-// end catch_wildcard_pattern.cpp
-// start catch_xmlwriter.cpp
-
-#include <iomanip>
-
-namespace Catch {
-
-    XmlEncode::XmlEncode( std::string const& str, ForWhat forWhat )
-    :   m_str( str ),
-        m_forWhat( forWhat )
-    {}
-
-    void XmlEncode::encodeTo( std::ostream& os ) const {
-
-        // Apostrophe escaping not necessary if we always use " to write attributes
-        // (see: http://www.w3.org/TR/xml/#syntax)
-
-        for( std::size_t i = 0; i < m_str.size(); ++ i ) {
-            char c = m_str[i];
-            switch( c ) {
-                case '<':   os << "&lt;"; break;
-                case '&':   os << "&amp;"; break;
-
-                case '>':
-                    // See: http://www.w3.org/TR/xml/#syntax
-                    if( i > 2 && m_str[i-1] == ']' && m_str[i-2] == ']' )
-                        os << "&gt;";
-                    else
-                        os << c;
-                    break;
-
-                case '\"':
-                    if( m_forWhat == ForAttributes )
-                        os << "&quot;";
-                    else
-                        os << c;
-                    break;
-
-                default:
-                    // Escape control chars - based on contribution by @espenalb in PR #465 and
-                    // by @mrpi PR #588
-                    if ( ( c >= 0 && c < '\x09' ) || ( c > '\x0D' && c < '\x20') || c=='\x7F' ) {
-                        // see http://stackoverflow.com/questions/404107/why-are-control-characters-illegal-in-xml-1-0
-                        os << "\\x" << std::uppercase << std::hex << std::setfill('0') << std::setw(2)
-                           << static_cast<int>( c );
-                    }
-                    else
-                        os << c;
-            }
-        }
-    }
-
-    std::ostream& operator << ( std::ostream& os, XmlEncode const& xmlEncode ) {
-        xmlEncode.encodeTo( os );
-        return os;
-    }
-
-    XmlWriter::ScopedElement::ScopedElement( XmlWriter* writer )
-    :   m_writer( writer )
-    {}
-
-    XmlWriter::ScopedElement::ScopedElement( ScopedElement&& other ) noexcept
-    :   m_writer( other.m_writer ){
-        other.m_writer = nullptr;
-    }
-    XmlWriter::ScopedElement& XmlWriter::ScopedElement::operator=( ScopedElement&& other ) noexcept {
-        if ( m_writer ) {
-            m_writer->endElement();
-        }
-        m_writer = other.m_writer;
-        other.m_writer = nullptr;
-        return *this;
-    }
-
-    XmlWriter::ScopedElement::~ScopedElement() {
-        if( m_writer )
-            m_writer->endElement();
-    }
-
-    XmlWriter::ScopedElement& XmlWriter::ScopedElement::writeText( std::string const& text, bool indent ) {
-        m_writer->writeText( text, indent );
-        return *this;
-    }
-
-    XmlWriter::XmlWriter( std::ostream& os ) : m_os( os )
-    {
-        writeDeclaration();
-    }
-
-    XmlWriter::~XmlWriter() {
-        while( !m_tags.empty() )
-            endElement();
-    }
-
-    XmlWriter& XmlWriter::startElement( std::string const& name ) {
-        ensureTagClosed();
-        newlineIfNecessary();
-        m_os << m_indent << '<' << name;
-        m_tags.push_back( name );
-        m_indent += "  ";
-        m_tagIsOpen = true;
-        return *this;
-    }
-
-    XmlWriter::ScopedElement XmlWriter::scopedElement( std::string const& name ) {
-        ScopedElement scoped( this );
-        startElement( name );
-        return scoped;
-    }
-
-    XmlWriter& XmlWriter::endElement() {
-        newlineIfNecessary();
-        m_indent = m_indent.substr( 0, m_indent.size()-2 );
-        if( m_tagIsOpen ) {
-            m_os << "/>";
-            m_tagIsOpen = false;
-        }
-        else {
-            m_os << m_indent << "</" << m_tags.back() << ">";
-        }
-        m_os << std::endl;
-        m_tags.pop_back();
-        return *this;
-    }
-
-    XmlWriter& XmlWriter::writeAttribute( std::string const& name, std::string const& attribute ) {
-        if( !name.empty() && !attribute.empty() )
-            m_os << ' ' << name << "=\"" << XmlEncode( attribute, XmlEncode::ForAttributes ) << '"';
-        return *this;
-    }
-
-    XmlWriter& XmlWriter::writeAttribute( std::string const& name, bool attribute ) {
-        m_os << ' ' << name << "=\"" << ( attribute ? "true" : "false" ) << '"';
-        return *this;
-    }
-
-    XmlWriter& XmlWriter::writeText( std::string const& text, bool indent ) {
-        if( !text.empty() ){
-            bool tagWasOpen = m_tagIsOpen;
-            ensureTagClosed();
-            if( tagWasOpen && indent )
-                m_os << m_indent;
-            m_os << XmlEncode( text );
-            m_needsNewline = true;
-        }
-        return *this;
-    }
-
-    XmlWriter& XmlWriter::writeComment( std::string const& text ) {
-        ensureTagClosed();
-        m_os << m_indent << "<!--" << text << "-->";
-        m_needsNewline = true;
-        return *this;
-    }
-
-    void XmlWriter::writeStylesheetRef( std::string const& url ) {
-        m_os << "<?xml-stylesheet type=\"text/xsl\" href=\"" << url << "\"?>\n";
-    }
-
-    XmlWriter& XmlWriter::writeBlankLine() {
-        ensureTagClosed();
-        m_os << '\n';
-        return *this;
-    }
-
-    void XmlWriter::ensureTagClosed() {
-        if( m_tagIsOpen ) {
-            m_os << ">" << std::endl;
-            m_tagIsOpen = false;
-        }
-    }
-
-    void XmlWriter::writeDeclaration() {
-        m_os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    }
-
-    void XmlWriter::newlineIfNecessary() {
-        if( m_needsNewline ) {
-            m_os << std::endl;
-            m_needsNewline = false;
-        }
-    }
-}
-// end catch_xmlwriter.cpp
-// start catch_reporter_bases.cpp
-
-#include <cstring>
-#include <cfloat>
-#include <cstdio>
-#include <assert.h>
-#include <memory>
-
-namespace Catch {
-    void prepareExpandedExpression(AssertionResult& result) {
-        result.getExpandedExpression();
-    }
-
-    // Because formatting using c++ streams is stateful, drop down to C is required
-    // Alternatively we could use stringstream, but its performance is... not good.
-    std::string getFormattedDuration( double duration ) {
-        // Max exponent + 1 is required to represent the whole part
-        // + 1 for decimal point
-        // + 3 for the 3 decimal places
-        // + 1 for null terminator
-        const std::size_t maxDoubleSize = DBL_MAX_10_EXP + 1 + 1 + 3 + 1;
-        char buffer[maxDoubleSize];
-
-        // Save previous errno, to prevent sprintf from overwriting it
-        ErrnoGuard guard;
-#ifdef _MSC_VER
-        sprintf_s(buffer, "%.3f", duration);
-#else
-        sprintf(buffer, "%.3f", duration);
-#endif
-        return std::string(buffer);
-    }
-
-    TestEventListenerBase::TestEventListenerBase(ReporterConfig const & _config)
-        :StreamingReporterBase(_config) {}
-
-    void TestEventListenerBase::assertionStarting(AssertionInfo const &) {}
-
-    bool TestEventListenerBase::assertionEnded(AssertionStats const &) {
-        return false;
-    }
-
-} // end namespace Catch
-// end catch_reporter_bases.cpp
-// start catch_reporter_compact.cpp
-
-namespace {
-
-#ifdef CATCH_PLATFORM_MAC
-    const char* failedString() { return "FAILED"; }
-    const char* passedString() { return "PASSED"; }
-#else
-    const char* failedString() { return "failed"; }
-    const char* passedString() { return "passed"; }
-#endif
-
-    // Colour::LightGrey
-    Catch::Colour::Code dimColour() { return Catch::Colour::FileName; }
-
-    std::string bothOrAll( std::size_t count ) {
-        return count == 1 ? std::string() :
-               count == 2 ? "both " : "all " ;
-    }
-
-} // anon namespace
-
-namespace Catch {
-namespace {
-// Colour, message variants:
-// - white: No tests ran.
-// -   red: Failed [both/all] N test cases, failed [both/all] M assertions.
-// - white: Passed [both/all] N test cases (no assertions).
-// -   red: Failed N tests cases, failed M assertions.
-// - green: Passed [both/all] N tests cases with M assertions.
-void printTotals(std::ostream& out, const Totals& totals) {
-    if (totals.testCases.total() == 0) {
-        out << "No tests ran.";
-    } else if (totals.testCases.failed == totals.testCases.total()) {
-        Colour colour(Colour::ResultError);
-        const std::string qualify_assertions_failed =
-            totals.assertions.failed == totals.assertions.total() ?
-            bothOrAll(totals.assertions.failed) : std::string();
-        out <<
-            "Failed " << bothOrAll(totals.testCases.failed)
-            << pluralise(totals.testCases.failed, "test case") << ", "
-            "failed " << qualify_assertions_failed <<
-            pluralise(totals.assertions.failed, "assertion") << '.';
-    } else if (totals.assertions.total() == 0) {
-        out <<
-            "Passed " << bothOrAll(totals.testCases.total())
-            << pluralise(totals.testCases.total(), "test case")
-            << " (no assertions).";
-    } else if (totals.assertions.failed) {
-        Colour colour(Colour::ResultError);
-        out <<
-            "Failed " << pluralise(totals.testCases.failed, "test case") << ", "
-            "failed " << pluralise(totals.assertions.failed, "assertion") << '.';
-    } else {
-        Colour colour(Colour::ResultSuccess);
-        out <<
-            "Passed " << bothOrAll(totals.testCases.passed)
-            << pluralise(totals.testCases.passed, "test case") <<
-            " with " << pluralise(totals.assertions.passed, "assertion") << '.';
-    }
-}
-
-// Implementation of CompactReporter formatting
-class AssertionPrinter {
-public:
-    AssertionPrinter& operator= (AssertionPrinter const&) = delete;
-    AssertionPrinter(AssertionPrinter const&) = delete;
-    AssertionPrinter(std::ostream& _stream, AssertionStats const& _stats, bool _printInfoMessages)
-        : stream(_stream)
-        , result(_stats.assertionResult)
-        , messages(_stats.infoMessages)
-        , itMessage(_stats.infoMessages.begin())
-        , printInfoMessages(_printInfoMessages) {}
-
-    void print() {
-        printSourceInfo();
-
-        itMessage = messages.begin();
-
-        switch (result.getResultType()) {
-        case ResultWas::Ok:
-            printResultType(Colour::ResultSuccess, passedString());
-            printOriginalExpression();
-            printReconstructedExpression();
-            if (!result.hasExpression())
-                printRemainingMessages(Colour::None);
-            else
-                printRemainingMessages();
-            break;
-        case ResultWas::ExpressionFailed:
-            if (result.isOk())
-                printResultType(Colour::ResultSuccess, failedString() + std::string(" - but was ok"));
-            else
-                printResultType(Colour::Error, failedString());
-            printOriginalExpression();
-            printReconstructedExpression();
-            printRemainingMessages();
-            break;
-        case ResultWas::ThrewException:
-            printResultType(Colour::Error, failedString());
-            printIssue("unexpected exception with message:");
-            printMessage();
-            printExpressionWas();
-            printRemainingMessages();
-            break;
-        case ResultWas::FatalErrorCondition:
-            printResultType(Colour::Error, failedString());
-            printIssue("fatal error condition with message:");
-            printMessage();
-            printExpressionWas();
-            printRemainingMessages();
-            break;
-        case ResultWas::DidntThrowException:
-            printResultType(Colour::Error, failedString());
-            printIssue("expected exception, got none");
-            printExpressionWas();
-            printRemainingMessages();
-            break;
-        case ResultWas::Info:
-            printResultType(Colour::None, "info");
-            printMessage();
-            printRemainingMessages();
-            break;
-        case ResultWas::Warning:
-            printResultType(Colour::None, "warning");
-            printMessage();
-            printRemainingMessages();
-            break;
-        case ResultWas::ExplicitFailure:
-            printResultType(Colour::Error, failedString());
-            printIssue("explicitly");
-            printRemainingMessages(Colour::None);
-            break;
-            // These cases are here to prevent compiler warnings
-        case ResultWas::Unknown:
-        case ResultWas::FailureBit:
-        case ResultWas::Exception:
-            printResultType(Colour::Error, "** internal error **");
-            break;
-        }
-    }
-
-private:
-    void printSourceInfo() const {
-        Colour colourGuard(Colour::FileName);
-        stream << result.getSourceInfo() << ':';
-    }
-
-    void printResultType(Colour::Code colour, std::string const& passOrFail) const {
-        if (!passOrFail.empty()) {
-            {
-                Colour colourGuard(colour);
-                stream << ' ' << passOrFail;
-            }
-            stream << ':';
-        }
-    }
-
-    void printIssue(std::string const& issue) const {
-        stream << ' ' << issue;
-    }
-
-    void printExpressionWas() {
-        if (result.hasExpression()) {
-            stream << ';';
-            {
-                Colour colour(dimColour());
-                stream << " expression was:";
-            }
-            printOriginalExpression();
-        }
-    }
-
-    void printOriginalExpression() const {
-        if (result.hasExpression()) {
-            stream << ' ' << result.getExpression();
-        }
-    }
-
-    void printReconstructedExpression() const {
-        if (result.hasExpandedExpression()) {
-            {
-                Colour colour(dimColour());
-                stream << " for: ";
-            }
-            stream << result.getExpandedExpression();
-        }
-    }
-
-    void printMessage() {
-        if (itMessage != messages.end()) {
-            stream << " '" << itMessage->message << '\'';
-            ++itMessage;
-        }
-    }
-
-    void printRemainingMessages(Colour::Code colour = dimColour()) {
-        if (itMessage == messages.end())
-            return;
-
-        // using messages.end() directly yields (or auto) compilation error:
-        std::vector<MessageInfo>::const_iterator itEnd = messages.end();
-        const std::size_t N = static_cast<std::size_t>(std::distance(itMessage, itEnd));
-
-        {
-            Colour colourGuard(colour);
-            stream << " with " << pluralise(N, "message") << ':';
-        }
-
-        for (; itMessage != itEnd; ) {
-            // If this assertion is a warning ignore any INFO messages
-            if (printInfoMessages || itMessage->type != ResultWas::Info) {
-                stream << " '" << itMessage->message << '\'';
-                if (++itMessage != itEnd) {
-                    Colour colourGuard(dimColour());
-                    stream << " and";
-                }
-            }
-        }
-    }
-
-private:
-    std::ostream& stream;
-    AssertionResult const& result;
-    std::vector<MessageInfo> messages;
-    std::vector<MessageInfo>::const_iterator itMessage;
-    bool printInfoMessages;
-};
-
-} // anon namespace
-
-        std::string CompactReporter::getDescription() {
-            return "Reports test results on a single line, suitable for IDEs";
-        }
-
-        ReporterPreferences CompactReporter::getPreferences() const {
-            ReporterPreferences prefs;
-            prefs.shouldRedirectStdOut = false;
-            return prefs;
-        }
-
-        void CompactReporter::noMatchingTestCases( std::string const& spec ) {
-            stream << "No test cases matched '" << spec << '\'' << std::endl;
-        }
-
-        void CompactReporter::assertionStarting( AssertionInfo const& ) {}
-
-        bool CompactReporter::assertionEnded( AssertionStats const& _assertionStats ) {
-            AssertionResult const& result = _assertionStats.assertionResult;
-
-            bool printInfoMessages = true;
-
-            // Drop out if result was successful and we're not printing those
-            if( !m_config->includeSuccessfulResults() && result.isOk() ) {
-                if( result.getResultType() != ResultWas::Warning )
-                    return false;
-                printInfoMessages = false;
-            }
-
-            AssertionPrinter printer( stream, _assertionStats, printInfoMessages );
-            printer.print();
-
-            stream << std::endl;
-            return true;
-        }
-
-        void CompactReporter::sectionEnded(SectionStats const& _sectionStats) {
-            if (m_config->showDurations() == ShowDurations::Always) {
-                stream << getFormattedDuration(_sectionStats.durationInSeconds) << " s: " << _sectionStats.sectionInfo.name << std::endl;
-            }
-        }
-
-        void CompactReporter::testRunEnded( TestRunStats const& _testRunStats ) {
-            printTotals( stream, _testRunStats.totals );
-            stream << '\n' << std::endl;
-            StreamingReporterBase::testRunEnded( _testRunStats );
-        }
-
-        CompactReporter::~CompactReporter() {}
-
-    CATCH_REGISTER_REPORTER( "compact", CompactReporter )
-
-} // end namespace Catch
-// end catch_reporter_compact.cpp
-// start catch_reporter_console.cpp
-
-#include <cfloat>
-#include <cstdio>
-
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4061) // Not all labels are EXPLICITLY handled in switch
- // Note that 4062 (not all labels are handled
- // and default is missing) is enabled
-#endif
-
-namespace Catch {
-
-namespace {
-
-// Formatter impl for ConsoleReporter
-class ConsoleAssertionPrinter {
-public:
-    ConsoleAssertionPrinter& operator= (ConsoleAssertionPrinter const&) = delete;
-    ConsoleAssertionPrinter(ConsoleAssertionPrinter const&) = delete;
-    ConsoleAssertionPrinter(std::ostream& _stream, AssertionStats const& _stats, bool _printInfoMessages)
-        : stream(_stream),
-        stats(_stats),
-        result(_stats.assertionResult),
-        colour(Colour::None),
-        message(result.getMessage()),
-        messages(_stats.infoMessages),
-        printInfoMessages(_printInfoMessages) {
-        switch (result.getResultType()) {
-        case ResultWas::Ok:
-            colour = Colour::Success;
-            passOrFail = "PASSED";
-            //if( result.hasMessage() )
-            if (_stats.infoMessages.size() == 1)
-                messageLabel = "with message";
-            if (_stats.infoMessages.size() > 1)
-                messageLabel = "with messages";
-            break;
-        case ResultWas::ExpressionFailed:
-            if (result.isOk()) {
-                colour = Colour::Success;
-                passOrFail = "FAILED - but was ok";
-            } else {
-                colour = Colour::Error;
-                passOrFail = "FAILED";
-            }
-            if (_stats.infoMessages.size() == 1)
-                messageLabel = "with message";
-            if (_stats.infoMessages.size() > 1)
-                messageLabel = "with messages";
-            break;
-        case ResultWas::ThrewException:
-            colour = Colour::Error;
-            passOrFail = "FAILED";
-            messageLabel = "due to unexpected exception with ";
-            if (_stats.infoMessages.size() == 1)
-                messageLabel += "message";
-            if (_stats.infoMessages.size() > 1)
-                messageLabel += "messages";
-            break;
-        case ResultWas::FatalErrorCondition:
-            colour = Colour::Error;
-            passOrFail = "FAILED";
-            messageLabel = "due to a fatal error condition";
-            break;
-        case ResultWas::DidntThrowException:
-            colour = Colour::Error;
-            passOrFail = "FAILED";
-            messageLabel = "because no exception was thrown where one was expected";
-            break;
-        case ResultWas::Info:
-            messageLabel = "info";
-            break;
-        case ResultWas::Warning:
-            messageLabel = "warning";
-            break;
-        case ResultWas::ExplicitFailure:
-            passOrFail = "FAILED";
-            colour = Colour::Error;
-            if (_stats.infoMessages.size() == 1)
-                messageLabel = "explicitly with message";
-            if (_stats.infoMessages.size() > 1)
-                messageLabel = "explicitly with messages";
-            break;
-            // These cases are here to prevent compiler warnings
-        case ResultWas::Unknown:
-        case ResultWas::FailureBit:
-        case ResultWas::Exception:
-            passOrFail = "** internal error **";
-            colour = Colour::Error;
-            break;
-        }
-    }
-
-    void print() const {
-        printSourceInfo();
-        if (stats.totals.assertions.total() > 0) {
-            if (result.isOk())
-                stream << '\n';
-            printResultType();
-            printOriginalExpression();
-            printReconstructedExpression();
-        } else {
-            stream << '\n';
-        }
-        printMessage();
-    }
-
-private:
-    void printResultType() const {
-        if (!passOrFail.empty()) {
-            Colour colourGuard(colour);
-            stream << passOrFail << ":\n";
-        }
-    }
-    void printOriginalExpression() const {
-        if (result.hasExpression()) {
-            Colour colourGuard(Colour::OriginalExpression);
-            stream << "  ";
-            stream << result.getExpressionInMacro();
-            stream << '\n';
-        }
-    }
-    void printReconstructedExpression() const {
-        if (result.hasExpandedExpression()) {
-            stream << "with expansion:\n";
-            Colour colourGuard(Colour::ReconstructedExpression);
-            stream << Column(result.getExpandedExpression()).indent(2) << '\n';
-        }
-    }
-    void printMessage() const {
-        if (!messageLabel.empty())
-            stream << messageLabel << ':' << '\n';
-        for (auto const& msg : messages) {
-            // If this assertion is a warning ignore any INFO messages
-            if (printInfoMessages || msg.type != ResultWas::Info)
-                stream << Column(msg.message).indent(2) << '\n';
-        }
-    }
-    void printSourceInfo() const {
-        Colour colourGuard(Colour::FileName);
-        stream << result.getSourceInfo() << ": ";
-    }
-
-    std::ostream& stream;
-    AssertionStats const& stats;
-    AssertionResult const& result;
-    Colour::Code colour;
-    std::string passOrFail;
-    std::string messageLabel;
-    std::string message;
-    std::vector<MessageInfo> messages;
-    bool printInfoMessages;
-};
-
-std::size_t makeRatio(std::size_t number, std::size_t total) {
-    std::size_t ratio = total > 0 ? CATCH_CONFIG_CONSOLE_WIDTH * number / total : 0;
-    return (ratio == 0 && number > 0) ? 1 : ratio;
-}
-
-std::size_t& findMax(std::size_t& i, std::size_t& j, std::size_t& k) {
-    if (i > j && i > k)
-        return i;
-    else if (j > k)
-        return j;
-    else
-        return k;
-}
-
-struct ColumnInfo {
-    enum Justification { Left, Right };
-    std::string name;
-    int width;
-    Justification justification;
-};
-struct ColumnBreak {};
-struct RowBreak {};
-
-class Duration {
-    enum class Unit {
-        Auto,
-        Nanoseconds,
-        Microseconds,
-        Milliseconds,
-        Seconds,
-        Minutes
-    };
-    static const uint64_t s_nanosecondsInAMicrosecond = 1000;
-    static const uint64_t s_nanosecondsInAMillisecond = 1000 * s_nanosecondsInAMicrosecond;
-    static const uint64_t s_nanosecondsInASecond = 1000 * s_nanosecondsInAMillisecond;
-    static const uint64_t s_nanosecondsInAMinute = 60 * s_nanosecondsInASecond;
-
-    uint64_t m_inNanoseconds;
-    Unit m_units;
-
-public:
-    explicit Duration(uint64_t inNanoseconds, Unit units = Unit::Auto)
-        : m_inNanoseconds(inNanoseconds),
-        m_units(units) {
-        if (m_units == Unit::Auto) {
-            if (m_inNanoseconds < s_nanosecondsInAMicrosecond)
-                m_units = Unit::Nanoseconds;
-            else if (m_inNanoseconds < s_nanosecondsInAMillisecond)
-                m_units = Unit::Microseconds;
-            else if (m_inNanoseconds < s_nanosecondsInASecond)
-                m_units = Unit::Milliseconds;
-            else if (m_inNanoseconds < s_nanosecondsInAMinute)
-                m_units = Unit::Seconds;
-            else
-                m_units = Unit::Minutes;
-        }
-
-    }
-
-    auto value() const -> double {
-        switch (m_units) {
-        case Unit::Microseconds:
-            return m_inNanoseconds / static_cast<double>(s_nanosecondsInAMicrosecond);
-        case Unit::Milliseconds:
-            return m_inNanoseconds / static_cast<double>(s_nanosecondsInAMillisecond);
-        case Unit::Seconds:
-            return m_inNanoseconds / static_cast<double>(s_nanosecondsInASecond);
-        case Unit::Minutes:
-            return m_inNanoseconds / static_cast<double>(s_nanosecondsInAMinute);
-        default:
-            return static_cast<double>(m_inNanoseconds);
-        }
-    }
-    auto unitsAsString() const -> std::string {
-        switch (m_units) {
-        case Unit::Nanoseconds:
-            return "ns";
-        case Unit::Microseconds:
-            return "µs";
-        case Unit::Milliseconds:
-            return "ms";
-        case Unit::Seconds:
-            return "s";
-        case Unit::Minutes:
-            return "m";
-        default:
-            return "** internal error **";
-        }
-
-    }
-    friend auto operator << (std::ostream& os, Duration const& duration) -> std::ostream& {
-        return os << duration.value() << " " << duration.unitsAsString();
-    }
-};
-} // end anon namespace
-
-class TablePrinter {
-    std::ostream& m_os;
-    std::vector<ColumnInfo> m_columnInfos;
-    std::ostringstream m_oss;
-    int m_currentColumn = -1;
-    bool m_isOpen = false;
-
-public:
-    TablePrinter( std::ostream& os, std::vector<ColumnInfo> columnInfos )
-    :   m_os( os ),
-        m_columnInfos( std::move( columnInfos ) ) {}
-
-    auto columnInfos() const -> std::vector<ColumnInfo> const& {
-        return m_columnInfos;
-    }
-
-    void open() {
-        if (!m_isOpen) {
-            m_isOpen = true;
-            *this << RowBreak();
-            for (auto const& info : m_columnInfos)
-                *this << info.name << ColumnBreak();
-            *this << RowBreak();
-            m_os << Catch::getLineOfChars<'-'>() << "\n";
-        }
-    }
-    void close() {
-        if (m_isOpen) {
-            *this << RowBreak();
-            m_os << std::endl;
-            m_isOpen = false;
-        }
-    }
-
-    template<typename T>
-    friend TablePrinter& operator << (TablePrinter& tp, T const& value) {
-        tp.m_oss << value;
-        return tp;
-    }
-
-    friend TablePrinter& operator << (TablePrinter& tp, ColumnBreak) {
-        auto colStr = tp.m_oss.str();
-        // This takes account of utf8 encodings
-        auto strSize = Catch::StringRef(colStr).numberOfCharacters();
-        tp.m_oss.str("");
-        tp.open();
-        if (tp.m_currentColumn == static_cast<int>(tp.m_columnInfos.size() - 1)) {
-            tp.m_currentColumn = -1;
-            tp.m_os << "\n";
-        }
-        tp.m_currentColumn++;
-
-        auto colInfo = tp.m_columnInfos[tp.m_currentColumn];
-        auto padding = (strSize + 2 < static_cast<std::size_t>(colInfo.width))
-            ? std::string(colInfo.width - (strSize + 2), ' ')
-            : std::string();
-        if (colInfo.justification == ColumnInfo::Left)
-            tp.m_os << colStr << padding << " ";
-        else
-            tp.m_os << padding << colStr << " ";
-        return tp;
-    }
-
-    friend TablePrinter& operator << (TablePrinter& tp, RowBreak) {
-        if (tp.m_currentColumn > 0) {
-            tp.m_os << "\n";
-            tp.m_currentColumn = -1;
-        }
-        return tp;
-    }
-};
-
-ConsoleReporter::ConsoleReporter(ReporterConfig const& config)
-    : StreamingReporterBase(config),
-    m_tablePrinter(new TablePrinter(config.stream(),
-    {
-        { "benchmark name", CATCH_CONFIG_CONSOLE_WIDTH - 32, ColumnInfo::Left },
-        { "iters", 8, ColumnInfo::Right },
-        { "elapsed ns", 14, ColumnInfo::Right },
-        { "average", 14, ColumnInfo::Right }
-    })) {}
-ConsoleReporter::~ConsoleReporter() = default;
-
-std::string ConsoleReporter::getDescription() {
-    return "Reports test results as plain lines of text";
-}
-
-void ConsoleReporter::noMatchingTestCases(std::string const& spec) {
-    stream << "No test cases matched '" << spec << '\'' << std::endl;
-}
-
-void ConsoleReporter::assertionStarting(AssertionInfo const&) {}
-
-bool ConsoleReporter::assertionEnded(AssertionStats const& _assertionStats) {
-    AssertionResult const& result = _assertionStats.assertionResult;
-
-    bool includeResults = m_config->includeSuccessfulResults() || !result.isOk();
-
-    // Drop out if result was successful but we're not printing them.
-    if (!includeResults && result.getResultType() != ResultWas::Warning)
-        return false;
-
-    lazyPrint();
-
-    ConsoleAssertionPrinter printer(stream, _assertionStats, includeResults);
-    printer.print();
-    stream << std::endl;
-    return true;
-}
-
-void ConsoleReporter::sectionStarting(SectionInfo const& _sectionInfo) {
-    m_headerPrinted = false;
-    StreamingReporterBase::sectionStarting(_sectionInfo);
-}
-void ConsoleReporter::sectionEnded(SectionStats const& _sectionStats) {
-    m_tablePrinter->close();
-    if (_sectionStats.missingAssertions) {
-        lazyPrint();
-        Colour colour(Colour::ResultError);
-        if (m_sectionStack.size() > 1)
-            stream << "\nNo assertions in section";
-        else
-            stream << "\nNo assertions in test case";
-        stream << " '" << _sectionStats.sectionInfo.name << "'\n" << std::endl;
-    }
-    if (m_config->showDurations() == ShowDurations::Always) {
-        stream << getFormattedDuration(_sectionStats.durationInSeconds) << " s: " << _sectionStats.sectionInfo.name << std::endl;
-    }
-    if (m_headerPrinted) {
-        m_headerPrinted = false;
-    }
-    StreamingReporterBase::sectionEnded(_sectionStats);
-}
-
-void ConsoleReporter::benchmarkStarting(BenchmarkInfo const& info) {
-    lazyPrintWithoutClosingBenchmarkTable();
-
-    auto nameCol = Column( info.name ).width( static_cast<std::size_t>( m_tablePrinter->columnInfos()[0].width - 2 ) );
-
-    bool firstLine = true;
-    for (auto line : nameCol) {
-        if (!firstLine)
-            (*m_tablePrinter) << ColumnBreak() << ColumnBreak() << ColumnBreak();
-        else
-            firstLine = false;
-
-        (*m_tablePrinter) << line << ColumnBreak();
-    }
-}
-void ConsoleReporter::benchmarkEnded(BenchmarkStats const& stats) {
-    Duration average(stats.elapsedTimeInNanoseconds / stats.iterations);
-    (*m_tablePrinter)
-        << stats.iterations << ColumnBreak()
-        << stats.elapsedTimeInNanoseconds << ColumnBreak()
-        << average << ColumnBreak();
-}
-
-void ConsoleReporter::testCaseEnded(TestCaseStats const& _testCaseStats) {
-    m_tablePrinter->close();
-    StreamingReporterBase::testCaseEnded(_testCaseStats);
-    m_headerPrinted = false;
-}
-void ConsoleReporter::testGroupEnded(TestGroupStats const& _testGroupStats) {
-    if (currentGroupInfo.used) {
-        printSummaryDivider();
-        stream << "Summary for group '" << _testGroupStats.groupInfo.name << "':\n";
-        printTotals(_testGroupStats.totals);
-        stream << '\n' << std::endl;
-    }
-    StreamingReporterBase::testGroupEnded(_testGroupStats);
-}
-void ConsoleReporter::testRunEnded(TestRunStats const& _testRunStats) {
-    printTotalsDivider(_testRunStats.totals);
-    printTotals(_testRunStats.totals);
-    stream << std::endl;
-    StreamingReporterBase::testRunEnded(_testRunStats);
-}
-
-void ConsoleReporter::lazyPrint() {
-
-    m_tablePrinter->close();
-    lazyPrintWithoutClosingBenchmarkTable();
-}
-
-void ConsoleReporter::lazyPrintWithoutClosingBenchmarkTable() {
-
-    if (!currentTestRunInfo.used)
-        lazyPrintRunInfo();
-    if (!currentGroupInfo.used)
-        lazyPrintGroupInfo();
-
-    if (!m_headerPrinted) {
-        printTestCaseAndSectionHeader();
-        m_headerPrinted = true;
-    }
-}
-void ConsoleReporter::lazyPrintRunInfo() {
-    stream << '\n' << getLineOfChars<'~'>() << '\n';
-    Colour colour(Colour::SecondaryText);
-    stream << currentTestRunInfo->name
-        << " is a Catch v" << libraryVersion() << " host application.\n"
-        << "Run with -? for options\n\n";
-
-    if (m_config->rngSeed() != 0)
-        stream << "Randomness seeded to: " << m_config->rngSeed() << "\n\n";
-
-    currentTestRunInfo.used = true;
-}
-void ConsoleReporter::lazyPrintGroupInfo() {
-    if (!currentGroupInfo->name.empty() && currentGroupInfo->groupsCounts > 1) {
-        printClosedHeader("Group: " + currentGroupInfo->name);
-        currentGroupInfo.used = true;
-    }
-}
-void ConsoleReporter::printTestCaseAndSectionHeader() {
-    assert(!m_sectionStack.empty());
-    printOpenHeader(currentTestCaseInfo->name);
-
-    if (m_sectionStack.size() > 1) {
-        Colour colourGuard(Colour::Headers);
-
-        auto
-            it = m_sectionStack.begin() + 1, // Skip first section (test case)
-            itEnd = m_sectionStack.end();
-        for (; it != itEnd; ++it)
-            printHeaderString(it->name, 2);
-    }
-
-    SourceLineInfo lineInfo = m_sectionStack.back().lineInfo;
-
-    if (!lineInfo.empty()) {
-        stream << getLineOfChars<'-'>() << '\n';
-        Colour colourGuard(Colour::FileName);
-        stream << lineInfo << '\n';
-    }
-    stream << getLineOfChars<'.'>() << '\n' << std::endl;
-}
-
-void ConsoleReporter::printClosedHeader(std::string const& _name) {
-    printOpenHeader(_name);
-    stream << getLineOfChars<'.'>() << '\n';
-}
-void ConsoleReporter::printOpenHeader(std::string const& _name) {
-    stream << getLineOfChars<'-'>() << '\n';
-    {
-        Colour colourGuard(Colour::Headers);
-        printHeaderString(_name);
-    }
-}
-
-// if string has a : in first line will set indent to follow it on
-// subsequent lines
-void ConsoleReporter::printHeaderString(std::string const& _string, std::size_t indent) {
-    std::size_t i = _string.find(": ");
-    if (i != std::string::npos)
-        i += 2;
-    else
-        i = 0;
-    stream << Column(_string).indent(indent + i).initialIndent(indent) << '\n';
-}
-
-struct SummaryColumn {
-
-    SummaryColumn( std::string _label, Colour::Code _colour )
-    :   label( std::move( _label ) ),
-        colour( _colour ) {}
-    SummaryColumn addRow( std::size_t count ) {
-        ReusableStringStream rss;
-        rss << count;
-        std::string row = rss.str();
-        for (auto& oldRow : rows) {
-            while (oldRow.size() < row.size())
-                oldRow = ' ' + oldRow;
-            while (oldRow.size() > row.size())
-                row = ' ' + row;
-        }
-        rows.push_back(row);
-        return *this;
-    }
-
-    std::string label;
-    Colour::Code colour;
-    std::vector<std::string> rows;
-
-};
-
-void ConsoleReporter::printTotals( Totals const& totals ) {
-    if (totals.testCases.total() == 0) {
-        stream << Colour(Colour::Warning) << "No tests ran\n";
-    } else if (totals.assertions.total() > 0 && totals.testCases.allPassed()) {
-        stream << Colour(Colour::ResultSuccess) << "All tests passed";
-        stream << " ("
-            << pluralise(totals.assertions.passed, "assertion") << " in "
-            << pluralise(totals.testCases.passed, "test case") << ')'
-            << '\n';
-    } else {
-
-        std::vector<SummaryColumn> columns;
-        columns.push_back(SummaryColumn("", Colour::None)
-                          .addRow(totals.testCases.total())
-                          .addRow(totals.assertions.total()));
-        columns.push_back(SummaryColumn("passed", Colour::Success)
-                          .addRow(totals.testCases.passed)
-                          .addRow(totals.assertions.passed));
-        columns.push_back(SummaryColumn("failed", Colour::ResultError)
-                          .addRow(totals.testCases.failed)
-                          .addRow(totals.assertions.failed));
-        columns.push_back(SummaryColumn("failed as expected", Colour::ResultExpectedFailure)
-                          .addRow(totals.testCases.failedButOk)
-                          .addRow(totals.assertions.failedButOk));
-
-        printSummaryRow("test cases", columns, 0);
-        printSummaryRow("assertions", columns, 1);
-    }
-}
-void ConsoleReporter::printSummaryRow(std::string const& label, std::vector<SummaryColumn> const& cols, std::size_t row) {
-    for (auto col : cols) {
-        std::string value = col.rows[row];
-        if (col.label.empty()) {
-            stream << label << ": ";
-            if (value != "0")
-                stream << value;
-            else
-                stream << Colour(Colour::Warning) << "- none -";
-        } else if (value != "0") {
-            stream << Colour(Colour::LightGrey) << " | ";
-            stream << Colour(col.colour)
-                << value << ' ' << col.label;
-        }
-    }
-    stream << '\n';
-}
-
-void ConsoleReporter::printTotalsDivider(Totals const& totals) {
-    if (totals.testCases.total() > 0) {
-        std::size_t failedRatio = makeRatio(totals.testCases.failed, totals.testCases.total());
-        std::size_t failedButOkRatio = makeRatio(totals.testCases.failedButOk, totals.testCases.total());
-        std::size_t passedRatio = makeRatio(totals.testCases.passed, totals.testCases.total());
-        while (failedRatio + failedButOkRatio + passedRatio < CATCH_CONFIG_CONSOLE_WIDTH - 1)
-            findMax(failedRatio, failedButOkRatio, passedRatio)++;
-        while (failedRatio + failedButOkRatio + passedRatio > CATCH_CONFIG_CONSOLE_WIDTH - 1)
-            findMax(failedRatio, failedButOkRatio, passedRatio)--;
-
-        stream << Colour(Colour::Error) << std::string(failedRatio, '=');
-        stream << Colour(Colour::ResultExpectedFailure) << std::string(failedButOkRatio, '=');
-        if (totals.testCases.allPassed())
-            stream << Colour(Colour::ResultSuccess) << std::string(passedRatio, '=');
-        else
-            stream << Colour(Colour::Success) << std::string(passedRatio, '=');
-    } else {
-        stream << Colour(Colour::Warning) << std::string(CATCH_CONFIG_CONSOLE_WIDTH - 1, '=');
-    }
-    stream << '\n';
-}
-void ConsoleReporter::printSummaryDivider() {
-    stream << getLineOfChars<'-'>() << '\n';
-}
-
-CATCH_REGISTER_REPORTER("console", ConsoleReporter)
-
-} // end namespace Catch
-
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
-// end catch_reporter_console.cpp
-// start catch_reporter_junit.cpp
-
-#include <assert.h>
-#include <sstream>
-#include <ctime>
-#include <algorithm>
-
-namespace Catch {
-
-    namespace {
-        std::string getCurrentTimestamp() {
-            // Beware, this is not reentrant because of backward compatibility issues
-            // Also, UTC only, again because of backward compatibility (%z is C++11)
-            time_t rawtime;
-            std::time(&rawtime);
-            auto const timeStampSize = sizeof("2017-01-16T17:06:45Z");
-
-#ifdef _MSC_VER
-            std::tm timeInfo = {};
-            gmtime_s(&timeInfo, &rawtime);
-#else
-            std::tm* timeInfo;
-            timeInfo = std::gmtime(&rawtime);
-#endif
-
-            char timeStamp[timeStampSize];
-            const char * const fmt = "%Y-%m-%dT%H:%M:%SZ";
-
-#ifdef _MSC_VER
-            std::strftime(timeStamp, timeStampSize, fmt, &timeInfo);
-#else
-            std::strftime(timeStamp, timeStampSize, fmt, timeInfo);
-#endif
-            return std::string(timeStamp);
-        }
-
-        std::string fileNameTag(const std::vector<std::string> &tags) {
-            auto it = std::find_if(begin(tags),
-                                   end(tags),
-                                   [] (std::string const& tag) {return tag.front() == '#'; });
-            if (it != tags.end())
-                return it->substr(1);
-            return std::string();
-        }
-    } // anonymous namespace
-
-    JunitReporter::JunitReporter( ReporterConfig const& _config )
-        :   CumulativeReporterBase( _config ),
-            xml( _config.stream() )
-        {
-            m_reporterPrefs.shouldRedirectStdOut = true;
-        }
-
-    JunitReporter::~JunitReporter() {}
-
-    std::string JunitReporter::getDescription() {
-        return "Reports test results in an XML format that looks like Ant's junitreport target";
-    }
-
-    void JunitReporter::noMatchingTestCases( std::string const& /*spec*/ ) {}
-
-    void JunitReporter::testRunStarting( TestRunInfo const& runInfo )  {
-        CumulativeReporterBase::testRunStarting( runInfo );
-        xml.startElement( "testsuites" );
-    }
-
-    void JunitReporter::testGroupStarting( GroupInfo const& groupInfo ) {
-        suiteTimer.start();
-        stdOutForSuite.clear();
-        stdErrForSuite.clear();
-        unexpectedExceptions = 0;
-        CumulativeReporterBase::testGroupStarting( groupInfo );
-    }
-
-    void JunitReporter::testCaseStarting( TestCaseInfo const& testCaseInfo ) {
-        m_okToFail = testCaseInfo.okToFail();
-    }
-
-    bool JunitReporter::assertionEnded( AssertionStats const& assertionStats ) {
-        if( assertionStats.assertionResult.getResultType() == ResultWas::ThrewException && !m_okToFail )
-            unexpectedExceptions++;
-        return CumulativeReporterBase::assertionEnded( assertionStats );
-    }
-
-    void JunitReporter::testCaseEnded( TestCaseStats const& testCaseStats ) {
-        stdOutForSuite += testCaseStats.stdOut;
-        stdErrForSuite += testCaseStats.stdErr;
-        CumulativeReporterBase::testCaseEnded( testCaseStats );
-    }
-
-    void JunitReporter::testGroupEnded( TestGroupStats const& testGroupStats ) {
-        double suiteTime = suiteTimer.getElapsedSeconds();
-        CumulativeReporterBase::testGroupEnded( testGroupStats );
-        writeGroup( *m_testGroups.back(), suiteTime );
-    }
-
-    void JunitReporter::testRunEndedCumulative() {
-        xml.endElement();
-    }
-
-    void JunitReporter::writeGroup( TestGroupNode const& groupNode, double suiteTime ) {
-        XmlWriter::ScopedElement e = xml.scopedElement( "testsuite" );
-        TestGroupStats const& stats = groupNode.value;
-        xml.writeAttribute( "name", stats.groupInfo.name );
-        xml.writeAttribute( "errors", unexpectedExceptions );
-        xml.writeAttribute( "failures", stats.totals.assertions.failed-unexpectedExceptions );
-        xml.writeAttribute( "tests", stats.totals.assertions.total() );
-        xml.writeAttribute( "hostname", "tbd" ); // !TBD
-        if( m_config->showDurations() == ShowDurations::Never )
-            xml.writeAttribute( "time", "" );
-        else
-            xml.writeAttribute( "time", suiteTime );
-        xml.writeAttribute( "timestamp", getCurrentTimestamp() );
-
-        // Write test cases
-        for( auto const& child : groupNode.children )
-            writeTestCase( *child );
-
-        xml.scopedElement( "system-out" ).writeText( trim( stdOutForSuite ), false );
-        xml.scopedElement( "system-err" ).writeText( trim( stdErrForSuite ), false );
-    }
-
-    void JunitReporter::writeTestCase( TestCaseNode const& testCaseNode ) {
-        TestCaseStats const& stats = testCaseNode.value;
-
-        // All test cases have exactly one section - which represents the
-        // test case itself. That section may have 0-n nested sections
-        assert( testCaseNode.children.size() == 1 );
-        SectionNode const& rootSection = *testCaseNode.children.front();
-
-        std::string className = stats.testInfo.className;
-
-        if( className.empty() ) {
-            className = fileNameTag(stats.testInfo.tags);
-            if ( className.empty() )
-                className = "global";
-        }
-
-        if ( !m_config->name().empty() )
-            className = m_config->name() + "." + className;
-
-        writeSection( className, "", rootSection );
-    }
-
-    void JunitReporter::writeSection(  std::string const& className,
-                        std::string const& rootName,
-                        SectionNode const& sectionNode ) {
-        std::string name = trim( sectionNode.stats.sectionInfo.name );
-        if( !rootName.empty() )
-            name = rootName + '/' + name;
-
-        if( !sectionNode.assertions.empty() ||
-            !sectionNode.stdOut.empty() ||
-            !sectionNode.stdErr.empty() ) {
-            XmlWriter::ScopedElement e = xml.scopedElement( "testcase" );
-            if( className.empty() ) {
-                xml.writeAttribute( "classname", name );
-                xml.writeAttribute( "name", "root" );
-            }
-            else {
-                xml.writeAttribute( "classname", className );
-                xml.writeAttribute( "name", name );
-            }
-            xml.writeAttribute( "time", ::Catch::Detail::stringify( sectionNode.stats.durationInSeconds ) );
-
-            writeAssertions( sectionNode );
-
-            if( !sectionNode.stdOut.empty() )
-                xml.scopedElement( "system-out" ).writeText( trim( sectionNode.stdOut ), false );
-            if( !sectionNode.stdErr.empty() )
-                xml.scopedElement( "system-err" ).writeText( trim( sectionNode.stdErr ), false );
-        }
-        for( auto const& childNode : sectionNode.childSections )
-            if( className.empty() )
-                writeSection( name, "", *childNode );
-            else
-                writeSection( className, name, *childNode );
-    }
-
-    void JunitReporter::writeAssertions( SectionNode const& sectionNode ) {
-        for( auto const& assertion : sectionNode.assertions )
-            writeAssertion( assertion );
-    }
-
-    void JunitReporter::writeAssertion( AssertionStats const& stats ) {
-        AssertionResult const& result = stats.assertionResult;
-        if( !result.isOk() ) {
-            std::string elementName;
-            switch( result.getResultType() ) {
-                case ResultWas::ThrewException:
-                case ResultWas::FatalErrorCondition:
-                    elementName = "error";
-                    break;
-                case ResultWas::ExplicitFailure:
-                    elementName = "failure";
-                    break;
-                case ResultWas::ExpressionFailed:
-                    elementName = "failure";
-                    break;
-                case ResultWas::DidntThrowException:
-                    elementName = "failure";
-                    break;
-
-                // We should never see these here:
-                case ResultWas::Info:
-                case ResultWas::Warning:
-                case ResultWas::Ok:
-                case ResultWas::Unknown:
-                case ResultWas::FailureBit:
-                case ResultWas::Exception:
-                    elementName = "internalError";
-                    break;
-            }
-
-            XmlWriter::ScopedElement e = xml.scopedElement( elementName );
-
-            xml.writeAttribute( "message", result.getExpandedExpression() );
-            xml.writeAttribute( "type", result.getTestMacroName() );
-
-            ReusableStringStream rss;
-            if( !result.getMessage().empty() )
-                rss << result.getMessage() << '\n';
-            for( auto const& msg : stats.infoMessages )
-                if( msg.type == ResultWas::Info )
-                    rss << msg.message << '\n';
-
-            rss << "at " << result.getSourceInfo();
-            xml.writeText( rss.str(), false );
-        }
-    }
-
-    CATCH_REGISTER_REPORTER( "junit", JunitReporter )
-
-} // end namespace Catch
-// end catch_reporter_junit.cpp
-// start catch_reporter_multi.cpp
-
-namespace Catch {
-
-    void MultipleReporters::add( IStreamingReporterPtr&& reporter ) {
-        m_reporters.push_back( std::move( reporter ) );
-    }
-
-    ReporterPreferences MultipleReporters::getPreferences() const {
-        return m_reporters[0]->getPreferences();
-    }
-
-    std::set<Verbosity> MultipleReporters::getSupportedVerbosities() {
-        return std::set<Verbosity>{ };
-    }
-
-    void MultipleReporters::noMatchingTestCases( std::string const& spec ) {
-        for( auto const& reporter : m_reporters )
-            reporter->noMatchingTestCases( spec );
-    }
-
-    void MultipleReporters::benchmarkStarting( BenchmarkInfo const& benchmarkInfo ) {
-        for( auto const& reporter : m_reporters )
-            reporter->benchmarkStarting( benchmarkInfo );
-    }
-    void MultipleReporters::benchmarkEnded( BenchmarkStats const& benchmarkStats ) {
-        for( auto const& reporter : m_reporters )
-            reporter->benchmarkEnded( benchmarkStats );
-    }
-
-    void MultipleReporters::testRunStarting( TestRunInfo const& testRunInfo ) {
-        for( auto const& reporter : m_reporters )
-            reporter->testRunStarting( testRunInfo );
-    }
-
-    void MultipleReporters::testGroupStarting( GroupInfo const& groupInfo ) {
-        for( auto const& reporter : m_reporters )
-            reporter->testGroupStarting( groupInfo );
-    }
-
-    void MultipleReporters::testCaseStarting( TestCaseInfo const& testInfo ) {
-        for( auto const& reporter : m_reporters )
-            reporter->testCaseStarting( testInfo );
-    }
-
-    void MultipleReporters::sectionStarting( SectionInfo const& sectionInfo ) {
-        for( auto const& reporter : m_reporters )
-            reporter->sectionStarting( sectionInfo );
-    }
-
-    void MultipleReporters::assertionStarting( AssertionInfo const& assertionInfo ) {
-        for( auto const& reporter : m_reporters )
-            reporter->assertionStarting( assertionInfo );
-    }
-
-    // The return value indicates if the messages buffer should be cleared:
-    bool MultipleReporters::assertionEnded( AssertionStats const& assertionStats ) {
-        bool clearBuffer = false;
-        for( auto const& reporter : m_reporters )
-            clearBuffer |= reporter->assertionEnded( assertionStats );
-        return clearBuffer;
-    }
-
-    void MultipleReporters::sectionEnded( SectionStats const& sectionStats ) {
-        for( auto const& reporter : m_reporters )
-            reporter->sectionEnded( sectionStats );
-    }
-
-    void MultipleReporters::testCaseEnded( TestCaseStats const& testCaseStats ) {
-        for( auto const& reporter : m_reporters )
-            reporter->testCaseEnded( testCaseStats );
-    }
-
-    void MultipleReporters::testGroupEnded( TestGroupStats const& testGroupStats ) {
-        for( auto const& reporter : m_reporters )
-            reporter->testGroupEnded( testGroupStats );
-    }
-
-    void MultipleReporters::testRunEnded( TestRunStats const& testRunStats ) {
-        for( auto const& reporter : m_reporters )
-            reporter->testRunEnded( testRunStats );
-    }
-
-    void MultipleReporters::skipTest( TestCaseInfo const& testInfo ) {
-        for( auto const& reporter : m_reporters )
-            reporter->skipTest( testInfo );
-    }
-
-    bool MultipleReporters::isMulti() const {
-        return true;
-    }
-
-} // end namespace Catch
-// end catch_reporter_multi.cpp
-// start catch_reporter_xml.cpp
-
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable:4061) // Not all labels are EXPLICITLY handled in switch
-                              // Note that 4062 (not all labels are handled
-                              // and default is missing) is enabled
-#endif
-
-namespace Catch {
-    XmlReporter::XmlReporter( ReporterConfig const& _config )
-    :   StreamingReporterBase( _config ),
-        m_xml(_config.stream())
-    {
-        m_reporterPrefs.shouldRedirectStdOut = true;
-    }
-
-    XmlReporter::~XmlReporter() = default;
-
-    std::string XmlReporter::getDescription() {
-        return "Reports test results as an XML document";
-    }
-
-    std::string XmlReporter::getStylesheetRef() const {
-        return std::string();
-    }
-
-    void XmlReporter::writeSourceInfo( SourceLineInfo const& sourceInfo ) {
-        m_xml
-            .writeAttribute( "filename", sourceInfo.file )
-            .writeAttribute( "line", sourceInfo.line );
-    }
-
-    void XmlReporter::noMatchingTestCases( std::string const& s ) {
-        StreamingReporterBase::noMatchingTestCases( s );
-    }
-
-    void XmlReporter::testRunStarting( TestRunInfo const& testInfo ) {
-        StreamingReporterBase::testRunStarting( testInfo );
-        std::string stylesheetRef = getStylesheetRef();
-        if( !stylesheetRef.empty() )
-            m_xml.writeStylesheetRef( stylesheetRef );
-        m_xml.startElement( "Catch" );
-        if( !m_config->name().empty() )
-            m_xml.writeAttribute( "name", m_config->name() );
-    }
-
-    void XmlReporter::testGroupStarting( GroupInfo const& groupInfo ) {
-        StreamingReporterBase::testGroupStarting( groupInfo );
-        m_xml.startElement( "Group" )
-            .writeAttribute( "name", groupInfo.name );
-    }
-
-    void XmlReporter::testCaseStarting( TestCaseInfo const& testInfo ) {
-        StreamingReporterBase::testCaseStarting(testInfo);
-        m_xml.startElement( "TestCase" )
-            .writeAttribute( "name", trim( testInfo.name ) )
-            .writeAttribute( "description", testInfo.description )
-            .writeAttribute( "tags", testInfo.tagsAsString() );
-
-        writeSourceInfo( testInfo.lineInfo );
-
-        if ( m_config->showDurations() == ShowDurations::Always )
-            m_testCaseTimer.start();
-        m_xml.ensureTagClosed();
-    }
-
-    void XmlReporter::sectionStarting( SectionInfo const& sectionInfo ) {
-        StreamingReporterBase::sectionStarting( sectionInfo );
-        if( m_sectionDepth++ > 0 ) {
-            m_xml.startElement( "Section" )
-                .writeAttribute( "name", trim( sectionInfo.name ) )
-                .writeAttribute( "description", sectionInfo.description );
-            writeSourceInfo( sectionInfo.lineInfo );
-            m_xml.ensureTagClosed();
-        }
-    }
-
-    void XmlReporter::assertionStarting( AssertionInfo const& ) { }
-
-    bool XmlReporter::assertionEnded( AssertionStats const& assertionStats ) {
-
-        AssertionResult const& result = assertionStats.assertionResult;
-
-        bool includeResults = m_config->includeSuccessfulResults() || !result.isOk();
-
-        if( includeResults || result.getResultType() == ResultWas::Warning ) {
-            // Print any info messages in <Info> tags.
-            for( auto const& msg : assertionStats.infoMessages ) {
-                if( msg.type == ResultWas::Info && includeResults ) {
-                    m_xml.scopedElement( "Info" )
-                            .writeText( msg.message );
-                } else if ( msg.type == ResultWas::Warning ) {
-                    m_xml.scopedElement( "Warning" )
-                            .writeText( msg.message );
-                }
-            }
-        }
-
-        // Drop out if result was successful but we're not printing them.
-        if( !includeResults && result.getResultType() != ResultWas::Warning )
-            return true;
-
-        // Print the expression if there is one.
-        if( result.hasExpression() ) {
-            m_xml.startElement( "Expression" )
-                .writeAttribute( "success", result.succeeded() )
-                .writeAttribute( "type", result.getTestMacroName() );
-
-            writeSourceInfo( result.getSourceInfo() );
-
-            m_xml.scopedElement( "Original" )
-                .writeText( result.getExpression() );
-            m_xml.scopedElement( "Expanded" )
-                .writeText( result.getExpandedExpression() );
-        }
-
-        // And... Print a result applicable to each result type.
-        switch( result.getResultType() ) {
-            case ResultWas::ThrewException:
-                m_xml.startElement( "Exception" );
-                writeSourceInfo( result.getSourceInfo() );
-                m_xml.writeText( result.getMessage() );
-                m_xml.endElement();
-                break;
-            case ResultWas::FatalErrorCondition:
-                m_xml.startElement( "FatalErrorCondition" );
-                writeSourceInfo( result.getSourceInfo() );
-                m_xml.writeText( result.getMessage() );
-                m_xml.endElement();
-                break;
-            case ResultWas::Info:
-                m_xml.scopedElement( "Info" )
-                    .writeText( result.getMessage() );
-                break;
-            case ResultWas::Warning:
-                // Warning will already have been written
-                break;
-            case ResultWas::ExplicitFailure:
-                m_xml.startElement( "Failure" );
-                writeSourceInfo( result.getSourceInfo() );
-                m_xml.writeText( result.getMessage() );
-                m_xml.endElement();
-                break;
-            default:
-                break;
-        }
-
-        if( result.hasExpression() )
-            m_xml.endElement();
-
-        return true;
-    }
-
-    void XmlReporter::sectionEnded( SectionStats const& sectionStats ) {
-        StreamingReporterBase::sectionEnded( sectionStats );
-        if( --m_sectionDepth > 0 ) {
-            XmlWriter::ScopedElement e = m_xml.scopedElement( "OverallResults" );
-            e.writeAttribute( "successes", sectionStats.assertions.passed );
-            e.writeAttribute( "failures", sectionStats.assertions.failed );
-            e.writeAttribute( "expectedFailures", sectionStats.assertions.failedButOk );
-
-            if ( m_config->showDurations() == ShowDurations::Always )
-                e.writeAttribute( "durationInSeconds", sectionStats.durationInSeconds );
-
-            m_xml.endElement();
-        }
-    }
-
-    void XmlReporter::testCaseEnded( TestCaseStats const& testCaseStats ) {
-        StreamingReporterBase::testCaseEnded( testCaseStats );
-        XmlWriter::ScopedElement e = m_xml.scopedElement( "OverallResult" );
-        e.writeAttribute( "success", testCaseStats.totals.assertions.allOk() );
-
-        if ( m_config->showDurations() == ShowDurations::Always )
-            e.writeAttribute( "durationInSeconds", m_testCaseTimer.getElapsedSeconds() );
-
-        if( !testCaseStats.stdOut.empty() )
-            m_xml.scopedElement( "StdOut" ).writeText( trim( testCaseStats.stdOut ), false );
-        if( !testCaseStats.stdErr.empty() )
-            m_xml.scopedElement( "StdErr" ).writeText( trim( testCaseStats.stdErr ), false );
-
-        m_xml.endElement();
-    }
-
-    void XmlReporter::testGroupEnded( TestGroupStats const& testGroupStats ) {
-        StreamingReporterBase::testGroupEnded( testGroupStats );
-        // TODO: Check testGroupStats.aborting and act accordingly.
-        m_xml.scopedElement( "OverallResults" )
-            .writeAttribute( "successes", testGroupStats.totals.assertions.passed )
-            .writeAttribute( "failures", testGroupStats.totals.assertions.failed )
-            .writeAttribute( "expectedFailures", testGroupStats.totals.assertions.failedButOk );
-        m_xml.endElement();
-    }
-
-    void XmlReporter::testRunEnded( TestRunStats const& testRunStats ) {
-        StreamingReporterBase::testRunEnded( testRunStats );
-        m_xml.scopedElement( "OverallResults" )
-            .writeAttribute( "successes", testRunStats.totals.assertions.passed )
-            .writeAttribute( "failures", testRunStats.totals.assertions.failed )
-            .writeAttribute( "expectedFailures", testRunStats.totals.assertions.failedButOk );
-        m_xml.endElement();
-    }
-
-    CATCH_REGISTER_REPORTER( "xml", XmlReporter )
-
-} // end namespace Catch
-
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
-// end catch_reporter_xml.cpp
-
-namespace Catch {
-    LeakDetector leakDetector;
-}
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
-// end catch_impl.hpp
-#endif
-
-#ifdef CATCH_CONFIG_MAIN
-// start catch_default_main.hpp
-
-#ifndef __OBJC__
-
-#if defined(CATCH_CONFIG_WCHAR) && defined(WIN32) && defined(_UNICODE) && !defined(DO_NOT_USE_WMAIN)
-// Standard C/C++ Win32 Unicode wmain entry point
-extern "C" int wmain (int argc, wchar_t * argv[], wchar_t * []) {
-#else
-// Standard C/C++ main entry point
-int main (int argc, char * argv[]) {
-#endif
-
-    return Catch::Session().run( argc, argv );
-}
-
-#else // __OBJC__
-
-// Objective-C entry point
-int main (int argc, char * const argv[]) {
-#if !CATCH_ARC_ENABLED
-    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-#endif
-
-    Catch::registerTestMethods();
-    int result = Catch::Session().run( argc, (char**)argv );
-
-#if !CATCH_ARC_ENABLED
-    [pool drain];
-#endif
-
-    return result;
-}
-
-#endif // __OBJC__
-
-// end catch_default_main.hpp
-#endif
-
-#if !defined(CATCH_CONFIG_IMPL_ONLY)
-
-#ifdef CLARA_CONFIG_MAIN_NOT_DEFINED
-#  undef CLARA_CONFIG_MAIN
-#endif
-
-#if !defined(CATCH_CONFIG_DISABLE)
-//////
-// If this config identifier is defined then all CATCH macros are prefixed with CATCH_
-#ifdef CATCH_CONFIG_PREFIX_ALL
-
-#define CATCH_REQUIRE( ... ) INTERNAL_CATCH_TEST( "CATCH_REQUIRE", Catch::ResultDisposition::Normal, __VA_ARGS__ )
-#define CATCH_REQUIRE_FALSE( ... ) INTERNAL_CATCH_TEST( "CATCH_REQUIRE_FALSE", Catch::ResultDisposition::Normal | Catch::ResultDisposition::FalseTest, __VA_ARGS__ )
-
-#define CATCH_REQUIRE_THROWS( ... ) INTERNAL_CATCH_THROWS( "CATCH_REQUIRE_THROWS", Catch::ResultDisposition::Normal, "", __VA_ARGS__ )
-#define CATCH_REQUIRE_THROWS_AS( expr, exceptionType ) INTERNAL_CATCH_THROWS_AS( "CATCH_REQUIRE_THROWS_AS", exceptionType, Catch::ResultDisposition::Normal, expr )
-#define CATCH_REQUIRE_THROWS_WITH( expr, matcher ) INTERNAL_CATCH_THROWS_STR_MATCHES( "CATCH_REQUIRE_THROWS_WITH", Catch::ResultDisposition::Normal, matcher, expr )
-#if !defined(CATCH_CONFIG_DISABLE_MATCHERS)
-#define CATCH_REQUIRE_THROWS_MATCHES( expr, exceptionType, matcher ) INTERNAL_CATCH_THROWS_MATCHES( "CATCH_REQUIRE_THROWS_MATCHES", exceptionType, Catch::ResultDisposition::Normal, matcher, expr )
-#endif// CATCH_CONFIG_DISABLE_MATCHERS
-#define CATCH_REQUIRE_NOTHROW( ... ) INTERNAL_CATCH_NO_THROW( "CATCH_REQUIRE_NOTHROW", Catch::ResultDisposition::Normal, __VA_ARGS__ )
-
-#define CATCH_CHECK( ... ) INTERNAL_CATCH_TEST( "CATCH_CHECK", Catch::ResultDisposition::ContinueOnFailure, __VA_ARGS__ )
-#define CATCH_CHECK_FALSE( ... ) INTERNAL_CATCH_TEST( "CATCH_CHECK_FALSE", Catch::ResultDisposition::ContinueOnFailure | Catch::ResultDisposition::FalseTest, __VA_ARGS__ )
-#define CATCH_CHECKED_IF( ... ) INTERNAL_CATCH_IF( "CATCH_CHECKED_IF", Catch::ResultDisposition::ContinueOnFailure, __VA_ARGS__ )
-#define CATCH_CHECKED_ELSE( ... ) INTERNAL_CATCH_ELSE( "CATCH_CHECKED_ELSE", Catch::ResultDisposition::ContinueOnFailure, __VA_ARGS__ )
-#define CATCH_CHECK_NOFAIL( ... ) INTERNAL_CATCH_TEST( "CATCH_CHECK_NOFAIL", Catch::ResultDisposition::ContinueOnFailure | Catch::ResultDisposition::SuppressFail, __VA_ARGS__ )
-
-#define CATCH_CHECK_THROWS( ... )  INTERNAL_CATCH_THROWS( "CATCH_CHECK_THROWS", Catch::ResultDisposition::ContinueOnFailure, "", __VA_ARGS__ )
-#define CATCH_CHECK_THROWS_AS( expr, exceptionType ) INTERNAL_CATCH_THROWS_AS( "CATCH_CHECK_THROWS_AS", exceptionType, Catch::ResultDisposition::ContinueOnFailure, expr )
-#define CATCH_CHECK_THROWS_WITH( expr, matcher ) INTERNAL_CATCH_THROWS_STR_MATCHES( "CATCH_CHECK_THROWS_WITH", Catch::ResultDisposition::ContinueOnFailure, matcher, expr )
-#if !defined(CATCH_CONFIG_DISABLE_MATCHERS)
-#define CATCH_CHECK_THROWS_MATCHES( expr, exceptionType, matcher ) INTERNAL_CATCH_THROWS_MATCHES( "CATCH_CHECK_THROWS_MATCHES", exceptionType, Catch::ResultDisposition::ContinueOnFailure, matcher, expr )
-#endif // CATCH_CONFIG_DISABLE_MATCHERS
-#define CATCH_CHECK_NOTHROW( ... ) INTERNAL_CATCH_NO_THROW( "CATCH_CHECK_NOTHROW", Catch::ResultDisposition::ContinueOnFailure, __VA_ARGS__ )
-
-#if !defined(CATCH_CONFIG_DISABLE_MATCHERS)
-#define CATCH_CHECK_THAT( arg, matcher ) INTERNAL_CHECK_THAT( "CATCH_CHECK_THAT", matcher, Catch::ResultDisposition::ContinueOnFailure, arg )
-
-#define CATCH_REQUIRE_THAT( arg, matcher ) INTERNAL_CHECK_THAT( "CATCH_REQUIRE_THAT", matcher, Catch::ResultDisposition::Normal, arg )
-#endif // CATCH_CONFIG_DISABLE_MATCHERS
-
-#define CATCH_INFO( msg ) INTERNAL_CATCH_INFO( "CATCH_INFO", msg )
-#define CATCH_WARN( msg ) INTERNAL_CATCH_MSG( "CATCH_WARN", Catch::ResultWas::Warning, Catch::ResultDisposition::ContinueOnFailure, msg )
-#define CATCH_CAPTURE( msg ) INTERNAL_CATCH_INFO( "CATCH_CAPTURE", #msg " := " << ::Catch::Detail::stringify(msg) )
-
-#define CATCH_TEST_CASE( ... ) INTERNAL_CATCH_TESTCASE( __VA_ARGS__ )
-#define CATCH_TEST_CASE_METHOD( className, ... ) INTERNAL_CATCH_TEST_CASE_METHOD( className, __VA_ARGS__ )
-#define CATCH_METHOD_AS_TEST_CASE( method, ... ) INTERNAL_CATCH_METHOD_AS_TEST_CASE( method, __VA_ARGS__ )
-#define CATCH_REGISTER_TEST_CASE( Function, ... ) INTERNAL_CATCH_REGISTER_TESTCASE( Function, __VA_ARGS__ )
-#define CATCH_SECTION( ... ) INTERNAL_CATCH_SECTION( __VA_ARGS__ )
-#define CATCH_FAIL( ... ) INTERNAL_CATCH_MSG( "CATCH_FAIL", Catch::ResultWas::ExplicitFailure, Catch::ResultDisposition::Normal, __VA_ARGS__ )
-#define CATCH_FAIL_CHECK( ... ) INTERNAL_CATCH_MSG( "CATCH_FAIL_CHECK", Catch::ResultWas::ExplicitFailure, Catch::ResultDisposition::ContinueOnFailure, __VA_ARGS__ )
-#define CATCH_SUCCEED( ... ) INTERNAL_CATCH_MSG( "CATCH_SUCCEED", Catch::ResultWas::Ok, Catch::ResultDisposition::ContinueOnFailure, __VA_ARGS__ )
-
-#define CATCH_ANON_TEST_CASE() INTERNAL_CATCH_TESTCASE()
-
-// "BDD-style" convenience wrappers
-#define CATCH_SCENARIO( ... ) CATCH_TEST_CASE( "Scenario: " __VA_ARGS__ )
-#define CATCH_SCENARIO_METHOD( className, ... ) INTERNAL_CATCH_TEST_CASE_METHOD( className, "Scenario: " __VA_ARGS__ )
-#define CATCH_GIVEN( desc )    CATCH_SECTION( std::string( "Given: ") + desc )
-#define CATCH_WHEN( desc )     CATCH_SECTION( std::string( " When: ") + desc )
-#define CATCH_AND_WHEN( desc ) CATCH_SECTION( std::string( "  And: ") + desc )
-#define CATCH_THEN( desc )     CATCH_SECTION( std::string( " Then: ") + desc )
-#define CATCH_AND_THEN( desc ) CATCH_SECTION( std::string( "  And: ") + desc )
-
-// If CATCH_CONFIG_PREFIX_ALL is not defined then the CATCH_ prefix is not required
-#else
-
-#define REQUIRE( ... ) INTERNAL_CATCH_TEST( "REQUIRE", Catch::ResultDisposition::Normal, __VA_ARGS__  )
-#define REQUIRE_FALSE( ... ) INTERNAL_CATCH_TEST( "REQUIRE_FALSE", Catch::ResultDisposition::Normal | Catch::ResultDisposition::FalseTest, __VA_ARGS__ )
-
-#define REQUIRE_THROWS( ... ) INTERNAL_CATCH_THROWS( "REQUIRE_THROWS", Catch::ResultDisposition::Normal, __VA_ARGS__ )
-#define REQUIRE_THROWS_AS( expr, exceptionType ) INTERNAL_CATCH_THROWS_AS( "REQUIRE_THROWS_AS", exceptionType, Catch::ResultDisposition::Normal, expr )
-#define REQUIRE_THROWS_WITH( expr, matcher ) INTERNAL_CATCH_THROWS_STR_MATCHES( "REQUIRE_THROWS_WITH", Catch::ResultDisposition::Normal, matcher, expr )
-#if !defined(CATCH_CONFIG_DISABLE_MATCHERS)
-#define REQUIRE_THROWS_MATCHES( expr, exceptionType, matcher ) INTERNAL_CATCH_THROWS_MATCHES( "REQUIRE_THROWS_MATCHES", exceptionType, Catch::ResultDisposition::Normal, matcher, expr )
-#endif // CATCH_CONFIG_DISABLE_MATCHERS
-#define REQUIRE_NOTHROW( ... ) INTERNAL_CATCH_NO_THROW( "REQUIRE_NOTHROW", Catch::ResultDisposition::Normal, __VA_ARGS__ )
-
-#define CHECK( ... ) INTERNAL_CATCH_TEST( "CHECK", Catch::ResultDisposition::ContinueOnFailure, __VA_ARGS__ )
-#define CHECK_FALSE( ... ) INTERNAL_CATCH_TEST( "CHECK_FALSE", Catch::ResultDisposition::ContinueOnFailure | Catch::ResultDisposition::FalseTest, __VA_ARGS__ )
-#define CHECKED_IF( ... ) INTERNAL_CATCH_IF( "CHECKED_IF", Catch::ResultDisposition::ContinueOnFailure, __VA_ARGS__ )
-#define CHECKED_ELSE( ... ) INTERNAL_CATCH_ELSE( "CHECKED_ELSE", Catch::ResultDisposition::ContinueOnFailure, __VA_ARGS__ )
-#define CHECK_NOFAIL( ... ) INTERNAL_CATCH_TEST( "CHECK_NOFAIL", Catch::ResultDisposition::ContinueOnFailure | Catch::ResultDisposition::SuppressFail, __VA_ARGS__ )
-
-#define CHECK_THROWS( ... )  INTERNAL_CATCH_THROWS( "CHECK_THROWS", Catch::ResultDisposition::ContinueOnFailure, __VA_ARGS__ )
-#define CHECK_THROWS_AS( expr, exceptionType ) INTERNAL_CATCH_THROWS_AS( "CHECK_THROWS_AS", exceptionType, Catch::ResultDisposition::ContinueOnFailure, expr )
-#define CHECK_THROWS_WITH( expr, matcher ) INTERNAL_CATCH_THROWS_STR_MATCHES( "CHECK_THROWS_WITH", Catch::ResultDisposition::ContinueOnFailure, matcher, expr )
-#if !defined(CATCH_CONFIG_DISABLE_MATCHERS)
-#define CHECK_THROWS_MATCHES( expr, exceptionType, matcher ) INTERNAL_CATCH_THROWS_MATCHES( "CHECK_THROWS_MATCHES", exceptionType, Catch::ResultDisposition::ContinueOnFailure, matcher, expr )
-#endif // CATCH_CONFIG_DISABLE_MATCHERS
-#define CHECK_NOTHROW( ... ) INTERNAL_CATCH_NO_THROW( "CHECK_NOTHROW", Catch::ResultDisposition::ContinueOnFailure, __VA_ARGS__ )
-
-#if !defined(CATCH_CONFIG_DISABLE_MATCHERS)
-#define CHECK_THAT( arg, matcher ) INTERNAL_CHECK_THAT( "CHECK_THAT", matcher, Catch::ResultDisposition::ContinueOnFailure, arg )
-
-#define REQUIRE_THAT( arg, matcher ) INTERNAL_CHECK_THAT( "REQUIRE_THAT", matcher, Catch::ResultDisposition::Normal, arg )
-#endif // CATCH_CONFIG_DISABLE_MATCHERS
-
-#define INFO( msg ) INTERNAL_CATCH_INFO( "INFO", msg )
-#define WARN( msg ) INTERNAL_CATCH_MSG( "WARN", Catch::ResultWas::Warning, Catch::ResultDisposition::ContinueOnFailure, msg )
-#define CAPTURE( msg ) INTERNAL_CATCH_INFO( "CAPTURE", #msg " := " << ::Catch::Detail::stringify(msg) )
-
-#define TEST_CASE( ... ) INTERNAL_CATCH_TESTCASE( __VA_ARGS__ )
-#define TEST_CASE_METHOD( className, ... ) INTERNAL_CATCH_TEST_CASE_METHOD( className, __VA_ARGS__ )
-#define METHOD_AS_TEST_CASE( method, ... ) INTERNAL_CATCH_METHOD_AS_TEST_CASE( method, __VA_ARGS__ )
-#define REGISTER_TEST_CASE( Function, ... ) INTERNAL_CATCH_REGISTER_TESTCASE( Function, __VA_ARGS__ )
-#define SECTION( ... ) INTERNAL_CATCH_SECTION( __VA_ARGS__ )
-#define FAIL( ... ) INTERNAL_CATCH_MSG( "FAIL", Catch::ResultWas::ExplicitFailure, Catch::ResultDisposition::Normal, __VA_ARGS__ )
-#define FAIL_CHECK( ... ) INTERNAL_CATCH_MSG( "FAIL_CHECK", Catch::ResultWas::ExplicitFailure, Catch::ResultDisposition::ContinueOnFailure, __VA_ARGS__ )
-#define SUCCEED( ... ) INTERNAL_CATCH_MSG( "SUCCEED", Catch::ResultWas::Ok, Catch::ResultDisposition::ContinueOnFailure, __VA_ARGS__ )
-#define ANON_TEST_CASE() INTERNAL_CATCH_TESTCASE()
-
-#endif
-
-#define CATCH_TRANSLATE_EXCEPTION( signature ) INTERNAL_CATCH_TRANSLATE_EXCEPTION( signature )
-
-// "BDD-style" convenience wrappers
-#define SCENARIO( ... ) TEST_CASE( "Scenario: " __VA_ARGS__ )
-#define SCENARIO_METHOD( className, ... ) INTERNAL_CATCH_TEST_CASE_METHOD( className, "Scenario: " __VA_ARGS__ )
-
-#define GIVEN( desc )    SECTION( std::string("   Given: ") + desc )
-#define WHEN( desc )     SECTION( std::string("    When: ") + desc )
-#define AND_WHEN( desc ) SECTION( std::string("And when: ") + desc )
-#define THEN( desc )     SECTION( std::string("    Then: ") + desc )
-#define AND_THEN( desc ) SECTION( std::string("     And: ") + desc )
-
-using Catch::Detail::Approx;
-
-#else
-//////
-// If this config identifier is defined then all CATCH macros are prefixed with CATCH_
-#ifdef CATCH_CONFIG_PREFIX_ALL
-
-#define CATCH_REQUIRE( ... )        (void)(0)
-#define CATCH_REQUIRE_FALSE( ... )  (void)(0)
-
-#define CATCH_REQUIRE_THROWS( ... ) (void)(0)
-#define CATCH_REQUIRE_THROWS_AS( expr, exceptionType ) (void)(0)
-#define CATCH_REQUIRE_THROWS_WITH( expr, matcher )     (void)(0)
-#if !defined(CATCH_CONFIG_DISABLE_MATCHERS)
-#define CATCH_REQUIRE_THROWS_MATCHES( expr, exceptionType, matcher ) (void)(0)
-#endif// CATCH_CONFIG_DISABLE_MATCHERS
-#define CATCH_REQUIRE_NOTHROW( ... ) (void)(0)
-
-#define CATCH_CHECK( ... )         (void)(0)
-#define CATCH_CHECK_FALSE( ... )   (void)(0)
-#define CATCH_CHECKED_IF( ... )    if (__VA_ARGS__)
-#define CATCH_CHECKED_ELSE( ... )  if (!(__VA_ARGS__))
-#define CATCH_CHECK_NOFAIL( ... )  (void)(0)
-
-#define CATCH_CHECK_THROWS( ... )  (void)(0)
-#define CATCH_CHECK_THROWS_AS( expr, exceptionType ) (void)(0)
-#define CATCH_CHECK_THROWS_WITH( expr, matcher )     (void)(0)
-#if !defined(CATCH_CONFIG_DISABLE_MATCHERS)
-#define CATCH_CHECK_THROWS_MATCHES( expr, exceptionType, matcher ) (void)(0)
-#endif // CATCH_CONFIG_DISABLE_MATCHERS
-#define CATCH_CHECK_NOTHROW( ... ) (void)(0)
-
-#if !defined(CATCH_CONFIG_DISABLE_MATCHERS)
-#define CATCH_CHECK_THAT( arg, matcher )   (void)(0)
-
-#define CATCH_REQUIRE_THAT( arg, matcher ) (void)(0)
-#endif // CATCH_CONFIG_DISABLE_MATCHERS
-
-#define CATCH_INFO( msg )    (void)(0)
-#define CATCH_WARN( msg )    (void)(0)
-#define CATCH_CAPTURE( msg ) (void)(0)
-
-#define CATCH_TEST_CASE( ... ) INTERNAL_CATCH_TESTCASE_NO_REGISTRATION(INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ))
-#define CATCH_TEST_CASE_METHOD( className, ... ) INTERNAL_CATCH_TESTCASE_NO_REGISTRATION(INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ))
-#define CATCH_METHOD_AS_TEST_CASE( method, ... )
-#define CATCH_REGISTER_TEST_CASE( Function, ... ) (void)(0)
-#define CATCH_SECTION( ... )
-#define CATCH_FAIL( ... ) (void)(0)
-#define CATCH_FAIL_CHECK( ... ) (void)(0)
-#define CATCH_SUCCEED( ... ) (void)(0)
-
-#define CATCH_ANON_TEST_CASE() INTERNAL_CATCH_TESTCASE_NO_REGISTRATION(INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ))
-
-// "BDD-style" convenience wrappers
-#define CATCH_SCENARIO( ... ) INTERNAL_CATCH_TESTCASE_NO_REGISTRATION(INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ))
-#define CATCH_SCENARIO_METHOD( className, ... ) INTERNAL_CATCH_TESTCASE_METHOD_NO_REGISTRATION(INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ), className )
-#define CATCH_GIVEN( desc )
-#define CATCH_WHEN( desc )
-#define CATCH_AND_WHEN( desc )
-#define CATCH_THEN( desc )
-#define CATCH_AND_THEN( desc )
-
-// If CATCH_CONFIG_PREFIX_ALL is not defined then the CATCH_ prefix is not required
-#else
-
-#define REQUIRE( ... )       (void)(0)
-#define REQUIRE_FALSE( ... ) (void)(0)
-
-#define REQUIRE_THROWS( ... ) (void)(0)
-#define REQUIRE_THROWS_AS( expr, exceptionType ) (void)(0)
-#define REQUIRE_THROWS_WITH( expr, matcher ) (void)(0)
-#if !defined(CATCH_CONFIG_DISABLE_MATCHERS)
-#define REQUIRE_THROWS_MATCHES( expr, exceptionType, matcher ) (void)(0)
-#endif // CATCH_CONFIG_DISABLE_MATCHERS
-#define REQUIRE_NOTHROW( ... ) (void)(0)
-
-#define CHECK( ... ) (void)(0)
-#define CHECK_FALSE( ... ) (void)(0)
-#define CHECKED_IF( ... ) if (__VA_ARGS__)
-#define CHECKED_ELSE( ... ) if (!(__VA_ARGS__))
-#define CHECK_NOFAIL( ... ) (void)(0)
-
-#define CHECK_THROWS( ... )  (void)(0)
-#define CHECK_THROWS_AS( expr, exceptionType ) (void)(0)
-#define CHECK_THROWS_WITH( expr, matcher ) (void)(0)
-#if !defined(CATCH_CONFIG_DISABLE_MATCHERS)
-#define CHECK_THROWS_MATCHES( expr, exceptionType, matcher ) (void)(0)
-#endif // CATCH_CONFIG_DISABLE_MATCHERS
-#define CHECK_NOTHROW( ... ) (void)(0)
-
-#if !defined(CATCH_CONFIG_DISABLE_MATCHERS)
-#define CHECK_THAT( arg, matcher ) (void)(0)
-
-#define REQUIRE_THAT( arg, matcher ) (void)(0)
-#endif // CATCH_CONFIG_DISABLE_MATCHERS
-
-#define INFO( msg ) (void)(0)
-#define WARN( msg ) (void)(0)
-#define CAPTURE( msg ) (void)(0)
-
-#define TEST_CASE( ... )  INTERNAL_CATCH_TESTCASE_NO_REGISTRATION(INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ))
-#define TEST_CASE_METHOD( className, ... ) INTERNAL_CATCH_TESTCASE_NO_REGISTRATION(INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ))
-#define METHOD_AS_TEST_CASE( method, ... )
-#define REGISTER_TEST_CASE( Function, ... ) (void)(0)
-#define SECTION( ... )
-#define FAIL( ... ) (void)(0)
-#define FAIL_CHECK( ... ) (void)(0)
-#define SUCCEED( ... ) (void)(0)
-#define ANON_TEST_CASE() INTERNAL_CATCH_TESTCASE_NO_REGISTRATION(INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ))
-
-#endif
-
-#define CATCH_TRANSLATE_EXCEPTION( signature ) INTERNAL_CATCH_TRANSLATE_EXCEPTION_NO_REG( INTERNAL_CATCH_UNIQUE_NAME( catch_internal_ExceptionTranslator ), signature )
-
-// "BDD-style" convenience wrappers
-#define SCENARIO( ... ) INTERNAL_CATCH_TESTCASE_NO_REGISTRATION(INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ) )
-#define SCENARIO_METHOD( className, ... ) INTERNAL_CATCH_TESTCASE_METHOD_NO_REGISTRATION(INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ), className )
-
-#define GIVEN( desc )
-#define WHEN( desc )
-#define AND_WHEN( desc )
-#define THEN( desc )
-#define AND_THEN( desc )
-
-using Catch::Detail::Approx;
-
-#endif
-
-#endif // ! CATCH_CONFIG_IMPL_ONLY
-
-// start catch_reenable_warnings.h
-
-
-#ifdef __clang__
-#    ifdef __ICC // icpc defines the __clang__ macro
-#        pragma warning(pop)
-#    else
-#        pragma clang diagnostic pop
-#    endif
-#elif defined __GNUC__
-#    pragma GCC diagnostic pop
-#endif
-
-// end catch_reenable_warnings.h
-// end catch.hpp
-#endif // TWOBLUECUBES_SINGLE_INCLUDE_CATCH_HPP_INCLUDED
+  is invalid, because it effectively does count++, moving pointer, and should
+  be replaced with ++*count, (*count)++ or *count += 1.
 
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+  if _RE_PATTERN_INVALID_INCREMENT.match(line):
+    error(filename, linenum, 'runtime/invalid_increment', 5,
+          'Changing pointer instead of value (or unused value of operator*).')
+
+
+def IsMacroDefinition(clean_lines, linenum):
+  if Search(r'^#define', clean_lines[linenum]):
+    return True
+
+  if linenum > 0 and Search(r'\\$', clean_lines[linenum - 1]):
+    return True
+
+  return False
+
+
+def IsForwardClassDeclaration(clean_lines, linenum):
+  return Match(r'^\s*(\btemplate\b)*.*class\s+\w+;\s*$', clean_lines[linenum])
+
+
+class _BlockInfo(object):
+  """Stores information about a generic block of code."""
+
+  def __init__(self, linenum, seen_open_brace):
+    self.starting_linenum = linenum
+    self.seen_open_brace = seen_open_brace
+    self.open_parentheses = 0
+    self.inline_asm = _NO_ASM
+    self.check_namespace_indentation = False
+
+  def CheckBegin(self, filename, clean_lines, linenum, error):
+    """Run checks that applies to text up to the opening brace.
+
+    This is mostly for checking the text after the class identifier
+    and the "{", usually where the base class is specified.  For other
+    blocks, there isn't much to check, so we always pass.
+
+    Args:
+      filename: The name of the current file.
+      clean_lines: A CleansedLines instance containing the file.
+      linenum: The number of the line to check.
+      error: The function to call with any errors found.
+    """
+    pass
+
+  def CheckEnd(self, filename, clean_lines, linenum, error):
+    """Run checks that applies to text after the closing brace.
+
+    This is mostly used for checking end of namespace comments.
+
+    Args:
+      filename: The name of the current file.
+      clean_lines: A CleansedLines instance containing the file.
+      linenum: The number of the line to check.
+      error: The function to call with any errors found.
+    """
+    pass
+
+  def IsBlockInfo(self):
+    """Returns true if this block is a _BlockInfo.
+
+    This is convenient for verifying that an object is an instance of
+    a _BlockInfo, but not an instance of any of the derived classes.
+
+    Returns:
+      True for this class, False for derived classes.
+    """
+    return self.__class__ == _BlockInfo
+
+
+class _ExternCInfo(_BlockInfo):
+  """Stores information about an 'extern "C"' block."""
+
+  def __init__(self, linenum):
+    _BlockInfo.__init__(self, linenum, True)
+
+
+class _ClassInfo(_BlockInfo):
+  """Stores information about a class."""
+
+  def __init__(self, name, class_or_struct, clean_lines, linenum):
+    _BlockInfo.__init__(self, linenum, False)
+    self.name = name
+    self.is_derived = False
+    self.check_namespace_indentation = True
+    if class_or_struct == 'struct':
+      self.access = 'public'
+      self.is_struct = True
+    else:
+      self.access = 'private'
+      self.is_struct = False
+
+    # Remember initial indentation level for this class.  Using raw_lines here
+    # instead of elided to account for leading comments.
+    self.class_indent = GetIndentLevel(clean_lines.raw_lines[linenum])
+
+    # Try to find the end of the class.  This will be confused by things like:
+    #   class A {
+    #   } *x = { ...
+    #
+    # But it's still good enough for CheckSectionSpacing.
+    self.last_line = 0
+    depth = 0
+    for i in range(linenum, clean_lines.NumLines()):
+      line = clean_lines.elided[i]
+      depth += line.count('{') - line.count('}')
+      if not depth:
+        self.last_line = i
+        break
+
+  def CheckBegin(self, filename, clean_lines, linenum, error):
+    # Look for a bare ':'
+    if Search('(^|[^:]):($|[^:])', clean_lines.elided[linenum]):
+      self.is_derived = True
+
+  def CheckEnd(self, filename, clean_lines, linenum, error):
+    # If there is a DISALLOW macro, it should appear near the end of
+    # the class.
+    seen_last_thing_in_class = False
+    for i in xrange(linenum - 1, self.starting_linenum, -1):
+      match = Search(
+          r'\b(DISALLOW_COPY_AND_ASSIGN|DISALLOW_IMPLICIT_CONSTRUCTORS)\(' +
+          self.name + r'\)',
+          clean_lines.elided[i])
+      if match:
+        if seen_last_thing_in_class:
+          error(filename, i, 'readability/constructors', 3,
+                match.group(1) + ' should be the last thing in the class')
+        break
+
+      if not Match(r'^\s*$', clean_lines.elided[i]):
+        seen_last_thing_in_class = True
+
+    # Check that closing brace is aligned with beginning of the class.
+    # Only do this if the closing brace is indented by only whitespaces.
+    # This means we will not check single-line class definitions.
+    indent = Match(r'^( *)\}', clean_lines.elided[linenum])
+    if indent and len(indent.group(1)) != self.class_indent:
+      if self.is_struct:
+        parent = 'struct ' + self.name
+      else:
+        parent = 'class ' + self.name
+      error(filename, linenum, 'whitespace/indent', 3,
+            'Closing brace should be aligned with beginning of %s' % parent)
+
+
+class _NamespaceInfo(_BlockInfo):
+  """Stores information about a namespace."""
+
+  def __init__(self, name, linenum):
+    _BlockInfo.__init__(self, linenum, False)
+    self.name = name or ''
+    self.check_namespace_indentation = True
+
+  def CheckEnd(self, filename, clean_lines, linenum, error):
+    """Check end of namespace comments."""
+    line = clean_lines.raw_lines[linenum]
+
+    # Check how many lines is enclosed in this namespace.  Don't issue
+    # warning for missing namespace comments if there aren't enough
+    # lines.  However, do apply checks if there is already an end of
+    # namespace comment and it's incorrect.
+    #
+    # TODO(unknown): We always want to check end of namespace comments
+    # if a namespace is large, but sometimes we also want to apply the
+    # check if a short namespace contained nontrivial things (something
+    # other than forward declarations).  There is currently no logic on
+    # deciding what these nontrivial things are, so this check is
+    # triggered by namespace size only, which works most of the time.
+    if (linenum - self.starting_linenum < 10
+        and not Match(r'^\s*};*\s*(//|/\*).*\bnamespace\b', line)):
+      return
+
+    # Look for matching comment at end of namespace.
+    #
+    # Note that we accept C style "/* */" comments for terminating
+    # namespaces, so that code that terminate namespaces inside
+    # preprocessor macros can be cpplint clean.
+    #
+    # We also accept stuff like "// end of namespace <name>." with the
+    # period at the end.
+    #
+    # Besides these, we don't accept anything else, otherwise we might
+    # get false negatives when existing comment is a substring of the
+    # expected namespace.
+    if self.name:
+      # Named namespace
+      if not Match((r'^\s*};*\s*(//|/\*).*\bnamespace\s+' +
+                    re.escape(self.name) + r'[\*/\.\\\s]*$'),
+                   line):
+        error(filename, linenum, 'readability/namespace', 5,
+              'Namespace should be terminated with "// namespace %s"' %
+              self.name)
+    else:
+      # Anonymous namespace
+      if not Match(r'^\s*};*\s*(//|/\*).*\bnamespace[\*/\.\\\s]*$', line):
+        # If "// namespace anonymous" or "// anonymous namespace (more text)",
+        # mention "// anonymous namespace" as an acceptable form
+        if Match(r'^\s*}.*\b(namespace anonymous|anonymous namespace)\b', line):
+          error(filename, linenum, 'readability/namespace', 5,
+                'Anonymous namespace should be terminated with "// namespace"'
+                ' or "// anonymous namespace"')
+        else:
+          error(filename, linenum, 'readability/namespace', 5,
+                'Anonymous namespace should be terminated with "// namespace"')
+
+
+class _PreprocessorInfo(object):
+  """Stores checkpoints of nesting stacks when #if/#else is seen."""
+
+  def __init__(self, stack_before_if):
+    # The entire nesting stack before #if
+    self.stack_before_if = stack_before_if
+
+    # The entire nesting stack up to #else
+    self.stack_before_else = []
+
+    # Whether we have already seen #else or #elif
+    self.seen_else = False
+
+
+class NestingState(object):
+  """Holds states related to parsing braces."""
+
+  def __init__(self):
+    # Stack for tracking all braces.  An object is pushed whenever we
+    # see a "{", and popped when we see a "}".  Only 3 types of
+    # objects are possible:
+    # - _ClassInfo: a class or struct.
+    # - _NamespaceInfo: a namespace.
+    # - _BlockInfo: some other type of block.
+    self.stack = []
+
+    # Top of the previous stack before each Update().
+    #
+    # Because the nesting_stack is updated at the end of each line, we
+    # had to do some convoluted checks to find out what is the current
+    # scope at the beginning of the line.  This check is simplified by
+    # saving the previous top of nesting stack.
+    #
+    # We could save the full stack, but we only need the top.  Copying
+    # the full nesting stack would slow down cpplint by ~10%.
+    self.previous_stack_top = []
+
+    # Stack of _PreprocessorInfo objects.
+    self.pp_stack = []
+
+  def SeenOpenBrace(self):
+    """Check if we have seen the opening brace for the innermost block.
+
+    Returns:
+      True if we have seen the opening brace, False if the innermost
+      block is still expecting an opening brace.
+    """
+    return (not self.stack) or self.stack[-1].seen_open_brace
+
+  def InNamespaceBody(self):
+    """Check if we are currently one level inside a namespace body.
+
+    Returns:
+      True if top of the stack is a namespace block, False otherwise.
+    """
+    return self.stack and isinstance(self.stack[-1], _NamespaceInfo)
+
+  def InExternC(self):
+    """Check if we are currently one level inside an 'extern "C"' block.
+
+    Returns:
+      True if top of the stack is an extern block, False otherwise.
+    """
+    return self.stack and isinstance(self.stack[-1], _ExternCInfo)
+
+  def InClassDeclaration(self):
+    """Check if we are currently one level inside a class or struct declaration.
+
+    Returns:
+      True if top of the stack is a class/struct, False otherwise.
+    """
+    return self.stack and isinstance(self.stack[-1], _ClassInfo)
+
+  def InAsmBlock(self):
+    """Check if we are currently one level inside an inline ASM block.
+
+    Returns:
+      True if the top of the stack is a block containing inline ASM.
+    """
+    return self.stack and self.stack[-1].inline_asm != _NO_ASM
+
+  def InTemplateArgumentList(self, clean_lines, linenum, pos):
+    """Check if current position is inside template argument list.
+
+    Args:
+      clean_lines: A CleansedLines instance containing the file.
+      linenum: The number of the line to check.
+      pos: position just after the suspected template argument.
+    Returns:
+      True if (linenum, pos) is inside template arguments.
+    """
+    while linenum < clean_lines.NumLines():
+      # Find the earliest character that might indicate a template argument
+      line = clean_lines.elided[linenum]
+      match = Match(r'^[^{};=\[\]\.<>]*(.)', line[pos:])
+      if not match:
+        linenum += 1
+        pos = 0
+        continue
+      token = match.group(1)
+      pos += len(match.group(0))
+
+      # These things do not look like template argument list:
+      #   class Suspect {
+      #   class Suspect x; }
+      if token in ('{', '}', ';'): return False
+
+      # These things look like template argument list:
+      #   template <class Suspect>
+      #   template <class Suspect = default_value>
+      #   template <class Suspect[]>
+      #   template <class Suspect...>
+      if token in ('>', '=', '[', ']', '.'): return True
+
+      # Check if token is an unmatched '<'.
+      # If not, move on to the next character.
+      if token != '<':
+        pos += 1
+        if pos >= len(line):
+          linenum += 1
+          pos = 0
+        continue
+
+      # We can't be sure if we just find a single '<', and need to
+      # find the matching '>'.
+      (_, end_line, end_pos) = CloseExpression(clean_lines, linenum, pos - 1)
+      if end_pos < 0:
+        # Not sure if template argument list or syntax error in file
+        return False
+      linenum = end_line
+      pos = end_pos
+    return False
+
+  def UpdatePreprocessor(self, line):
+    """Update preprocessor stack.
+
+    We need to handle preprocessors due to classes like this:
+      #ifdef SWIG
+      struct ResultDetailsPageElementExtensionPoint {
+      #else
+      struct ResultDetailsPageElementExtensionPoint : public Extension {
+      #endif
+
+    We make the following assumptions (good enough for most files):
+    - Preprocessor condition evaluates to true from #if up to first
+      #else/#elif/#endif.
+
+    - Preprocessor condition evaluates to false from #else/#elif up
+      to #endif.  We still perform lint checks on these lines, but
+      these do not affect nesting stack.
+
+    Args:
+      line: current line to check.
+    """
+    if Match(r'^\s*#\s*(if|ifdef|ifndef)\b', line):
+      # Beginning of #if block, save the nesting stack here.  The saved
+      # stack will allow us to restore the parsing state in the #else case.
+      self.pp_stack.append(_PreprocessorInfo(copy.deepcopy(self.stack)))
+    elif Match(r'^\s*#\s*(else|elif)\b', line):
+      # Beginning of #else block
+      if self.pp_stack:
+        if not self.pp_stack[-1].seen_else:
+          # This is the first #else or #elif block.  Remember the
+          # whole nesting stack up to this point.  This is what we
+          # keep after the #endif.
+          self.pp_stack[-1].seen_else = True
+          self.pp_stack[-1].stack_before_else = copy.deepcopy(self.stack)
+
+        # Restore the stack to how it was before the #if
+        self.stack = copy.deepcopy(self.pp_stack[-1].stack_before_if)
+      else:
+        # TODO(unknown): unexpected #else, issue warning?
+        pass
+    elif Match(r'^\s*#\s*endif\b', line):
+      # End of #if or #else blocks.
+      if self.pp_stack:
+        # If we saw an #else, we will need to restore the nesting
+        # stack to its former state before the #else, otherwise we
+        # will just continue from where we left off.
+        if self.pp_stack[-1].seen_else:
+          # Here we can just use a shallow copy since we are the last
+          # reference to it.
+          self.stack = self.pp_stack[-1].stack_before_else
+        # Drop the corresponding #if
+        self.pp_stack.pop()
+      else:
+        # TODO(unknown): unexpected #endif, issue warning?
+        pass
+
+  # TODO(unknown): Update() is too long, but we will refactor later.
+  def Update(self, filename, clean_lines, linenum, error):
+    """Update nesting state with current line.
+
+    Args:
+      filename: The name of the current file.
+      clean_lines: A CleansedLines instance containing the file.
+      linenum: The number of the line to check.
+      error: The function to call with any errors found.
+    """
+    line = clean_lines.elided[linenum]
+
+    # Remember top of the previous nesting stack.
+    #
+    # The stack is always pushed/popped and not modified in place, so
+    # we can just do a shallow copy instead of copy.deepcopy.  Using
+    # deepcopy would slow down cpplint by ~28%.
+    if self.stack:
+      self.previous_stack_top = self.stack[-1]
+    else:
+      self.previous_stack_top = None
+
+    # Update pp_stack
+    self.UpdatePreprocessor(line)
+
+    # Count parentheses.  This is to avoid adding struct arguments to
+    # the nesting stack.
+    if self.stack:
+      inner_block = self.stack[-1]
+      depth_change = line.count('(') - line.count(')')
+      inner_block.open_parentheses += depth_change
+
+      # Also check if we are starting or ending an inline assembly block.
+      if inner_block.inline_asm in (_NO_ASM, _END_ASM):
+        if (depth_change != 0 and
+            inner_block.open_parentheses == 1 and
+            _MATCH_ASM.match(line)):
+          # Enter assembly block
+          inner_block.inline_asm = _INSIDE_ASM
+        else:
+          # Not entering assembly block.  If previous line was _END_ASM,
+          # we will now shift to _NO_ASM state.
+          inner_block.inline_asm = _NO_ASM
+      elif (inner_block.inline_asm == _INSIDE_ASM and
+            inner_block.open_parentheses == 0):
+        # Exit assembly block
+        inner_block.inline_asm = _END_ASM
+
+    # Consume namespace declaration at the beginning of the line.  Do
+    # this in a loop so that we catch same line declarations like this:
+    #   namespace proto2 { namespace bridge { class MessageSet; } }
+    while True:
+      # Match start of namespace.  The "\b\s*" below catches namespace
+      # declarations even if it weren't followed by a whitespace, this
+      # is so that we don't confuse our namespace checker.  The
+      # missing spaces will be flagged by CheckSpacing.
+      namespace_decl_match = Match(r'^\s*namespace\b\s*([:\w]+)?(.*)$', line)
+      if not namespace_decl_match:
+        break
+
+      new_namespace = _NamespaceInfo(namespace_decl_match.group(1), linenum)
+      self.stack.append(new_namespace)
+
+      line = namespace_decl_match.group(2)
+      if line.find('{') != -1:
+        new_namespace.seen_open_brace = True
+        line = line[line.find('{') + 1:]
+
+    # Look for a class declaration in whatever is left of the line
+    # after parsing namespaces.  The regexp accounts for decorated classes
+    # such as in:
+    #   class LOCKABLE API Object {
+    #   };
+    class_decl_match = Match(
+        r'^(\s*(?:template\s*<[\w\s<>,:]*>\s*)?'
+        r'(class|struct)\s+(?:[A-Z_]+\s+)*(\w+(?:::\w+)*))'
+        r'(.*)$', line)
+    if (class_decl_match and
+        (not self.stack or self.stack[-1].open_parentheses == 0)):
+      # We do not want to accept classes that are actually template arguments:
+      #   template <class Ignore1,
+      #             class Ignore2 = Default<Args>,
+      #             template <Args> class Ignore3>
+      #   void Function() {};
+      #
+      # To avoid template argument cases, we scan forward and look for
+      # an unmatched '>'.  If we see one, assume we are inside a
+      # template argument list.
+      end_declaration = len(class_decl_match.group(1))
+      if not self.InTemplateArgumentList(clean_lines, linenum, end_declaration):
+        self.stack.append(_ClassInfo(
+            class_decl_match.group(3), class_decl_match.group(2),
+            clean_lines, linenum))
+        line = class_decl_match.group(4)
+
+    # If we have not yet seen the opening brace for the innermost block,
+    # run checks here.
+    if not self.SeenOpenBrace():
+      self.stack[-1].CheckBegin(filename, clean_lines, linenum, error)
+
+    # Update access control if we are inside a class/struct
+    if self.stack and isinstance(self.stack[-1], _ClassInfo):
+      classinfo = self.stack[-1]
+      access_match = Match(
+          r'^(.*)\b(public|private|protected|signals)(\s+(?:slots\s*)?)?'
+          r':(?:[^:]|$)',
+          line)
+      if access_match:
+        classinfo.access = access_match.group(2)
+
+        # Check that access keywords are indented +1 space.  Skip this
+        # check if the keywords are not preceded by whitespaces.
+        indent = access_match.group(1)
+        if (len(indent) != classinfo.class_indent + 1 and
+            Match(r'^\s*$', indent)):
+          if classinfo.is_struct:
+            parent = 'struct ' + classinfo.name
+          else:
+            parent = 'class ' + classinfo.name
+          slots = ''
+          if access_match.group(3):
+            slots = access_match.group(3)
+          error(filename, linenum, 'whitespace/indent', 3,
+                '%s%s: should be indented +1 space inside %s' % (
+                    access_match.group(2), slots, parent))
+
+    # Consume braces or semicolons from what's left of the line
+    while True:
+      # Match first brace, semicolon, or closed parenthesis.
+      matched = Match(r'^[^{;)}]*([{;)}])(.*)$', line)
+      if not matched:
+        break
+
+      token = matched.group(1)
+      if token == '{':
+        # If namespace or class hasn't seen a opening brace yet, mark
+        # namespace/class head as complete.  Push a new block onto the
+        # stack otherwise.
+        if not self.SeenOpenBrace():
+          self.stack[-1].seen_open_brace = True
+        elif Match(r'^extern\s*"[^"]*"\s*\{', line):
+          self.stack.append(_ExternCInfo(linenum))
+        else:
+          self.stack.append(_BlockInfo(linenum, True))
+          if _MATCH_ASM.match(line):
+            self.stack[-1].inline_asm = _BLOCK_ASM
+
+      elif token == ';' or token == ')':
+        # If we haven't seen an opening brace yet, but we already saw
+        # a semicolon, this is probably a forward declaration.  Pop
+        # the stack for these.
+        #
+        # Similarly, if we haven't seen an opening brace yet, but we
+        # already saw a closing parenthesis, then these are probably
+        # function arguments with extra "class" or "struct" keywords.
+        # Also pop these stack for these.
+        if not self.SeenOpenBrace():
+          self.stack.pop()
+      else:  # token == '}'
+        # Perform end of block checks and pop the stack.
+        if self.stack:
+          self.stack[-1].CheckEnd(filename, clean_lines, linenum, error)
+          self.stack.pop()
+      line = matched.group(2)
+
+  def InnermostClass(self):
+    """Get class info on the top of the stack.
+
+    Returns:
+      A _ClassInfo object if we are inside a class, or None otherwise.
+    """
+    for i in range(len(self.stack), 0, -1):
+      classinfo = self.stack[i - 1]
+      if isinstance(classinfo, _ClassInfo):
+        return classinfo
+    return None
+
+  def CheckCompletedBlocks(self, filename, error):
+    """Checks that all classes and namespaces have been completely parsed.
+
+    Call this when all lines in a file have been processed.
+    Args:
+      filename: The name of the current file.
+      error: The function to call with any errors found.
+    """
+    # Note: This test can result in false positives if #ifdef constructs
+    # get in the way of brace matching. See the testBuildClass test in
+    # cpplint_unittest.py for an example of this.
+    for obj in self.stack:
+      if isinstance(obj, _ClassInfo):
+        error(filename, obj.starting_linenum, 'build/class', 5,
+              'Failed to find complete declaration of class %s' %
+              obj.name)
+      elif isinstance(obj, _NamespaceInfo):
+        error(filename, obj.starting_linenum, 'build/namespaces', 5,
+              'Failed to find complete declaration of namespace %s' %
+              obj.name)
+
+
+def CheckForNonStandardConstructs(filename, clean_lines, linenum,
+                                  nesting_state, error):
+  r"""Logs an error if we see certain non-ANSI constructs ignored by gcc-2.
+
+  Complain about several constructs which gcc-2 accepts, but which are
+  not standard C++.  Warning about these in lint is one way to ease the
+  transition to new compilers.
+  - put storage class first (e.g. "static const" instead of "const static").
+  - "%lld" instead of %qd" in printf-type functions.
+  - "%1$d" is non-standard in printf-type functions.
+  - "\%" is an undefined character escape sequence.
+  - text after #endif is not allowed.
+  - invalid inner-style forward declaration.
+  - >? and <? operators, and their >?= and <?= cousins.
+
+  Additionally, check for constructor/destructor style violations and reference
+  members, as it is very convenient to do so while checking for
+  gcc-2 compliance.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    nesting_state: A NestingState instance which maintains information about
+                   the current stack of nested blocks being parsed.
+    error: A callable to which errors are reported, which takes 4 arguments:
+           filename, line number, error level, and message
+  """
+
+  # Remove comments from the line, but leave in strings for now.
+  line = clean_lines.lines[linenum]
+
+  if Search(r'printf\s*\(.*".*%[-+ ]?\d*q', line):
+    error(filename, linenum, 'runtime/printf_format', 3,
+          '%q in format strings is deprecated.  Use %ll instead.')
+
+  if Search(r'printf\s*\(.*".*%\d+\$', line):
+    error(filename, linenum, 'runtime/printf_format', 2,
+          '%N$ formats are unconventional.  Try rewriting to avoid them.')
+
+  # Remove escaped backslashes before looking for undefined escapes.
+  line = line.replace('\\\\', '')
+
+  if Search(r'("|\').*\\(%|\[|\(|{)', line):
+    error(filename, linenum, 'build/printf_format', 3,
+          '%, [, (, and { are undefined character escapes.  Unescape them.')
+
+  # For the rest, work with both comments and strings removed.
+  line = clean_lines.elided[linenum]
+
+  if Search(r'\b(const|volatile|void|char|short|int|long'
+            r'|float|double|signed|unsigned'
+            r'|schar|u?int8|u?int16|u?int32|u?int64)'
+            r'\s+(register|static|extern|typedef)\b',
+            line):
+    error(filename, linenum, 'build/storage_class', 5,
+          'Storage-class specifier (static, extern, typedef, etc) should be '
+          'at the beginning of the declaration.')
+
+  if Match(r'\s*#\s*endif\s*[^/\s]+', line):
+    error(filename, linenum, 'build/endif_comment', 5,
+          'Uncommented text after #endif is non-standard.  Use a comment.')
+
+  if Match(r'\s*class\s+(\w+\s*::\s*)+\w+\s*;', line):
+    error(filename, linenum, 'build/forward_decl', 5,
+          'Inner-style forward declarations are invalid.  Remove this line.')
+
+  if Search(r'(\w+|[+-]?\d+(\.\d*)?)\s*(<|>)\?=?\s*(\w+|[+-]?\d+)(\.\d*)?',
+            line):
+    error(filename, linenum, 'build/deprecated', 3,
+          '>? and <? (max and min) operators are non-standard and deprecated.')
+
+  if Search(r'^\s*const\s*string\s*&\s*\w+\s*;', line):
+    # TODO(unknown): Could it be expanded safely to arbitrary references,
+    # without triggering too many false positives? The first
+    # attempt triggered 5 warnings for mostly benign code in the regtest, hence
+    # the restriction.
+    # Here's the original regexp, for the reference:
+    # type_name = r'\w+((\s*::\s*\w+)|(\s*<\s*\w+?\s*>))?'
+    # r'\s*const\s*' + type_name + '\s*&\s*\w+\s*;'
+    error(filename, linenum, 'runtime/member_string_references', 2,
+          'const string& members are dangerous. It is much better to use '
+          'alternatives, such as pointers or simple constants.')
+
+  # Everything else in this function operates on class declarations.
+  # Return early if the top of the nesting stack is not a class, or if
+  # the class head is not completed yet.
+  classinfo = nesting_state.InnermostClass()
+  if not classinfo or not classinfo.seen_open_brace:
+    return
+
+  # The class may have been declared with namespace or classname qualifiers.
+  # The constructor and destructor will not have those qualifiers.
+  base_classname = classinfo.name.split('::')[-1]
+
+  # Look for single-argument constructors that aren't marked explicit.
+  # Technically a valid construct, but against style.
+  explicit_constructor_match = Match(
+      r'\s+(?:(?:inline|constexpr)\s+)*(explicit\s+)?'
+      r'(?:(?:inline|constexpr)\s+)*%s\s*'
+      r'\(((?:[^()]|\([^()]*\))*)\)'
+      % re.escape(base_classname),
+      line)
+
+  if explicit_constructor_match:
+    is_marked_explicit = explicit_constructor_match.group(1)
+
+    if not explicit_constructor_match.group(2):
+      constructor_args = []
+    else:
+      constructor_args = explicit_constructor_match.group(2).split(',')
+
+    # collapse arguments so that commas in template parameter lists and function
+    # argument parameter lists don't split arguments in two
+    i = 0
+    while i < len(constructor_args):
+      constructor_arg = constructor_args[i]
+      while (constructor_arg.count('<') > constructor_arg.count('>') or
+             constructor_arg.count('(') > constructor_arg.count(')')):
+        constructor_arg += ',' + constructor_args[i + 1]
+        del constructor_args[i + 1]
+      constructor_args[i] = constructor_arg
+      i += 1
+
+    defaulted_args = [arg for arg in constructor_args if '=' in arg]
+    noarg_constructor = (not constructor_args or  # empty arg list
+                         # 'void' arg specifier
+                         (len(constructor_args) == 1 and
+                          constructor_args[0].strip() == 'void'))
+    onearg_constructor = ((len(constructor_args) == 1 and  # exactly one arg
+                           not noarg_constructor) or
+                          # all but at most one arg defaulted
+                          (len(constructor_args) >= 1 and
+                           not noarg_constructor and
+                           len(defaulted_args) >= len(constructor_args) - 1))
+    initializer_list_constructor = bool(
+        onearg_constructor and
+        Search(r'\bstd\s*::\s*initializer_list\b', constructor_args[0]))
+    copy_constructor = bool(
+        onearg_constructor and
+        Match(r'(const\s+)?%s(\s*<[^>]*>)?(\s+const)?\s*(?:<\w+>\s*)?&'
+              % re.escape(base_classname), constructor_args[0].strip()))
+
+    if (not is_marked_explicit and
+        onearg_constructor and
+        not initializer_list_constructor and
+        not copy_constructor):
+      if defaulted_args:
+        error(filename, linenum, 'runtime/explicit', 5,
+              'Constructors callable with one argument '
+              'should be marked explicit.')
+      else:
+        error(filename, linenum, 'runtime/explicit', 5,
+              'Single-parameter constructors should be marked explicit.')
+    elif is_marked_explicit and not onearg_constructor:
+      if noarg_constructor:
+        error(filename, linenum, 'runtime/explicit', 5,
+              'Zero-parameter constructors should not be marked explicit.')
+
+
+def CheckSpacingForFunctionCall(filename, clean_lines, linenum, error):
+  """Checks for the correctness of various spacing around function calls.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+
+  # Since function calls often occur inside if/for/while/switch
+  # expressions - which have their own, more liberal conventions - we
+  # first see if we should be looking inside such an expression for a
+  # function call, to which we can apply more strict standards.
+  fncall = line    # if there's no control flow construct, look at whole line
+  for pattern in (r'\bif\s*\((.*)\)\s*{',
+                  r'\bfor\s*\((.*)\)\s*{',
+                  r'\bwhile\s*\((.*)\)\s*[{;]',
+                  r'\bswitch\s*\((.*)\)\s*{'):
+    match = Search(pattern, line)
+    if match:
+      fncall = match.group(1)    # look inside the parens for function calls
+      break
+
+  # Except in if/for/while/switch, there should never be space
+  # immediately inside parens (eg "f( 3, 4 )").  We make an exception
+  # for nested parens ( (a+b) + c ).  Likewise, there should never be
+  # a space before a ( when it's a function argument.  I assume it's a
+  # function argument when the char before the whitespace is legal in
+  # a function name (alnum + _) and we're not starting a macro. Also ignore
+  # pointers and references to arrays and functions coz they're too tricky:
+  # we use a very simple way to recognize these:
+  # " (something)(maybe-something)" or
+  # " (something)(maybe-something," or
+  # " (something)[something]"
+  # Note that we assume the contents of [] to be short enough that
+  # they'll never need to wrap.
+  if (  # Ignore control structures.
+      not Search(r'\b(if|for|while|switch|return|new|delete|catch|sizeof)\b',
+                 fncall) and
+      # Ignore pointers/references to functions.
+      not Search(r' \([^)]+\)\([^)]*(\)|,$)', fncall) and
+      # Ignore pointers/references to arrays.
+      not Search(r' \([^)]+\)\[[^\]]+\]', fncall)):
+    if Search(r'\w\s*\(\s(?!\s*\\$)', fncall):      # a ( used for a fn call
+      error(filename, linenum, 'whitespace/parens', 4,
+            'Extra space after ( in function call')
+    elif Search(r'\(\s+(?!(\s*\\)|\()', fncall):
+      error(filename, linenum, 'whitespace/parens', 2,
+            'Extra space after (')
+    if (Search(r'\w\s+\(', fncall) and
+        not Search(r'_{0,2}asm_{0,2}\s+_{0,2}volatile_{0,2}\s+\(', fncall) and
+        not Search(r'#\s*define|typedef|using\s+\w+\s*=', fncall) and
+        not Search(r'\w\s+\((\w+::)*\*\w+\)\(', fncall) and
+        not Search(r'\bcase\s+\(', fncall)):
+      # TODO(unknown): Space after an operator function seem to be a common
+      # error, silence those for now by restricting them to highest verbosity.
+      if Search(r'\boperator_*\b', line):
+        error(filename, linenum, 'whitespace/parens', 0,
+              'Extra space before ( in function call')
+      else:
+        error(filename, linenum, 'whitespace/parens', 4,
+              'Extra space before ( in function call')
+    # If the ) is followed only by a newline or a { + newline, assume it's
+    # part of a control statement (if/while/etc), and don't complain
+    if Search(r'[^)]\s+\)\s*[^{\s]', fncall):
+      # If the closing parenthesis is preceded by only whitespaces,
+      # try to give a more descriptive error message.
+      if Search(r'^\s+\)', fncall):
+        error(filename, linenum, 'whitespace/parens', 2,
+              'Closing ) should be moved to the previous line')
+      else:
+        error(filename, linenum, 'whitespace/parens', 2,
+              'Extra space before )')
+
+
+def IsBlankLine(line):
+  """Returns true if the given line is blank.
+
+  We consider a line to be blank if the line is empty or consists of
+  only white spaces.
+
+  Args:
+    line: A line of a string.
+
+  Returns:
+    True, if the given line is blank.
+  """
+  return not line or line.isspace()
+
+
+def CheckForNamespaceIndentation(filename, nesting_state, clean_lines, line,
+                                 error):
+  is_namespace_indent_item = (
+      len(nesting_state.stack) > 1 and
+      nesting_state.stack[-1].check_namespace_indentation and
+      isinstance(nesting_state.previous_stack_top, _NamespaceInfo) and
+      nesting_state.previous_stack_top == nesting_state.stack[-2])
+
+  if ShouldCheckNamespaceIndentation(nesting_state, is_namespace_indent_item,
+                                     clean_lines.elided, line):
+    CheckItemIndentationInNamespace(filename, clean_lines.elided,
+                                    line, error)
+
+
+def CheckForFunctionLengths(filename, clean_lines, linenum,
+                            function_state, error):
+  """Reports for long function bodies.
+
+  For an overview why this is done, see:
+  https://google-styleguide.googlecode.com/svn/trunk/cppguide.xml#Write_Short_Functions
+
+  Uses a simplistic algorithm assuming other style guidelines
+  (especially spacing) are followed.
+  Only checks unindented functions, so class members are unchecked.
+  Trivial bodies are unchecked, so constructors with huge initializer lists
+  may be missed.
+  Blank/comment lines are not counted so as to avoid encouraging the removal
+  of vertical space and comments just to get through a lint check.
+  NOLINT *on the last line of a function* disables this check.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    function_state: Current function name and lines in body so far.
+    error: The function to call with any errors found.
+  """
+  lines = clean_lines.lines
+  line = lines[linenum]
+  joined_line = ''
+
+  starting_func = False
+  regexp = r'(\w(\w|::|\*|\&|\s)*)\('  # decls * & space::name( ...
+  match_result = Match(regexp, line)
+  if match_result:
+    # If the name is all caps and underscores, figure it's a macro and
+    # ignore it, unless it's TEST or TEST_F.
+    function_name = match_result.group(1).split()[-1]
+    if function_name == 'TEST' or function_name == 'TEST_F' or (
+        not Match(r'[A-Z_]+$', function_name)):
+      starting_func = True
+
+  if starting_func:
+    body_found = False
+    for start_linenum in xrange(linenum, clean_lines.NumLines()):
+      start_line = lines[start_linenum]
+      joined_line += ' ' + start_line.lstrip()
+      if Search(r'(;|})', start_line):  # Declarations and trivial functions
+        body_found = True
+        break                              # ... ignore
+      elif Search(r'{', start_line):
+        body_found = True
+        function = Search(r'((\w|:)*)\(', line).group(1)
+        if Match(r'TEST', function):    # Handle TEST... macros
+          parameter_regexp = Search(r'(\(.*\))', joined_line)
+          if parameter_regexp:             # Ignore bad syntax
+            function += parameter_regexp.group(1)
+        else:
+          function += '()'
+        function_state.Begin(function)
+        break
+    if not body_found:
+      # No body for the function (or evidence of a non-function) was found.
+      error(filename, linenum, 'readability/fn_size', 5,
+            'Lint failed to find start of function body.')
+  elif Match(r'^\}\s*$', line):  # function end
+    function_state.Check(error, filename, linenum)
+    function_state.End()
+  elif not Match(r'^\s*$', line):
+    function_state.Count()  # Count non-blank/non-comment lines.
+
+
+_RE_PATTERN_TODO = re.compile(r'^//(\s*)TODO(\(.+?\))?:?(\s|$)?')
+
+
+def CheckComment(line, filename, linenum, next_line_start, error):
+  """Checks for common mistakes in comments.
+
+  Args:
+    line: The line in question.
+    filename: The name of the current file.
+    linenum: The number of the line to check.
+    next_line_start: The first non-whitespace column of the next line.
+    error: The function to call with any errors found.
+  """
+  commentpos = line.find('//')
+  if commentpos != -1:
+    # Check if the // may be in quotes.  If so, ignore it
+    if re.sub(r'\\.', '', line[0:commentpos]).count('"') % 2 == 0:
+      # Allow one space for new scopes, two spaces otherwise:
+      if (not (Match(r'^.*{ *//', line) and next_line_start == commentpos) and
+          ((commentpos >= 1 and
+            line[commentpos-1] not in string.whitespace) or
+           (commentpos >= 2 and
+            line[commentpos-2] not in string.whitespace))):
+        error(filename, linenum, 'whitespace/comments', 2,
+              'At least two spaces is best between code and comments')
+
+      # Checks for common mistakes in TODO comments.
+      comment = line[commentpos:]
+      match = _RE_PATTERN_TODO.match(comment)
+      if match:
+        # One whitespace is correct; zero whitespace is handled elsewhere.
+        leading_whitespace = match.group(1)
+        if len(leading_whitespace) > 1:
+          error(filename, linenum, 'whitespace/todo', 2,
+                'Too many spaces before TODO')
+
+        username = match.group(2)
+        if not username:
+          error(filename, linenum, 'readability/todo', 2,
+                'Missing username in TODO; it should look like '
+                '"// TODO(my_username): Stuff."')
+
+        middle_whitespace = match.group(3)
+        # Comparisons made explicit for correctness -- pylint: disable=g-explicit-bool-comparison
+        if middle_whitespace != ' ' and middle_whitespace != '':
+          error(filename, linenum, 'whitespace/todo', 2,
+                'TODO(my_username) should be followed by a space')
+
+      # If the comment contains an alphanumeric character, there
+      # should be a space somewhere between it and the // unless
+      # it's a /// or //! Doxygen comment.
+      if (Match(r'//[^ ]*\w', comment) and
+          not Match(r'(///|//\!)(\s+|$)', comment)):
+        error(filename, linenum, 'whitespace/comments', 4,
+              'Should have a space between // and comment')
+
+
+def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
+  """Checks for the correctness of various spacing issues in the code.
+
+  Things we check for: spaces around operators, spaces after
+  if/for/while/switch, no spaces around parens in function calls, two
+  spaces between code and comment, don't start a block with a blank
+  line, don't end a function with a blank line, don't add a blank line
+  after public/protected/private, don't have too many blank lines in a row.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    nesting_state: A NestingState instance which maintains information about
+                   the current stack of nested blocks being parsed.
+    error: The function to call with any errors found.
+  """
+
+  # Don't use "elided" lines here, otherwise we can't check commented lines.
+  # Don't want to use "raw" either, because we don't want to check inside C++11
+  # raw strings,
+  raw = clean_lines.lines_without_raw_strings
+  line = raw[linenum]
+
+  # Before nixing comments, check if the line is blank for no good
+  # reason.  This includes the first line after a block is opened, and
+  # blank lines at the end of a function (ie, right before a line like '}'
+  #
+  # Skip all the blank line checks if we are immediately inside a
+  # namespace body.  In other words, don't issue blank line warnings
+  # for this block:
+  #   namespace {
+  #
+  #   }
+  #
+  # A warning about missing end of namespace comments will be issued instead.
+  #
+  # Also skip blank line checks for 'extern "C"' blocks, which are formatted
+  # like namespaces.
+  if (IsBlankLine(line) and
+      not nesting_state.InNamespaceBody() and
+      not nesting_state.InExternC()):
+    elided = clean_lines.elided
+    prev_line = elided[linenum - 1]
+    prevbrace = prev_line.rfind('{')
+    # TODO(unknown): Don't complain if line before blank line, and line after,
+    #                both start with alnums and are indented the same amount.
+    #                This ignores whitespace at the start of a namespace block
+    #                because those are not usually indented.
+    if prevbrace != -1 and prev_line[prevbrace:].find('}') == -1:
+      # OK, we have a blank line at the start of a code block.  Before we
+      # complain, we check if it is an exception to the rule: The previous
+      # non-empty line has the parameters of a function header that are indented
+      # 4 spaces (because they did not fit in a 80 column line when placed on
+      # the same line as the function name).  We also check for the case where
+      # the previous line is indented 6 spaces, which may happen when the
+      # initializers of a constructor do not fit into a 80 column line.
+      exception = False
+      if Match(r' {6}\w', prev_line):  # Initializer list?
+        # We are looking for the opening column of initializer list, which
+        # should be indented 4 spaces to cause 6 space indentation afterwards.
+        search_position = linenum-2
+        while (search_position >= 0
+               and Match(r' {6}\w', elided[search_position])):
+          search_position -= 1
+        exception = (search_position >= 0
+                     and elided[search_position][:5] == '    :')
+      else:
+        # Search for the function arguments or an initializer list.  We use a
+        # simple heuristic here: If the line is indented 4 spaces; and we have a
+        # closing paren, without the opening paren, followed by an opening brace
+        # or colon (for initializer lists) we assume that it is the last line of
+        # a function header.  If we have a colon indented 4 spaces, it is an
+        # initializer list.
+        exception = (Match(r' {4}\w[^\(]*\)\s*(const\s*)?(\{\s*$|:)',
+                           prev_line)
+                     or Match(r' {4}:', prev_line))
+
+      if not exception:
+        error(filename, linenum, 'whitespace/blank_line', 2,
+              'Redundant blank line at the start of a code block '
+              'should be deleted.')
+    # Ignore blank lines at the end of a block in a long if-else
+    # chain, like this:
+    #   if (condition1) {
+    #     // Something followed by a blank line
+    #
+    #   } else if (condition2) {
+    #     // Something else
+    #   }
+    if linenum + 1 < clean_lines.NumLines():
+      next_line = raw[linenum + 1]
+      if (next_line
+          and Match(r'\s*}', next_line)
+          and next_line.find('} else ') == -1):
+        error(filename, linenum, 'whitespace/blank_line', 3,
+              'Redundant blank line at the end of a code block '
+              'should be deleted.')
+
+    matched = Match(r'\s*(public|protected|private):', prev_line)
+    if matched:
+      error(filename, linenum, 'whitespace/blank_line', 3,
+            'Do not leave a blank line after "%s:"' % matched.group(1))
+
+  # Next, check comments
+  next_line_start = 0
+  if linenum + 1 < clean_lines.NumLines():
+    next_line = raw[linenum + 1]
+    next_line_start = len(next_line) - len(next_line.lstrip())
+  CheckComment(line, filename, linenum, next_line_start, error)
+
+  # get rid of comments and strings
+  line = clean_lines.elided[linenum]
+
+  # You shouldn't have spaces before your brackets, except maybe after
+  # 'delete []', 'return []() {};', or 'auto [abc, ...] = ...;'.
+  if Search(r'\w\s+\[', line) and not Search(r'(?:auto&?|delete|return)\s+\[', line):
+    error(filename, linenum, 'whitespace/braces', 5,
+          'Extra space before [')
+
+  # In range-based for, we wanted spaces before and after the colon, but
+  # not around "::" tokens that might appear.
+  if (Search(r'for *\(.*[^:]:[^: ]', line) or
+      Search(r'for *\(.*[^: ]:[^:]', line)):
+    error(filename, linenum, 'whitespace/forcolon', 2,
+          'Missing space around colon in range-based for loop')
+
+
+def CheckOperatorSpacing(filename, clean_lines, linenum, error):
+  """Checks for horizontal spacing around operators.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+
+  # Don't try to do spacing checks for operator methods.  Do this by
+  # replacing the troublesome characters with something else,
+  # preserving column position for all other characters.
+  #
+  # The replacement is done repeatedly to avoid false positives from
+  # operators that call operators.
+  while True:
+    match = Match(r'^(.*\boperator\b)(\S+)(\s*\(.*)$', line)
+    if match:
+      line = match.group(1) + ('_' * len(match.group(2))) + match.group(3)
+    else:
+      break
+
+  # We allow no-spaces around = within an if: "if ( (a=Foo()) == 0 )".
+  # Otherwise not.  Note we only check for non-spaces on *both* sides;
+  # sometimes people put non-spaces on one side when aligning ='s among
+  # many lines (not that this is behavior that I approve of...)
+  if ((Search(r'[\w.]=', line) or
+       Search(r'=[\w.]', line))
+      and not Search(r'\b(if|while|for) ', line)
+      # Operators taken from [lex.operators] in C++11 standard.
+      and not Search(r'(>=|<=|==|!=|&=|\^=|\|=|\+=|\*=|\/=|\%=)', line)
+      and not Search(r'operator=', line)):
+    error(filename, linenum, 'whitespace/operators', 4,
+          'Missing spaces around =')
+
+  # It's ok not to have spaces around binary operators like + - * /, but if
+  # there's too little whitespace, we get concerned.  It's hard to tell,
+  # though, so we punt on this one for now.  TODO.
+
+  # You should always have whitespace around binary operators.
+  #
+  # Check <= and >= first to avoid false positives with < and >, then
+  # check non-include lines for spacing around < and >.
+  #
+  # If the operator is followed by a comma, assume it's be used in a
+  # macro context and don't do any checks.  This avoids false
+  # positives.
+  #
+  # Note that && is not included here.  This is because there are too
+  # many false positives due to RValue references.
+  match = Search(r'[^<>=!\s](==|!=|<=|>=|\|\|)[^<>=!\s,;\)]', line)
+  if match:
+    error(filename, linenum, 'whitespace/operators', 3,
+          'Missing spaces around %s' % match.group(1))
+  elif not Match(r'#.*include', line):
+    # Look for < that is not surrounded by spaces.  This is only
+    # triggered if both sides are missing spaces, even though
+    # technically should should flag if at least one side is missing a
+    # space.  This is done to avoid some false positives with shifts.
+    match = Match(r'^(.*[^\s<])<[^\s=<,]', line)
+    if match:
+      (_, _, end_pos) = CloseExpression(
+          clean_lines, linenum, len(match.group(1)))
+      if end_pos <= -1:
+        error(filename, linenum, 'whitespace/operators', 3,
+              'Missing spaces around <')
+
+    # Look for > that is not surrounded by spaces.  Similar to the
+    # above, we only trigger if both sides are missing spaces to avoid
+    # false positives with shifts.
+    match = Match(r'^(.*[^-\s>])>[^\s=>,]', line)
+    if match:
+      (_, _, start_pos) = ReverseCloseExpression(
+          clean_lines, linenum, len(match.group(1)))
+      if start_pos <= -1:
+        error(filename, linenum, 'whitespace/operators', 3,
+              'Missing spaces around >')
+
+  # We allow no-spaces around << when used like this: 10<<20, but
+  # not otherwise (particularly, not when used as streams)
+  #
+  # We also allow operators following an opening parenthesis, since
+  # those tend to be macros that deal with operators.
+  match = Search(r'(operator|[^\s(<])(?:L|UL|LL|ULL|l|ul|ll|ull)?<<([^\s,=<])', line)
+  if (match and not (match.group(1).isdigit() and match.group(2).isdigit()) and
+      not (match.group(1) == 'operator' and match.group(2) == ';')):
+    error(filename, linenum, 'whitespace/operators', 3,
+          'Missing spaces around <<')
+
+  # We allow no-spaces around >> for almost anything.  This is because
+  # C++11 allows ">>" to close nested templates, which accounts for
+  # most cases when ">>" is not followed by a space.
+  #
+  # We still warn on ">>" followed by alpha character, because that is
+  # likely due to ">>" being used for right shifts, e.g.:
+  #   value >> alpha
+  #
+  # When ">>" is used to close templates, the alphanumeric letter that
+  # follows would be part of an identifier, and there should still be
+  # a space separating the template type and the identifier.
+  #   type<type<type>> alpha
+  match = Search(r'>>[a-zA-Z_]', line)
+  if match:
+    error(filename, linenum, 'whitespace/operators', 3,
+          'Missing spaces around >>')
+
+  # There shouldn't be space around unary operators
+  match = Search(r'(!\s|~\s|[\s]--[\s;]|[\s]\+\+[\s;])', line)
+  if match:
+    error(filename, linenum, 'whitespace/operators', 4,
+          'Extra space for operator %s' % match.group(1))
+
+
+def CheckParenthesisSpacing(filename, clean_lines, linenum, error):
+  """Checks for horizontal spacing around parentheses.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+
+  # No spaces after an if, while, switch, or for
+  match = Search(r' (if\(|for\(|while\(|switch\()', line)
+  if match:
+    error(filename, linenum, 'whitespace/parens', 5,
+          'Missing space before ( in %s' % match.group(1))
+
+  # For if/for/while/switch, the left and right parens should be
+  # consistent about how many spaces are inside the parens, and
+  # there should either be zero or one spaces inside the parens.
+  # We don't want: "if ( foo)" or "if ( foo   )".
+  # Exception: "for ( ; foo; bar)" and "for (foo; bar; )" are allowed.
+  match = Search(r'\b(if|for|while|switch)\s*'
+                 r'\(([ ]*)(.).*[^ ]+([ ]*)\)\s*{\s*$',
+                 line)
+  if match:
+    if len(match.group(2)) != len(match.group(4)):
+      if not (match.group(3) == ';' and
+              len(match.group(2)) == 1 + len(match.group(4)) or
+              not match.group(2) and Search(r'\bfor\s*\(.*; \)', line)):
+        error(filename, linenum, 'whitespace/parens', 5,
+              'Mismatching spaces inside () in %s' % match.group(1))
+    if len(match.group(2)) not in [0, 1]:
+      error(filename, linenum, 'whitespace/parens', 5,
+            'Should have zero or one spaces inside ( and ) in %s' %
+            match.group(1))
+
+
+def CheckCommaSpacing(filename, clean_lines, linenum, error):
+  """Checks for horizontal spacing near commas and semicolons.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  raw = clean_lines.lines_without_raw_strings
+  line = clean_lines.elided[linenum]
+
+  # You should always have a space after a comma (either as fn arg or operator)
+  #
+  # This does not apply when the non-space character following the
+  # comma is another comma, since the only time when that happens is
+  # for empty macro arguments.
+  #
+  # We run this check in two passes: first pass on elided lines to
+  # verify that lines contain missing whitespaces, second pass on raw
+  # lines to confirm that those missing whitespaces are not due to
+  # elided comments.
+  if (Search(r',[^,\s]', ReplaceAll(r'\boperator\s*,\s*\(', 'F(', line)) and
+      Search(r',[^,\s]', raw[linenum])):
+    error(filename, linenum, 'whitespace/comma', 3,
+          'Missing space after ,')
+
+  # You should always have a space after a semicolon
+  # except for few corner cases
+  # TODO(unknown): clarify if 'if (1) { return 1;}' is requires one more
+  # space after ;
+  if Search(r';[^\s};\\)/]', line):
+    error(filename, linenum, 'whitespace/semicolon', 3,
+          'Missing space after ;')
+
+
+def _IsType(clean_lines, nesting_state, expr):
+  """Check if expression looks like a type name, returns true if so.
+
+  Args:
+    clean_lines: A CleansedLines instance containing the file.
+    nesting_state: A NestingState instance which maintains information about
+                   the current stack of nested blocks being parsed.
+    expr: The expression to check.
+  Returns:
+    True, if token looks like a type.
+  """
+  # Keep only the last token in the expression
+  last_word = Match(r'^.*(\b\S+)$', expr)
+  if last_word:
+    token = last_word.group(1)
+  else:
+    token = expr
+
+  # Match native types and stdint types
+  if _TYPES.match(token):
+    return True
+
+  # Try a bit harder to match templated types.  Walk up the nesting
+  # stack until we find something that resembles a typename
+  # declaration for what we are looking for.
+  typename_pattern = (r'\b(?:typename|class|struct)\s+' + re.escape(token) +
+                      r'\b')
+  block_index = len(nesting_state.stack) - 1
+  while block_index >= 0:
+    if isinstance(nesting_state.stack[block_index], _NamespaceInfo):
+      return False
+
+    # Found where the opening brace is.  We want to scan from this
+    # line up to the beginning of the function, minus a few lines.
+    #   template <typename Type1,  // stop scanning here
+    #             ...>
+    #   class C
+    #     : public ... {  // start scanning here
+    last_line = nesting_state.stack[block_index].starting_linenum
+
+    next_block_start = 0
+    if block_index > 0:
+      next_block_start = nesting_state.stack[block_index - 1].starting_linenum
+    first_line = last_line
+    while first_line >= next_block_start:
+      if clean_lines.elided[first_line].find('template') >= 0:
+        break
+      first_line -= 1
+    if first_line < next_block_start:
+      # Didn't find any "template" keyword before reaching the next block,
+      # there are probably no template things to check for this block
+      block_index -= 1
+      continue
+
+    # Look for typename in the specified range
+    for i in xrange(first_line, last_line + 1, 1):
+      if Search(typename_pattern, clean_lines.elided[i]):
+        return True
+    block_index -= 1
+
+  return False
+
+
+def CheckBracesSpacing(filename, clean_lines, linenum, nesting_state, error):
+  """Checks for horizontal spacing near commas.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    nesting_state: A NestingState instance which maintains information about
+                   the current stack of nested blocks being parsed.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+
+  # Except after an opening paren, or after another opening brace (in case of
+  # an initializer list, for instance), you should have spaces before your
+  # braces when they are delimiting blocks, classes, namespaces etc.
+  # And since you should never have braces at the beginning of a line,
+  # this is an easy test.  Except that braces used for initialization don't
+  # follow the same rule; we often don't want spaces before those.
+  match = Match(r'^(.*[^ ({>]){', line)
+
+  if match:
+    # Try a bit harder to check for brace initialization.  This
+    # happens in one of the following forms:
+    #   Constructor() : initializer_list_{} { ... }
+    #   Constructor{}.MemberFunction()
+    #   Type variable{};
+    #   FunctionCall(type{}, ...);
+    #   LastArgument(..., type{});
+    #   LOG(INFO) << type{} << " ...";
+    #   map_of_type[{...}] = ...;
+    #   ternary = expr ? new type{} : nullptr;
+    #   OuterTemplate<InnerTemplateConstructor<Type>{}>
+    #
+    # We check for the character following the closing brace, and
+    # silence the warning if it's one of those listed above, i.e.
+    # "{.;,)<>]:".
+    #
+    # To account for nested initializer list, we allow any number of
+    # closing braces up to "{;,)<".  We can't simply silence the
+    # warning on first sight of closing brace, because that would
+    # cause false negatives for things that are not initializer lists.
+    #   Silence this:         But not this:
+    #     Outer{                if (...) {
+    #       Inner{...}            if (...){  // Missing space before {
+    #     };                    }
+    #
+    # There is a false negative with this approach if people inserted
+    # spurious semicolons, e.g. "if (cond){};", but we will catch the
+    # spurious semicolon with a separate check.
+    leading_text = match.group(1)
+    (endline, endlinenum, endpos) = CloseExpression(
+        clean_lines, linenum, len(match.group(1)))
+    trailing_text = ''
+    if endpos > -1:
+      trailing_text = endline[endpos:]
+    for offset in xrange(endlinenum + 1,
+                         min(endlinenum + 3, clean_lines.NumLines() - 1)):
+      trailing_text += clean_lines.elided[offset]
+    # We also suppress warnings for `uint64_t{expression}` etc., as the style
+    # guide recommends brace initialization for integral types to avoid
+    # overflow/truncation.
+    if (not Match(r'^[\s}]*[{.;,)<>\]:]', trailing_text)
+        and not _IsType(clean_lines, nesting_state, leading_text)):
+      error(filename, linenum, 'whitespace/braces', 5,
+            'Missing space before {')
+
+  # Make sure '} else {' has spaces.
+  if Search(r'}else', line):
+    error(filename, linenum, 'whitespace/braces', 5,
+          'Missing space before else')
+
+  # You shouldn't have a space before a semicolon at the end of the line.
+  # There's a special case for "for" since the style guide allows space before
+  # the semicolon there.
+  if Search(r':\s*;\s*$', line):
+    error(filename, linenum, 'whitespace/semicolon', 5,
+          'Semicolon defining empty statement. Use {} instead.')
+  elif Search(r'^\s*;\s*$', line):
+    error(filename, linenum, 'whitespace/semicolon', 5,
+          'Line contains only semicolon. If this should be an empty statement, '
+          'use {} instead.')
+  elif (Search(r'\s+;\s*$', line) and
+        not Search(r'\bfor\b', line)):
+    error(filename, linenum, 'whitespace/semicolon', 5,
+          'Extra space before last semicolon. If this should be an empty '
+          'statement, use {} instead.')
+
+
+def IsDecltype(clean_lines, linenum, column):
+  """Check if the token ending on (linenum, column) is decltype().
+
+  Args:
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: the number of the line to check.
+    column: end column of the token to check.
+  Returns:
+    True if this token is decltype() expression, False otherwise.
+  """
+  (text, _, start_col) = ReverseCloseExpression(clean_lines, linenum, column)
+  if start_col < 0:
+    return False
+  if Search(r'\bdecltype\s*$', text[0:start_col]):
+    return True
+  return False
+
+
+def CheckSectionSpacing(filename, clean_lines, class_info, linenum, error):
+  """Checks for additional blank line issues related to sections.
+
+  Currently the only thing checked here is blank line before protected/private.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    class_info: A _ClassInfo objects.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  # Skip checks if the class is small, where small means 25 lines or less.
+  # 25 lines seems like a good cutoff since that's the usual height of
+  # terminals, and any class that can't fit in one screen can't really
+  # be considered "small".
+  #
+  # Also skip checks if we are on the first line.  This accounts for
+  # classes that look like
+  #   class Foo { public: ... };
+  #
+  # If we didn't find the end of the class, last_line would be zero,
+  # and the check will be skipped by the first condition.
+  if (class_info.last_line - class_info.starting_linenum <= 24 or
+      linenum <= class_info.starting_linenum):
+    return
+
+  matched = Match(r'\s*(public|protected|private):', clean_lines.lines[linenum])
+  if matched:
+    # Issue warning if the line before public/protected/private was
+    # not a blank line, but don't do this if the previous line contains
+    # "class" or "struct".  This can happen two ways:
+    #  - We are at the beginning of the class.
+    #  - We are forward-declaring an inner class that is semantically
+    #    private, but needed to be public for implementation reasons.
+    # Also ignores cases where the previous line ends with a backslash as can be
+    # common when defining classes in C macros.
+    prev_line = clean_lines.lines[linenum - 1]
+    if (not IsBlankLine(prev_line) and
+        not Search(r'\b(class|struct)\b', prev_line) and
+        not Search(r'\\$', prev_line)):
+      # Try a bit harder to find the beginning of the class.  This is to
+      # account for multi-line base-specifier lists, e.g.:
+      #   class Derived
+      #       : public Base {
+      end_class_head = class_info.starting_linenum
+      for i in range(class_info.starting_linenum, linenum):
+        if Search(r'\{\s*$', clean_lines.lines[i]):
+          end_class_head = i
+          break
+      if end_class_head < linenum - 1:
+        error(filename, linenum, 'whitespace/blank_line', 3,
+              '"%s:" should be preceded by a blank line' % matched.group(1))
+
+
+def GetPreviousNonBlankLine(clean_lines, linenum):
+  """Return the most recent non-blank line and its line number.
+
+  Args:
+    clean_lines: A CleansedLines instance containing the file contents.
+    linenum: The number of the line to check.
+
+  Returns:
+    A tuple with two elements.  The first element is the contents of the last
+    non-blank line before the current line, or the empty string if this is the
+    first non-blank line.  The second is the line number of that line, or -1
+    if this is the first non-blank line.
+  """
+
+  prevlinenum = linenum - 1
+  while prevlinenum >= 0:
+    prevline = clean_lines.elided[prevlinenum]
+    if not IsBlankLine(prevline):     # if not a blank line...
+      return (prevline, prevlinenum)
+    prevlinenum -= 1
+  return ('', -1)
+
+
+def CheckBraces(filename, clean_lines, linenum, error):
+  """Looks for misplaced braces (e.g. at the end of line).
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+
+  line = clean_lines.elided[linenum]        # get rid of comments and strings
+
+  if Match(r'\s*{\s*$', line):
+    # We allow an open brace to start a line in the case where someone is using
+    # braces in a block to explicitly create a new scope, which is commonly used
+    # to control the lifetime of stack-allocated variables.  Braces are also
+    # used for brace initializers inside function calls.  We don't detect this
+    # perfectly: we just don't complain if the last non-whitespace character on
+    # the previous non-blank line is ',', ';', ':', '(', '{', or '}', or if the
+    # previous line starts a preprocessor block. We also allow a brace on the
+    # following line if it is part of an array initialization and would not fit
+    # within the 80 character limit of the preceding line.
+    prevline = GetPreviousNonBlankLine(clean_lines, linenum)[0]
+    if (not Search(r'[,;:}{(]\s*$', prevline) and
+        not Match(r'\s*#', prevline) and
+        not (GetLineWidth(prevline) > _line_length - 2 and '[]' in prevline)):
+      error(filename, linenum, 'whitespace/braces', 4,
+            '{ should almost always be at the end of the previous line')
+
+  # An else clause should be on the same line as the preceding closing brace.
+  if Match(r'\s*else\b\s*(?:if\b|\{|$)', line):
+    prevline = GetPreviousNonBlankLine(clean_lines, linenum)[0]
+    if Match(r'\s*}\s*$', prevline):
+      error(filename, linenum, 'whitespace/newline', 4,
+            'An else should appear on the same line as the preceding }')
+
+  # If braces come on one side of an else, they should be on both.
+  # However, we have to worry about "else if" that spans multiple lines!
+  if Search(r'else if\s*\(', line):       # could be multi-line if
+    brace_on_left = bool(Search(r'}\s*else if\s*\(', line))
+    # find the ( after the if
+    pos = line.find('else if')
+    pos = line.find('(', pos)
+    if pos > 0:
+      (endline, _, endpos) = CloseExpression(clean_lines, linenum, pos)
+      brace_on_right = endline[endpos:].find('{') != -1
+      if brace_on_left != brace_on_right:    # must be brace after if
+        error(filename, linenum, 'readability/braces', 5,
+              'If an else has a brace on one side, it should have it on both')
+  elif Search(r'}\s*else[^{]*$', line) or Match(r'[^}]*else\s*{', line):
+    error(filename, linenum, 'readability/braces', 5,
+          'If an else has a brace on one side, it should have it on both')
+
+  # Likewise, an else should never have the else clause on the same line
+  if Search(r'\belse [^\s{]', line) and not Search(r'\belse if\b', line):
+    error(filename, linenum, 'whitespace/newline', 4,
+          'Else clause should never be on same line as else (use 2 lines)')
+
+  # In the same way, a do/while should never be on one line
+  if Match(r'\s*do [^\s{]', line):
+    error(filename, linenum, 'whitespace/newline', 4,
+          'do/while clauses should not be on a single line')
+
+  # Check single-line if/else bodies. The style guide says 'curly braces are not
+  # required for single-line statements'. We additionally allow multi-line,
+  # single statements, but we reject anything with more than one semicolon in
+  # it. This means that the first semicolon after the if should be at the end of
+  # its line, and the line after that should have an indent level equal to or
+  # lower than the if. We also check for ambiguous if/else nesting without
+  # braces.
+  if_else_match = Search(r'\b(if\s*\(|else\b)', line)
+  if if_else_match and not Match(r'\s*#', line):
+    if_indent = GetIndentLevel(line)
+    endline, endlinenum, endpos = line, linenum, if_else_match.end()
+    if_match = Search(r'\bif\s*\(', line)
+    if if_match:
+      # This could be a multiline if condition, so find the end first.
+      pos = if_match.end() - 1
+      (endline, endlinenum, endpos) = CloseExpression(clean_lines, linenum, pos)
+    # Check for an opening brace, either directly after the if or on the next
+    # line. If found, this isn't a single-statement conditional.
+    if (not Match(r'\s*{', endline[endpos:])
+        and not (Match(r'\s*$', endline[endpos:])
+                 and endlinenum < (len(clean_lines.elided) - 1)
+                 and Match(r'\s*{', clean_lines.elided[endlinenum + 1]))):
+      while (endlinenum < len(clean_lines.elided)
+             and ';' not in clean_lines.elided[endlinenum][endpos:]):
+        endlinenum += 1
+        endpos = 0
+      if endlinenum < len(clean_lines.elided):
+        endline = clean_lines.elided[endlinenum]
+        # We allow a mix of whitespace and closing braces (e.g. for one-liner
+        # methods) and a single \ after the semicolon (for macros)
+        endpos = endline.find(';')
+        if not Match(r';[\s}]*(\\?)$', endline[endpos:]):
+          # Semicolon isn't the last character, there's something trailing.
+          # Output a warning if the semicolon is not contained inside
+          # a lambda expression.
+          if not Match(r'^[^{};]*\[[^\[\]]*\][^{}]*\{[^{}]*\}\s*\)*[;,]\s*$',
+                       endline):
+            error(filename, linenum, 'readability/braces', 4,
+                  'If/else bodies with multiple statements require braces')
+        elif endlinenum < len(clean_lines.elided) - 1:
+          # Make sure the next line is dedented
+          next_line = clean_lines.elided[endlinenum + 1]
+          next_indent = GetIndentLevel(next_line)
+          # With ambiguous nested if statements, this will error out on the
+          # if that *doesn't* match the else, regardless of whether it's the
+          # inner one or outer one.
+          if (if_match and Match(r'\s*else\b', next_line)
+              and next_indent != if_indent):
+            error(filename, linenum, 'readability/braces', 4,
+                  'Else clause should be indented at the same level as if. '
+                  'Ambiguous nested if/else chains require braces.')
+          elif next_indent > if_indent:
+            error(filename, linenum, 'readability/braces', 4,
+                  'If/else bodies with multiple statements require braces')
+
+
+def CheckTrailingSemicolon(filename, clean_lines, linenum, error):
+  """Looks for redundant trailing semicolon.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+
+  line = clean_lines.elided[linenum]
+
+  # Block bodies should not be followed by a semicolon.  Due to C++11
+  # brace initialization, there are more places where semicolons are
+  # required than not, so we explicitly list the allowed rules rather
+  # than listing the disallowed ones.  These are the places where "};"
+  # should be replaced by just "}":
+  # 1. Some flavor of block following closing parenthesis:
+  #    for (;;) {};
+  #    while (...) {};
+  #    switch (...) {};
+  #    Function(...) {};
+  #    if (...) {};
+  #    if (...) else if (...) {};
+  #
+  # 2. else block:
+  #    if (...) else {};
+  #
+  # 3. const member function:
+  #    Function(...) const {};
+  #
+  # 4. Block following some statement:
+  #    x = 42;
+  #    {};
+  #
+  # 5. Block at the beginning of a function:
+  #    Function(...) {
+  #      {};
+  #    }
+  #
+  #    Note that naively checking for the preceding "{" will also match
+  #    braces inside multi-dimensional arrays, but this is fine since
+  #    that expression will not contain semicolons.
+  #
+  # 6. Block following another block:
+  #    while (true) {}
+  #    {};
+  #
+  # 7. End of namespaces:
+  #    namespace {};
+  #
+  #    These semicolons seems far more common than other kinds of
+  #    redundant semicolons, possibly due to people converting classes
+  #    to namespaces.  For now we do not warn for this case.
+  #
+  # Try matching case 1 first.
+  match = Match(r'^(.*\)\s*)\{', line)
+  if match:
+    # Matched closing parenthesis (case 1).  Check the token before the
+    # matching opening parenthesis, and don't warn if it looks like a
+    # macro.  This avoids these false positives:
+    #  - macro that defines a base class
+    #  - multi-line macro that defines a base class
+    #  - macro that defines the whole class-head
+    #
+    # But we still issue warnings for macros that we know are safe to
+    # warn, specifically:
+    #  - TEST, TEST_F, TEST_P, MATCHER, MATCHER_P
+    #  - TYPED_TEST
+    #  - INTERFACE_DEF
+    #  - EXCLUSIVE_LOCKS_REQUIRED, SHARED_LOCKS_REQUIRED, LOCKS_EXCLUDED:
+    #
+    # We implement a list of safe macros instead of a list of
+    # unsafe macros, even though the latter appears less frequently in
+    # google code and would have been easier to implement.  This is because
+    # the downside for getting the allowed checks wrong means some extra
+    # semicolons, while the downside for getting disallowed checks wrong
+    # would result in compile errors.
+    #
+    # In addition to macros, we also don't want to warn on
+    #  - Compound literals
+    #  - Lambdas
+    #  - alignas specifier with anonymous structs
+    #  - decltype
+    closing_brace_pos = match.group(1).rfind(')')
+    opening_parenthesis = ReverseCloseExpression(
+        clean_lines, linenum, closing_brace_pos)
+    if opening_parenthesis[2] > -1:
+      line_prefix = opening_parenthesis[0][0:opening_parenthesis[2]]
+      macro = Search(r'\b([A-Z_][A-Z0-9_]*)\s*$', line_prefix)
+      func = Match(r'^(.*\])\s*$', line_prefix)
+      if ((macro and
+           macro.group(1) not in (
+               'TEST', 'TEST_F', 'MATCHER', 'MATCHER_P', 'TYPED_TEST',
+               'EXCLUSIVE_LOCKS_REQUIRED', 'SHARED_LOCKS_REQUIRED',
+               'LOCKS_EXCLUDED', 'INTERFACE_DEF')) or
+          (func and not Search(r'\boperator\s*\[\s*\]', func.group(1))) or
+          Search(r'\b(?:struct|union)\s+alignas\s*$', line_prefix) or
+          Search(r'\bdecltype$', line_prefix) or
+          Search(r'\s+=\s*$', line_prefix)):
+        match = None
+    if (match and
+        opening_parenthesis[1] > 1 and
+        Search(r'\]\s*$', clean_lines.elided[opening_parenthesis[1] - 1])):
+      # Multi-line lambda-expression
+      match = None
+
+  else:
+    # Try matching cases 2-3.
+    match = Match(r'^(.*(?:else|\)\s*const)\s*)\{', line)
+    if not match:
+      # Try matching cases 4-6.  These are always matched on separate lines.
+      #
+      # Note that we can't simply concatenate the previous line to the
+      # current line and do a single match, otherwise we may output
+      # duplicate warnings for the blank line case:
+      #   if (cond) {
+      #     // blank line
+      #   }
+      prevline = GetPreviousNonBlankLine(clean_lines, linenum)[0]
+      if prevline and Search(r'[;{}]\s*$', prevline):
+        match = Match(r'^(\s*)\{', line)
+
+  # Check matching closing brace
+  if match:
+    (endline, endlinenum, endpos) = CloseExpression(
+        clean_lines, linenum, len(match.group(1)))
+    if endpos > -1 and Match(r'^\s*;', endline[endpos:]):
+      # Current {} pair is eligible for semicolon check, and we have found
+      # the redundant semicolon, output warning here.
+      #
+      # Note: because we are scanning forward for opening braces, and
+      # outputting warnings for the matching closing brace, if there are
+      # nested blocks with trailing semicolons, we will get the error
+      # messages in reversed order.
+
+      # We need to check the line forward for NOLINT
+      raw_lines = clean_lines.raw_lines
+      ParseNolintSuppressions(filename, raw_lines[endlinenum-1], endlinenum-1,
+                              error)
+      ParseNolintSuppressions(filename, raw_lines[endlinenum], endlinenum,
+                              error)
+
+      error(filename, endlinenum, 'readability/braces', 4,
+            "You don't need a ; after a }")
+
+
+def CheckEmptyBlockBody(filename, clean_lines, linenum, error):
+  """Look for empty loop/conditional body with only a single semicolon.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+
+  # Search for loop keywords at the beginning of the line.  Because only
+  # whitespaces are allowed before the keywords, this will also ignore most
+  # do-while-loops, since those lines should start with closing brace.
+  #
+  # We also check "if" blocks here, since an empty conditional block
+  # is likely an error.
+  line = clean_lines.elided[linenum]
+  matched = Match(r'\s*(for|while|if)\s*\(', line)
+  if matched:
+    # Find the end of the conditional expression.
+    (end_line, end_linenum, end_pos) = CloseExpression(
+        clean_lines, linenum, line.find('('))
+
+    # Output warning if what follows the condition expression is a semicolon.
+    # No warning for all other cases, including whitespace or newline, since we
+    # have a separate check for semicolons preceded by whitespace.
+    if end_pos >= 0 and Match(r';', end_line[end_pos:]):
+      if matched.group(1) == 'if':
+        error(filename, end_linenum, 'whitespace/empty_conditional_body', 5,
+              'Empty conditional bodies should use {}')
+      else:
+        error(filename, end_linenum, 'whitespace/empty_loop_body', 5,
+              'Empty loop bodies should use {} or continue')
+
+    # Check for if statements that have completely empty bodies (no comments)
+    # and no else clauses.
+    if end_pos >= 0 and matched.group(1) == 'if':
+      # Find the position of the opening { for the if statement.
+      # Return without logging an error if it has no brackets.
+      opening_linenum = end_linenum
+      opening_line_fragment = end_line[end_pos:]
+      # Loop until EOF or find anything that's not whitespace or opening {.
+      while not Search(r'^\s*\{', opening_line_fragment):
+        if Search(r'^(?!\s*$)', opening_line_fragment):
+          # Conditional has no brackets.
+          return
+        opening_linenum += 1
+        if opening_linenum == len(clean_lines.elided):
+          # Couldn't find conditional's opening { or any code before EOF.
+          return
+        opening_line_fragment = clean_lines.elided[opening_linenum]
+      # Set opening_line (opening_line_fragment may not be entire opening line).
+      opening_line = clean_lines.elided[opening_linenum]
+
+      # Find the position of the closing }.
+      opening_pos = opening_line_fragment.find('{')
+      if opening_linenum == end_linenum:
+        # We need to make opening_pos relative to the start of the entire line.
+        opening_pos += end_pos
+      (closing_line, closing_linenum, closing_pos) = CloseExpression(
+          clean_lines, opening_linenum, opening_pos)
+      if closing_pos < 0:
+        return
+
+      # Now construct the body of the conditional. This consists of the portion
+      # of the opening line after the {, all lines until the closing line,
+      # and the portion of the closing line before the }.
+      if (clean_lines.raw_lines[opening_linenum] !=
+          CleanseComments(clean_lines.raw_lines[opening_linenum])):
+        # Opening line ends with a comment, so conditional isn't empty.
+        return
+      if closing_linenum > opening_linenum:
+        # Opening line after the {. Ignore comments here since we checked above.
+        body = list(opening_line[opening_pos+1:])
+        # All lines until closing line, excluding closing line, with comments.
+        body.extend(clean_lines.raw_lines[opening_linenum+1:closing_linenum])
+        # Closing line before the }. Won't (and can't) have comments.
+        body.append(clean_lines.elided[closing_linenum][:closing_pos-1])
+        body = '\n'.join(body)
+      else:
+        # If statement has brackets and fits on a single line.
+        body = opening_line[opening_pos+1:closing_pos-1]
+
+      # Check if the body is empty
+      if not _EMPTY_CONDITIONAL_BODY_PATTERN.search(body):
+        return
+      # The body is empty. Now make sure there's not an else clause.
+      current_linenum = closing_linenum
+      current_line_fragment = closing_line[closing_pos:]
+      # Loop until EOF or find anything that's not whitespace or else clause.
+      while Search(r'^\s*$|^(?=\s*else)', current_line_fragment):
+        if Search(r'^(?=\s*else)', current_line_fragment):
+          # Found an else clause, so don't log an error.
+          return
+        current_linenum += 1
+        if current_linenum == len(clean_lines.elided):
+          break
+        current_line_fragment = clean_lines.elided[current_linenum]
+
+      # The body is empty and there's no else clause until EOF or other code.
+      error(filename, end_linenum, 'whitespace/empty_if_body', 4,
+            ('If statement had no body and no else clause'))
+
+
+def FindCheckMacro(line):
+  """Find a replaceable CHECK-like macro.
+
+  Args:
+    line: line to search on.
+  Returns:
+    (macro name, start position), or (None, -1) if no replaceable
+    macro is found.
+  """
+  for macro in _CHECK_MACROS:
+    i = line.find(macro)
+    if i >= 0:
+      # Find opening parenthesis.  Do a regular expression match here
+      # to make sure that we are matching the expected CHECK macro, as
+      # opposed to some other macro that happens to contain the CHECK
+      # substring.
+      matched = Match(r'^(.*\b' + macro + r'\s*)\(', line)
+      if not matched:
+        continue
+      return (macro, len(matched.group(1)))
+  return (None, -1)
+
+
+def CheckCheck(filename, clean_lines, linenum, error):
+  """Checks the use of CHECK and EXPECT macros.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+
+  # Decide the set of replacement macros that should be suggested
+  lines = clean_lines.elided
+  (check_macro, start_pos) = FindCheckMacro(lines[linenum])
+  if not check_macro:
+    return
+
+  # Find end of the boolean expression by matching parentheses
+  (last_line, end_line, end_pos) = CloseExpression(
+      clean_lines, linenum, start_pos)
+  if end_pos < 0:
+    return
+
+  # If the check macro is followed by something other than a
+  # semicolon, assume users will log their own custom error messages
+  # and don't suggest any replacements.
+  if not Match(r'\s*;', last_line[end_pos:]):
+    return
+
+  if linenum == end_line:
+    expression = lines[linenum][start_pos + 1:end_pos - 1]
+  else:
+    expression = lines[linenum][start_pos + 1:]
+    for i in xrange(linenum + 1, end_line):
+      expression += lines[i]
+    expression += last_line[0:end_pos - 1]
+
+  # Parse expression so that we can take parentheses into account.
+  # This avoids false positives for inputs like "CHECK((a < 4) == b)",
+  # which is not replaceable by CHECK_LE.
+  lhs = ''
+  rhs = ''
+  operator = None
+  while expression:
+    matched = Match(r'^\s*(<<|<<=|>>|>>=|->\*|->|&&|\|\||'
+                    r'==|!=|>=|>|<=|<|\()(.*)$', expression)
+    if matched:
+      token = matched.group(1)
+      if token == '(':
+        # Parenthesized operand
+        expression = matched.group(2)
+        (end, _) = FindEndOfExpressionInLine(expression, 0, ['('])
+        if end < 0:
+          return  # Unmatched parenthesis
+        lhs += '(' + expression[0:end]
+        expression = expression[end:]
+      elif token in ('&&', '||'):
+        # Logical and/or operators.  This means the expression
+        # contains more than one term, for example:
+        #   CHECK(42 < a && a < b);
+        #
+        # These are not replaceable with CHECK_LE, so bail out early.
+        return
+      elif token in ('<<', '<<=', '>>', '>>=', '->*', '->'):
+        # Non-relational operator
+        lhs += token
+        expression = matched.group(2)
+      else:
+        # Relational operator
+        operator = token
+        rhs = matched.group(2)
+        break
+    else:
+      # Unparenthesized operand.  Instead of appending to lhs one character
+      # at a time, we do another regular expression match to consume several
+      # characters at once if possible.  Trivial benchmark shows that this
+      # is more efficient when the operands are longer than a single
+      # character, which is generally the case.
+      matched = Match(r'^([^-=!<>()&|]+)(.*)$', expression)
+      if not matched:
+        matched = Match(r'^(\s*\S)(.*)$', expression)
+        if not matched:
+          break
+      lhs += matched.group(1)
+      expression = matched.group(2)
+
+  # Only apply checks if we got all parts of the boolean expression
+  if not (lhs and operator and rhs):
+    return
+
+  # Check that rhs do not contain logical operators.  We already know
+  # that lhs is fine since the loop above parses out && and ||.
+  if rhs.find('&&') > -1 or rhs.find('||') > -1:
+    return
+
+  # At least one of the operands must be a constant literal.  This is
+  # to avoid suggesting replacements for unprintable things like
+  # CHECK(variable != iterator)
+  #
+  # The following pattern matches decimal, hex integers, strings, and
+  # characters (in that order).
+  lhs = lhs.strip()
+  rhs = rhs.strip()
+  match_constant = r'^([-+]?(\d+|0[xX][0-9a-fA-F]+)[lLuU]{0,3}|".*"|\'.*\')$'
+  if Match(match_constant, lhs) or Match(match_constant, rhs):
+    # Note: since we know both lhs and rhs, we can provide a more
+    # descriptive error message like:
+    #   Consider using CHECK_EQ(x, 42) instead of CHECK(x == 42)
+    # Instead of:
+    #   Consider using CHECK_EQ instead of CHECK(a == b)
+    #
+    # We are still keeping the less descriptive message because if lhs
+    # or rhs gets long, the error message might become unreadable.
+    error(filename, linenum, 'readability/check', 2,
+          'Consider using %s instead of %s(a %s b)' % (
+              _CHECK_REPLACEMENT[check_macro][operator],
+              check_macro, operator))
+
+
+def CheckAltTokens(filename, clean_lines, linenum, error):
+  """Check alternative keywords being used in boolean expressions.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+
+  # Avoid preprocessor lines
+  if Match(r'^\s*#', line):
+    return
+
+  # Last ditch effort to avoid multi-line comments.  This will not help
+  # if the comment started before the current line or ended after the
+  # current line, but it catches most of the false positives.  At least,
+  # it provides a way to workaround this warning for people who use
+  # multi-line comments in preprocessor macros.
+  #
+  # TODO(unknown): remove this once cpplint has better support for
+  # multi-line comments.
+  if line.find('/*') >= 0 or line.find('*/') >= 0:
+    return
+
+  for match in _ALT_TOKEN_REPLACEMENT_PATTERN.finditer(line):
+    error(filename, linenum, 'readability/alt_tokens', 2,
+          'Use operator %s instead of %s' % (
+              _ALT_TOKEN_REPLACEMENT[match.group(1)], match.group(1)))
+
+
+def GetLineWidth(line):
+  """Determines the width of the line in column positions.
+
+  Args:
+    line: A string, which may be a Unicode string.
+
+  Returns:
+    The width of the line in column positions, accounting for Unicode
+    combining characters and wide characters.
+  """
+  if isinstance(line, unicode):
+    width = 0
+    for uc in unicodedata.normalize('NFC', line):
+      if unicodedata.east_asian_width(uc) in ('W', 'F'):
+        width += 2
+      elif not unicodedata.combining(uc):
+        # Issue 337
+        # https://mail.python.org/pipermail/python-list/2012-August/628809.html
+        if (sys.version_info.major, sys.version_info.minor) <= (3, 2):
+          # https://github.com/python/cpython/blob/2.7/Include/unicodeobject.h#L81
+          is_wide_build = sysconfig.get_config_var("Py_UNICODE_SIZE") >= 4
+          # https://github.com/python/cpython/blob/2.7/Objects/unicodeobject.c#L564
+          is_low_surrogate = 0xDC00 <= ord(uc) <= 0xDFFF
+          if not is_wide_build and is_low_surrogate:
+            width -= 1
+          
+        width += 1
+    return width
+  else:
+    return len(line)
+
+
+def CheckStyle(filename, clean_lines, linenum, file_extension, nesting_state,
+               error):
+  """Checks rules from the 'C++ style rules' section of cppguide.html.
+
+  Most of these rules are hard to test (naming, comment style), but we
+  do what we can.  In particular we check for 2-space indents, line lengths,
+  tab usage, spaces inside code, etc.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    file_extension: The extension (without the dot) of the filename.
+    nesting_state: A NestingState instance which maintains information about
+                   the current stack of nested blocks being parsed.
+    error: The function to call with any errors found.
+  """
+
+  # Don't use "elided" lines here, otherwise we can't check commented lines.
+  # Don't want to use "raw" either, because we don't want to check inside C++11
+  # raw strings,
+  raw_lines = clean_lines.lines_without_raw_strings
+  line = raw_lines[linenum]
+  prev = raw_lines[linenum - 1] if linenum > 0 else ''
+
+  if line.find('\t') != -1:
+    error(filename, linenum, 'whitespace/tab', 1,
+          'Tab found; better to use spaces')
+
+  # One or three blank spaces at the beginning of the line is weird; it's
+  # hard to reconcile that with 2-space indents.
+  # NOTE: here are the conditions rob pike used for his tests.  Mine aren't
+  # as sophisticated, but it may be worth becoming so:  RLENGTH==initial_spaces
+  # if(RLENGTH > 20) complain = 0;
+  # if(match($0, " +(error|private|public|protected):")) complain = 0;
+  # if(match(prev, "&& *$")) complain = 0;
+  # if(match(prev, "\\|\\| *$")) complain = 0;
+  # if(match(prev, "[\",=><] *$")) complain = 0;
+  # if(match($0, " <<")) complain = 0;
+  # if(match(prev, " +for \\(")) complain = 0;
+  # if(prevodd && match(prevprev, " +for \\(")) complain = 0;
+  scope_or_label_pattern = r'\s*\w+\s*:\s*\\?$'
+  classinfo = nesting_state.InnermostClass()
+  initial_spaces = 0
+  cleansed_line = clean_lines.elided[linenum]
+  while initial_spaces < len(line) and line[initial_spaces] == ' ':
+    initial_spaces += 1
+  # There are certain situations we allow one space, notably for
+  # section labels, and also lines containing multi-line raw strings.
+  # We also don't check for lines that look like continuation lines
+  # (of lines ending in double quotes, commas, equals, or angle brackets)
+  # because the rules for how to indent those are non-trivial.
+  if (not Search(r'[",=><] *$', prev) and
+      (initial_spaces == 1 or initial_spaces == 3) and
+      not Match(scope_or_label_pattern, cleansed_line) and
+      not (clean_lines.raw_lines[linenum] != line and
+           Match(r'^\s*""', line))):
+    error(filename, linenum, 'whitespace/indent', 3,
+          'Weird number of spaces at line-start.  '
+          'Are you using a 2-space indent?')
+
+  if line and line[-1].isspace():
+    error(filename, linenum, 'whitespace/end_of_line', 4,
+          'Line ends in whitespace.  Consider deleting these extra spaces.')
+
+  # Check if the line is a header guard.
+  is_header_guard = False
+  if IsHeaderExtension(file_extension):
+    cppvar = GetHeaderGuardCPPVariable(filename)
+    if (line.startswith('#ifndef %s' % cppvar) or
+        line.startswith('#define %s' % cppvar) or
+        line.startswith('#endif  // %s' % cppvar)):
+      is_header_guard = True
+  # #include lines and header guards can be long, since there's no clean way to
+  # split them.
+  #
+  # URLs can be long too.  It's possible to split these, but it makes them
+  # harder to cut&paste.
+  #
+  # The "$Id:...$" comment may also get very long without it being the
+  # developers fault.
+  if (not line.startswith('#include') and not is_header_guard and
+      not Match(r'^\s*//.*http(s?)://\S*$', line) and
+      not Match(r'^\s*//\s*[^\s]*$', line) and
+      not Match(r'^// \$Id:.*#[0-9]+ \$$', line)):
+    line_width = GetLineWidth(line)
+    if line_width > _line_length:
+      error(filename, linenum, 'whitespace/line_length', 2,
+            'Lines should be <= %i characters long' % _line_length)
+
+  if (cleansed_line.count(';') > 1 and
+      # for loops are allowed two ;'s (and may run over two lines).
+      cleansed_line.find('for') == -1 and
+      (GetPreviousNonBlankLine(clean_lines, linenum)[0].find('for') == -1 or
+       GetPreviousNonBlankLine(clean_lines, linenum)[0].find(';') != -1) and
+      # It's ok to have many commands in a switch case that fits in 1 line
+      not ((cleansed_line.find('case ') != -1 or
+            cleansed_line.find('default:') != -1) and
+           cleansed_line.find('break;') != -1)):
+    error(filename, linenum, 'whitespace/newline', 0,
+          'More than one command on the same line')
+
+  # Some more style checks
+  CheckBraces(filename, clean_lines, linenum, error)
+  CheckTrailingSemicolon(filename, clean_lines, linenum, error)
+  CheckEmptyBlockBody(filename, clean_lines, linenum, error)
+  CheckSpacing(filename, clean_lines, linenum, nesting_state, error)
+  CheckOperatorSpacing(filename, clean_lines, linenum, error)
+  CheckParenthesisSpacing(filename, clean_lines, linenum, error)
+  CheckCommaSpacing(filename, clean_lines, linenum, error)
+  CheckBracesSpacing(filename, clean_lines, linenum, nesting_state, error)
+  CheckSpacingForFunctionCall(filename, clean_lines, linenum, error)
+  CheckCheck(filename, clean_lines, linenum, error)
+  CheckAltTokens(filename, clean_lines, linenum, error)
+  classinfo = nesting_state.InnermostClass()
+  if classinfo:
+    CheckSectionSpacing(filename, clean_lines, classinfo, linenum, error)
+
+
+_RE_PATTERN_INCLUDE = re.compile(r'^\s*#\s*include\s*([<"])([^>"]*)[>"].*$')
+# Matches the first component of a filename delimited by -s and _s. That is:
+#  _RE_FIRST_COMPONENT.match('foo').group(0) == 'foo'
+#  _RE_FIRST_COMPONENT.match('foo.cc').group(0) == 'foo'
+#  _RE_FIRST_COMPONENT.match('foo-bar_baz.cc').group(0) == 'foo'
+#  _RE_FIRST_COMPONENT.match('foo_bar-baz.cc').group(0) == 'foo'
+_RE_FIRST_COMPONENT = re.compile(r'^[^-_.]+')
+
+
+def _DropCommonSuffixes(filename):
+  """Drops common suffixes like _test.cc or -inl.h from filename.
+
+  For example:
+    >>> _DropCommonSuffixes('foo/foo-inl.h')
+    'foo/foo'
+    >>> _DropCommonSuffixes('foo/bar/foo.cc')
+    'foo/bar/foo'
+    >>> _DropCommonSuffixes('foo/foo_internal.h')
+    'foo/foo'
+    >>> _DropCommonSuffixes('foo/foo_unusualinternal.h')
+    'foo/foo_unusualinternal'
+
+  Args:
+    filename: The input filename.
+
+  Returns:
+    The filename with the common suffix removed.
+  """
+  for suffix in ('test.cc', 'regtest.cc', 'unittest.cc',
+                 'inl.h', 'impl.h', 'internal.h'):
+    if (filename.endswith(suffix) and len(filename) > len(suffix) and
+        filename[-len(suffix) - 1] in ('-', '_')):
+      return filename[:-len(suffix) - 1]
+  return os.path.splitext(filename)[0]
+
+
+def _ClassifyInclude(fileinfo, include, is_system):
+  """Figures out what kind of header 'include' is.
+
+  Args:
+    fileinfo: The current file cpplint is running over. A FileInfo instance.
+    include: The path to a #included file.
+    is_system: True if the #include used <> rather than "".
+
+  Returns:
+    One of the _XXX_HEADER constants.
+
+  For example:
+    >>> _ClassifyInclude(FileInfo('foo/foo.cc'), 'stdio.h', True)
+    _C_SYS_HEADER
+    >>> _ClassifyInclude(FileInfo('foo/foo.cc'), 'string', True)
+    _CPP_SYS_HEADER
+    >>> _ClassifyInclude(FileInfo('foo/foo.cc'), 'foo/foo.h', False)
+    _LIKELY_MY_HEADER
+    >>> _ClassifyInclude(FileInfo('foo/foo_unknown_extension.cc'),
+    ...                  'bar/foo_other_ext.h', False)
+    _POSSIBLE_MY_HEADER
+    >>> _ClassifyInclude(FileInfo('foo/foo.cc'), 'foo/bar.h', False)
+    _OTHER_HEADER
+  """
+  # This is a list of all standard c++ header files, except
+  # those already checked for above.
+  is_cpp_h = include in _CPP_HEADERS
+
+  if is_system:
+    if is_cpp_h:
+      return _CPP_SYS_HEADER
+    else:
+      return _C_SYS_HEADER
+
+  # If the target file and the include we're checking share a
+  # basename when we drop common extensions, and the include
+  # lives in . , then it's likely to be owned by the target file.
+  target_dir, target_base = (
+      os.path.split(_DropCommonSuffixes(fileinfo.RepositoryName())))
+  include_dir, include_base = os.path.split(_DropCommonSuffixes(include))
+  if target_base == include_base and (
+      include_dir == target_dir or
+      include_dir == os.path.normpath(target_dir + '/../public')):
+    return _LIKELY_MY_HEADER
+
+  # If the target and include share some initial basename
+  # component, it's possible the target is implementing the
+  # include, so it's allowed to be first, but we'll never
+  # complain if it's not there.
+  target_first_component = _RE_FIRST_COMPONENT.match(target_base)
+  include_first_component = _RE_FIRST_COMPONENT.match(include_base)
+  if (target_first_component and include_first_component and
+      target_first_component.group(0) ==
+      include_first_component.group(0)):
+    return _POSSIBLE_MY_HEADER
+
+  return _OTHER_HEADER
+
+
+
+def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
+  """Check rules that are applicable to #include lines.
+
+  Strings on #include lines are NOT removed from elided line, to make
+  certain tasks easier. However, to prevent false positives, checks
+  applicable to #include lines in CheckLanguage must be put here.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    include_state: An _IncludeState instance in which the headers are inserted.
+    error: The function to call with any errors found.
+  """
+  fileinfo = FileInfo(filename)
+  line = clean_lines.lines[linenum]
+
+  # "include" should use the new style "foo/bar.h" instead of just "bar.h"
+  # Only do this check if the included header follows google naming
+  # conventions.  If not, assume that it's a 3rd party API that
+  # requires special include conventions.
+  #
+  # We also make an exception for Lua headers, which follow google
+  # naming convention but not the include convention.
+  match = Match(r'#include\s*"([^/]+\.h)"', line)
+  if match and not _THIRD_PARTY_HEADERS_PATTERN.match(match.group(1)):
+    error(filename, linenum, 'build/include', 4,
+          'Include the directory when naming .h files')
+
+  # we shouldn't include a file more than once. actually, there are a
+  # handful of instances where doing so is okay, but in general it's
+  # not.
+  match = _RE_PATTERN_INCLUDE.search(line)
+  if match:
+    include = match.group(2)
+    is_system = (match.group(1) == '<')
+    duplicate_line = include_state.FindHeader(include)
+    if duplicate_line >= 0:
+      error(filename, linenum, 'build/include', 4,
+            '"%s" already included at %s:%s' %
+            (include, filename, duplicate_line))
+    elif (include.endswith('.cc') and
+          os.path.dirname(fileinfo.RepositoryName()) != os.path.dirname(include)):
+      error(filename, linenum, 'build/include', 4,
+            'Do not include .cc files from other packages')
+    elif not _THIRD_PARTY_HEADERS_PATTERN.match(include):
+      include_state.include_list[-1].append((include, linenum))
+
+      # We want to ensure that headers appear in the right order:
+      # 1) for foo.cc, foo.h  (preferred location)
+      # 2) c system files
+      # 3) cpp system files
+      # 4) for foo.cc, foo.h  (deprecated location)
+      # 5) other google headers
+      #
+      # We classify each include statement as one of those 5 types
+      # using a number of techniques. The include_state object keeps
+      # track of the highest type seen, and complains if we see a
+      # lower type after that.
+      error_message = include_state.CheckNextIncludeOrder(
+          _ClassifyInclude(fileinfo, include, is_system))
+      if error_message:
+        error(filename, linenum, 'build/include_order', 4,
+              '%s. Should be: %s.h, c system, c++ system, other.' %
+              (error_message, fileinfo.BaseName()))
+      canonical_include = include_state.CanonicalizeAlphabeticalOrder(include)
+      if not include_state.IsInAlphabeticalOrder(
+          clean_lines, linenum, canonical_include):
+        error(filename, linenum, 'build/include_alpha', 4,
+              'Include "%s" not in alphabetical order' % include)
+      include_state.SetLastHeader(canonical_include)
+
+
+
+def _GetTextInside(text, start_pattern):
+  r"""Retrieves all the text between matching open and close parentheses.
+
+  Given a string of lines and a regular expression string, retrieve all the text
+  following the expression and between opening punctuation symbols like
+  (, [, or {, and the matching close-punctuation symbol. This properly nested
+  occurrences of the punctuations, so for the text like
+    printf(a(), b(c()));
+  a call to _GetTextInside(text, r'printf\(') will return 'a(), b(c())'.
+  start_pattern must match string having an open punctuation symbol at the end.
+
+  Args:
+    text: The lines to extract text. Its comments and strings must be elided.
+           It can be single line and can span multiple lines.
+    start_pattern: The regexp string indicating where to start extracting
+                   the text.
+  Returns:
+    The extracted text.
+    None if either the opening string or ending punctuation could not be found.
+  """
+  # TODO(unknown): Audit cpplint.py to see what places could be profitably
+  # rewritten to use _GetTextInside (and use inferior regexp matching today).
+
+  # Give opening punctuations to get the matching close-punctuations.
+  matching_punctuation = {'(': ')', '{': '}', '[': ']'}
+  closing_punctuation = set(matching_punctuation.itervalues())
+
+  # Find the position to start extracting text.
+  match = re.search(start_pattern, text, re.M)
+  if not match:  # start_pattern not found in text.
+    return None
+  start_position = match.end(0)
+
+  assert start_position > 0, (
+      'start_pattern must ends with an opening punctuation.')
+  assert text[start_position - 1] in matching_punctuation, (
+      'start_pattern must ends with an opening punctuation.')
+  # Stack of closing punctuations we expect to have in text after position.
+  punctuation_stack = [matching_punctuation[text[start_position - 1]]]
+  position = start_position
+  while punctuation_stack and position < len(text):
+    if text[position] == punctuation_stack[-1]:
+      punctuation_stack.pop()
+    elif text[position] in closing_punctuation:
+      # A closing punctuation without matching opening punctuations.
+      return None
+    elif text[position] in matching_punctuation:
+      punctuation_stack.append(matching_punctuation[text[position]])
+    position += 1
+  if punctuation_stack:
+    # Opening punctuations left without matching close-punctuations.
+    return None
+  # punctuations match.
+  return text[start_position:position - 1]
+
+
+# Patterns for matching call-by-reference parameters.
+#
+# Supports nested templates up to 2 levels deep using this messy pattern:
+#   < (?: < (?: < [^<>]*
+#               >
+#           |   [^<>] )*
+#         >
+#     |   [^<>] )*
+#   >
+_RE_PATTERN_IDENT = r'[_a-zA-Z]\w*'  # =~ [[:alpha:]][[:alnum:]]*
+_RE_PATTERN_TYPE = (
+    r'(?:const\s+)?(?:typename\s+|class\s+|struct\s+|union\s+|enum\s+)?'
+    r'(?:\w|'
+    r'\s*<(?:<(?:<[^<>]*>|[^<>])*>|[^<>])*>|'
+    r'::)+')
+# A call-by-reference parameter ends with '& identifier'.
+_RE_PATTERN_REF_PARAM = re.compile(
+    r'(' + _RE_PATTERN_TYPE + r'(?:\s*(?:\bconst\b|[*]))*\s*'
+    r'&\s*' + _RE_PATTERN_IDENT + r')\s*(?:=[^,()]+)?[,)]')
+# A call-by-const-reference parameter either ends with 'const& identifier'
+# or looks like 'const type& identifier' when 'type' is atomic.
+_RE_PATTERN_CONST_REF_PARAM = (
+    r'(?:.*\s*\bconst\s*&\s*' + _RE_PATTERN_IDENT +
+    r'|const\s+' + _RE_PATTERN_TYPE + r'\s*&\s*' + _RE_PATTERN_IDENT + r')')
+# Stream types.
+_RE_PATTERN_REF_STREAM_PARAM = (
+    r'(?:.*stream\s*&\s*' + _RE_PATTERN_IDENT + r')')
+
+
+def CheckLanguage(filename, clean_lines, linenum, file_extension,
+                  include_state, nesting_state, error):
+  """Checks rules from the 'C++ language rules' section of cppguide.html.
+
+  Some of these rules are hard to test (function overloading, using
+  uint32 inappropriately), but we do the best we can.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    file_extension: The extension (without the dot) of the filename.
+    include_state: An _IncludeState instance in which the headers are inserted.
+    nesting_state: A NestingState instance which maintains information about
+                   the current stack of nested blocks being parsed.
+    error: The function to call with any errors found.
+  """
+  # If the line is empty or consists of entirely a comment, no need to
+  # check it.
+  line = clean_lines.elided[linenum]
+  if not line:
+    return
+
+  match = _RE_PATTERN_INCLUDE.search(line)
+  if match:
+    CheckIncludeLine(filename, clean_lines, linenum, include_state, error)
+    return
+
+  # Reset include state across preprocessor directives.  This is meant
+  # to silence warnings for conditional includes.
+  match = Match(r'^\s*#\s*(if|ifdef|ifndef|elif|else|endif)\b', line)
+  if match:
+    include_state.ResetSection(match.group(1))
+
+  # Make Windows paths like Unix.
+  fullname = os.path.abspath(filename).replace('\\', '/')
+
+  # Perform other checks now that we are sure that this is not an include line
+  CheckCasts(filename, clean_lines, linenum, error)
+  CheckGlobalStatic(filename, clean_lines, linenum, error)
+  CheckPrintf(filename, clean_lines, linenum, error)
+
+  if IsHeaderExtension(file_extension):
+    # TODO(unknown): check that 1-arg constructors are explicit.
+    #                How to tell it's a constructor?
+    #                (handled in CheckForNonStandardConstructs for now)
+    # TODO(unknown): check that classes declare or disable copy/assign
+    #                (level 1 error)
+    pass
+
+  # Check if people are using the verboten C basic types.  The only exception
+  # we regularly allow is "unsigned short port" for port.
+  if Search(r'\bshort port\b', line):
+    if not Search(r'\bunsigned short port\b', line):
+      error(filename, linenum, 'runtime/int', 4,
+            'Use "unsigned short" for ports, not "short"')
+  else:
+    match = Search(r'\b(short|long(?! +double)|long long)\b', line)
+    if match:
+      error(filename, linenum, 'runtime/int', 4,
+            'Use int16/int64/etc, rather than the C type %s' % match.group(1))
+
+  # Check if some verboten operator overloading is going on
+  # TODO(unknown): catch out-of-line unary operator&:
+  #   class X {};
+  #   int operator&(const X& x) { return 42; }  // unary operator&
+  # The trick is it's hard to tell apart from binary operator&:
+  #   class Y { int operator&(const Y& x) { return 23; } }; // binary operator&
+  if Search(r'\boperator\s*&\s*\(\s*\)', line):
+    error(filename, linenum, 'runtime/operator', 4,
+          'Unary operator& is dangerous.  Do not use it.')
+
+  # Check for suspicious usage of "if" like
+  # } if (a == b) {
+  if Search(r'\}\s*if\s*\(', line):
+    error(filename, linenum, 'readability/braces', 4,
+          'Did you mean "else if"? If not, start a new line for "if".')
+
+  # Check for potential format string bugs like printf(foo).
+  # We constrain the pattern not to pick things like DocidForPrintf(foo).
+  # Not perfect but it can catch printf(foo.c_str()) and printf(foo->c_str())
+  # TODO(unknown): Catch the following case. Need to change the calling
+  # convention of the whole function to process multiple line to handle it.
+  #   printf(
+  #       boy_this_is_a_really_long_variable_that_cannot_fit_on_the_prev_line);
+  printf_args = _GetTextInside(line, r'(?i)\b(string)?printf\s*\(')
+  if printf_args:
+    match = Match(r'([\w.\->()]+)$', printf_args)
+    if match and match.group(1) != '__VA_ARGS__':
+      function_name = re.search(r'\b((?:string)?printf)\s*\(',
+                                line, re.I).group(1)
+      error(filename, linenum, 'runtime/printf', 4,
+            'Potential format string bug. Do %s("%%s", %s) instead.'
+            % (function_name, match.group(1)))
+
+  # Check for potential memset bugs like memset(buf, sizeof(buf), 0).
+  match = Search(r'memset\s*\(([^,]*),\s*([^,]*),\s*0\s*\)', line)
+  if match and not Match(r"^''|-?[0-9]+|0x[0-9A-Fa-f]$", match.group(2)):
+    error(filename, linenum, 'runtime/memset', 4,
+          'Did you mean "memset(%s, 0, %s)"?'
+          % (match.group(1), match.group(2)))
+
+  if Search(r'\busing namespace\b', line):
+    error(filename, linenum, 'build/namespaces', 5,
+          'Do not use namespace using-directives.  '
+          'Use using-declarations instead.')
+
+  # Detect variable-length arrays.
+  match = Match(r'\s*(.+::)?(\w+) [a-z]\w*\[(.+)];', line)
+  if (match and match.group(2) != 'return' and match.group(2) != 'delete' and
+      match.group(3).find(']') == -1):
+    # Split the size using space and arithmetic operators as delimiters.
+    # If any of the resulting tokens are not compile time constants then
+    # report the error.
+    tokens = re.split(r'\s|\+|\-|\*|\/|<<|>>]', match.group(3))
+    is_const = True
+    skip_next = False
+    for tok in tokens:
+      if skip_next:
+        skip_next = False
+        continue
+
+      if Search(r'sizeof\(.+\)', tok): continue
+      if Search(r'arraysize\(\w+\)', tok): continue
+
+      tok = tok.lstrip('(')
+      tok = tok.rstrip(')')
+      if not tok: continue
+      if Match(r'\d+', tok): continue
+      if Match(r'0[xX][0-9a-fA-F]+', tok): continue
+      if Match(r'k[A-Z0-9]\w*', tok): continue
+      if Match(r'(.+::)?k[A-Z0-9]\w*', tok): continue
+      if Match(r'(.+::)?[A-Z][A-Z0-9_]*', tok): continue
+      # A catch all for tricky sizeof cases, including 'sizeof expression',
+      # 'sizeof(*type)', 'sizeof(const type)', 'sizeof(struct StructName)'
+      # requires skipping the next token because we split on ' ' and '*'.
+      if tok.startswith('sizeof'):
+        skip_next = True
+        continue
+      is_const = False
+      break
+    if not is_const:
+      error(filename, linenum, 'runtime/arrays', 1,
+            'Do not use variable-length arrays.  Use an appropriately named '
+            "('k' followed by CamelCase) compile-time constant for the size.")
+
+  # Check for use of unnamed namespaces in header files.  Registration
+  # macros are typically OK, so we allow use of "namespace {" on lines
+  # that end with backslashes.
+  if (IsHeaderExtension(file_extension)
+      and Search(r'\bnamespace\s*{', line)
+      and line[-1] != '\\'):
+    error(filename, linenum, 'build/namespaces', 4,
+          'Do not use unnamed namespaces in header files.  See '
+          'https://google-styleguide.googlecode.com/svn/trunk/cppguide.xml#Namespaces'
+          ' for more information.')
+
+
+def CheckGlobalStatic(filename, clean_lines, linenum, error):
+  """Check for unsafe global or static objects.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+
+  # Match two lines at a time to support multiline declarations
+  if linenum + 1 < clean_lines.NumLines() and not Search(r'[;({]', line):
+    line += clean_lines.elided[linenum + 1].strip()
+
+  # Check for people declaring static/global STL strings at the top level.
+  # This is dangerous because the C++ language does not guarantee that
+  # globals with constructors are initialized before the first access, and
+  # also because globals can be destroyed when some threads are still running.
+  # TODO(unknown): Generalize this to also find static unique_ptr instances.
+  # TODO(unknown): File bugs for clang-tidy to find these.
+  match = Match(
+      r'((?:|static +)(?:|const +))(?::*std::)?string( +const)? +'
+      r'([a-zA-Z0-9_:]+)\b(.*)',
+      line)
+
+  # Remove false positives:
+  # - String pointers (as opposed to values).
+  #    string *pointer
+  #    const string *pointer
+  #    string const *pointer
+  #    string *const pointer
+  #
+  # - Functions and template specializations.
+  #    string Function<Type>(...
+  #    string Class<Type>::Method(...
+  #
+  # - Operators.  These are matched separately because operator names
+  #   cross non-word boundaries, and trying to match both operators
+  #   and functions at the same time would decrease accuracy of
+  #   matching identifiers.
+  #    string Class::operator*()
+  if (match and
+      not Search(r'\bstring\b(\s+const)?\s*[\*\&]\s*(const\s+)?\w', line) and
+      not Search(r'\boperator\W', line) and
+      not Match(r'\s*(<.*>)?(::[a-zA-Z0-9_]+)*\s*\(([^"]|$)', match.group(4))):
+    if Search(r'\bconst\b', line):
+      error(filename, linenum, 'runtime/string', 4,
+            'For a static/global string constant, use a C style string '
+            'instead: "%schar%s %s[]".' %
+            (match.group(1), match.group(2) or '', match.group(3)))
+    else:
+      error(filename, linenum, 'runtime/string', 4,
+            'Static/global string variables are not permitted.')
+
+  if (Search(r'\b([A-Za-z0-9_]*_)\(\1\)', line) or
+      Search(r'\b([A-Za-z0-9_]*_)\(CHECK_NOTNULL\(\1\)\)', line)):
+    error(filename, linenum, 'runtime/init', 4,
+          'You seem to be initializing a member variable with itself.')
+
+
+def CheckPrintf(filename, clean_lines, linenum, error):
+  """Check for printf related issues.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+
+  # When snprintf is used, the second argument shouldn't be a literal.
+  match = Search(r'snprintf\s*\(([^,]*),\s*([0-9]*)\s*,', line)
+  if match and match.group(2) != '0':
+    # If 2nd arg is zero, snprintf is used to calculate size.
+    error(filename, linenum, 'runtime/printf', 3,
+          'If you can, use sizeof(%s) instead of %s as the 2nd arg '
+          'to snprintf.' % (match.group(1), match.group(2)))
+
+  # Check if some verboten C functions are being used.
+  if Search(r'\bsprintf\s*\(', line):
+    error(filename, linenum, 'runtime/printf', 5,
+          'Never use sprintf. Use snprintf instead.')
+  match = Search(r'\b(strcpy|strcat)\s*\(', line)
+  if match:
+    error(filename, linenum, 'runtime/printf', 4,
+          'Almost always, snprintf is better than %s' % match.group(1))
+
+
+def IsDerivedFunction(clean_lines, linenum):
+  """Check if current line contains an inherited function.
+
+  Args:
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+  Returns:
+    True if current line contains a function with "override"
+    virt-specifier.
+  """
+  # Scan back a few lines for start of current function
+  for i in xrange(linenum, max(-1, linenum - 10), -1):
+    match = Match(r'^([^()]*\w+)\(', clean_lines.elided[i])
+    if match:
+      # Look for "override" after the matching closing parenthesis
+      line, _, closing_paren = CloseExpression(
+          clean_lines, i, len(match.group(1)))
+      return (closing_paren >= 0 and
+              Search(r'\boverride\b', line[closing_paren:]))
+  return False
+
+
+def IsOutOfLineMethodDefinition(clean_lines, linenum):
+  """Check if current line contains an out-of-line method definition.
+
+  Args:
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+  Returns:
+    True if current line contains an out-of-line method definition.
+  """
+  # Scan back a few lines for start of current function
+  for i in xrange(linenum, max(-1, linenum - 10), -1):
+    if Match(r'^([^()]*\w+)\(', clean_lines.elided[i]):
+      return Match(r'^[^()]*\w+::\w+\(', clean_lines.elided[i]) is not None
+  return False
+
+
+def IsInitializerList(clean_lines, linenum):
+  """Check if current line is inside constructor initializer list.
+
+  Args:
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+  Returns:
+    True if current line appears to be inside constructor initializer
+    list, False otherwise.
+  """
+  for i in xrange(linenum, 1, -1):
+    line = clean_lines.elided[i]
+    if i == linenum:
+      remove_function_body = Match(r'^(.*)\{\s*$', line)
+      if remove_function_body:
+        line = remove_function_body.group(1)
+
+    if Search(r'\s:\s*\w+[({]', line):
+      # A lone colon tend to indicate the start of a constructor
+      # initializer list.  It could also be a ternary operator, which
+      # also tend to appear in constructor initializer lists as
+      # opposed to parameter lists.
+      return True
+    if Search(r'\}\s*,\s*$', line):
+      # A closing brace followed by a comma is probably the end of a
+      # brace-initialized member in constructor initializer list.
+      return True
+    if Search(r'[{};]\s*$', line):
+      # Found one of the following:
+      # - A closing brace or semicolon, probably the end of the previous
+      #   function.
+      # - An opening brace, probably the start of current class or namespace.
+      #
+      # Current line is probably not inside an initializer list since
+      # we saw one of those things without seeing the starting colon.
+      return False
+
+  # Got to the beginning of the file without seeing the start of
+  # constructor initializer list.
+  return False
+
+
+def CheckForNonConstReference(filename, clean_lines, linenum,
+                              nesting_state, error):
+  """Check for non-const references.
+
+  Separate from CheckLanguage since it scans backwards from current
+  line, instead of scanning forward.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    nesting_state: A NestingState instance which maintains information about
+                   the current stack of nested blocks being parsed.
+    error: The function to call with any errors found.
+  """
+  # Do nothing if there is no '&' on current line.
+  line = clean_lines.elided[linenum]
+  if '&' not in line:
+    return
+
+  # If a function is inherited, current function doesn't have much of
+  # a choice, so any non-const references should not be blamed on
+  # derived function.
+  if IsDerivedFunction(clean_lines, linenum):
+    return
+
+  # Don't warn on out-of-line method definitions, as we would warn on the
+  # in-line declaration, if it isn't marked with 'override'.
+  if IsOutOfLineMethodDefinition(clean_lines, linenum):
+    return
+
+  # Long type names may be broken across multiple lines, usually in one
+  # of these forms:
+  #   LongType
+  #       ::LongTypeContinued &identifier
+  #   LongType::
+  #       LongTypeContinued &identifier
+  #   LongType<
+  #       ...>::LongTypeContinued &identifier
+  #
+  # If we detected a type split across two lines, join the previous
+  # line to current line so that we can match const references
+  # accordingly.
+  #
+  # Note that this only scans back one line, since scanning back
+  # arbitrary number of lines would be expensive.  If you have a type
+  # that spans more than 2 lines, please use a typedef.
+  if linenum > 1:
+    previous = None
+    if Match(r'\s*::(?:[\w<>]|::)+\s*&\s*\S', line):
+      # previous_line\n + ::current_line
+      previous = Search(r'\b((?:const\s*)?(?:[\w<>]|::)+[\w<>])\s*$',
+                        clean_lines.elided[linenum - 1])
+    elif Match(r'\s*[a-zA-Z_]([\w<>]|::)+\s*&\s*\S', line):
+      # previous_line::\n + current_line
+      previous = Search(r'\b((?:const\s*)?(?:[\w<>]|::)+::)\s*$',
+                        clean_lines.elided[linenum - 1])
+    if previous:
+      line = previous.group(1) + line.lstrip()
+    else:
+      # Check for templated parameter that is split across multiple lines
+      endpos = line.rfind('>')
+      if endpos > -1:
+        (_, startline, startpos) = ReverseCloseExpression(
+            clean_lines, linenum, endpos)
+        if startpos > -1 and startline < linenum:
+          # Found the matching < on an earlier line, collect all
+          # pieces up to current line.
+          line = ''
+          for i in xrange(startline, linenum + 1):
+            line += clean_lines.elided[i].strip()
+
+  # Check for non-const references in function parameters.  A single '&' may
+  # found in the following places:
+  #   inside expression: binary & for bitwise AND
+  #   inside expression: unary & for taking the address of something
+  #   inside declarators: reference parameter
+  # We will exclude the first two cases by checking that we are not inside a
+  # function body, including one that was just introduced by a trailing '{'.
+  # TODO(unknown): Doesn't account for 'catch(Exception& e)' [rare].
+  if (nesting_state.previous_stack_top and
+      not (isinstance(nesting_state.previous_stack_top, _ClassInfo) or
+           isinstance(nesting_state.previous_stack_top, _NamespaceInfo))):
+    # Not at toplevel, not within a class, and not within a namespace
+    return
+
+  # Avoid initializer lists.  We only need to scan back from the
+  # current line for something that starts with ':'.
+  #
+  # We don't need to check the current line, since the '&' would
+  # appear inside the second set of parentheses on the current line as
+  # opposed to the first set.
+  if linenum > 0:
+    for i in xrange(linenum - 1, max(0, linenum - 10), -1):
+      previous_line = clean_lines.elided[i]
+      if not Search(r'[),]\s*$', previous_line):
+        break
+      if Match(r'^\s*:\s+\S', previous_line):
+        return
+
+  # Avoid preprocessors
+  if Search(r'\\\s*$', line):
+    return
+
+  # Avoid constructor initializer lists
+  if IsInitializerList(clean_lines, linenum):
+    return
+
+  # We allow non-const references in a few standard places, like functions
+  # called "swap()" or iostream operators like "<<" or ">>".  Do not check
+  # those function parameters.
+  #
+  # We also accept & in static_assert, which looks like a function but
+  # it's actually a declaration expression.
+  allowed_functions = (r'(?:[sS]wap(?:<\w:+>)?|'
+                           r'operator\s*[<>][<>]|'
+                           r'static_assert|COMPILE_ASSERT'
+                           r')\s*\(')
+  if Search(allowed_functions, line):
+    return
+  elif not Search(r'\S+\([^)]*$', line):
+    # Don't see an allowed function on this line.  Actually we
+    # didn't see any function name on this line, so this is likely a
+    # multi-line parameter list.  Try a bit harder to catch this case.
+    for i in xrange(2):
+      if (linenum > i and
+          Search(allowed_functions, clean_lines.elided[linenum - i - 1])):
+        return
+
+  decls = ReplaceAll(r'{[^}]*}', ' ', line)  # exclude function body
+  for parameter in re.findall(_RE_PATTERN_REF_PARAM, decls):
+    if (not Match(_RE_PATTERN_CONST_REF_PARAM, parameter) and
+        not Match(_RE_PATTERN_REF_STREAM_PARAM, parameter)):
+      error(filename, linenum, 'runtime/references', 2,
+            'Is this a non-const reference? '
+            'If so, make const or use a pointer: ' +
+            ReplaceAll(' *<', '<', parameter))
+
+
+def CheckCasts(filename, clean_lines, linenum, error):
+  """Various cast related checks.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+
+  # Check to see if they're using an conversion function cast.
+  # I just try to capture the most common basic types, though there are more.
+  # Parameterless conversion functions, such as bool(), are allowed as they are
+  # probably a member operator declaration or default constructor.
+  match = Search(
+      r'(\bnew\s+(?:const\s+)?|\S<\s*(?:const\s+)?)?\b'
+      r'(int|float|double|bool|char|int32|uint32|int64|uint64)'
+      r'(\([^)].*)', line)
+  expecting_function = ExpectingFunctionArgs(clean_lines, linenum)
+  if match and not expecting_function:
+    matched_type = match.group(2)
+
+    # matched_new_or_template is used to silence two false positives:
+    # - New operators
+    # - Template arguments with function types
+    #
+    # For template arguments, we match on types immediately following
+    # an opening bracket without any spaces.  This is a fast way to
+    # silence the common case where the function type is the first
+    # template argument.  False negative with less-than comparison is
+    # avoided because those operators are usually followed by a space.
+    #
+    #   function<double(double)>   // bracket + no space = false positive
+    #   value < double(42)         // bracket + space = true positive
+    matched_new_or_template = match.group(1)
+
+    # Avoid arrays by looking for brackets that come after the closing
+    # parenthesis.
+    if Match(r'\([^()]+\)\s*\[', match.group(3)):
+      return
+
+    # Other things to ignore:
+    # - Function pointers
+    # - Casts to pointer types
+    # - Placement new
+    # - Alias declarations
+    matched_funcptr = match.group(3)
+    if (matched_new_or_template is None and
+        not (matched_funcptr and
+             (Match(r'\((?:[^() ]+::\s*\*\s*)?[^() ]+\)\s*\(',
+                    matched_funcptr) or
+              matched_funcptr.startswith('(*)'))) and
+        not Match(r'\s*using\s+\S+\s*=\s*' + matched_type, line) and
+        not Search(r'new\(\S+\)\s*' + matched_type, line)):
+      error(filename, linenum, 'readability/casting', 4,
+            'Using deprecated casting style.  '
+            'Use static_cast<%s>(...) instead' %
+            matched_type)
+
+  if not expecting_function:
+    CheckCStyleCast(filename, clean_lines, linenum, 'static_cast',
+                    r'\((int|float|double|bool|char|u?int(16|32|64))\)', error)
+
+  # This doesn't catch all cases. Consider (const char * const)"hello".
+  #
+  # (char *) "foo" should always be a const_cast (reinterpret_cast won't
+  # compile).
+  if CheckCStyleCast(filename, clean_lines, linenum, 'const_cast',
+                     r'\((char\s?\*+\s?)\)\s*"', error):
+    pass
+  else:
+    # Check pointer casts for other than string constants
+    CheckCStyleCast(filename, clean_lines, linenum, 'reinterpret_cast',
+                    r'\((\w+\s?\*+\s?)\)', error)
+
+  # In addition, we look for people taking the address of a cast.  This
+  # is dangerous -- casts can assign to temporaries, so the pointer doesn't
+  # point where you think.
+  #
+  # Some non-identifier character is required before the '&' for the
+  # expression to be recognized as a cast.  These are casts:
+  #   expression = &static_cast<int*>(temporary());
+  #   function(&(int*)(temporary()));
+  #
+  # This is not a cast:
+  #   reference_type&(int* function_param);
+  match = Search(
+      r'(?:[^\w]&\(([^)*][^)]*)\)[\w(])|'
+      r'(?:[^\w]&(static|dynamic|down|reinterpret)_cast\b)', line)
+  if match:
+    # Try a better error message when the & is bound to something
+    # dereferenced by the casted pointer, as opposed to the casted
+    # pointer itself.
+    parenthesis_error = False
+    match = Match(r'^(.*&(?:static|dynamic|down|reinterpret)_cast\b)<', line)
+    if match:
+      _, y1, x1 = CloseExpression(clean_lines, linenum, len(match.group(1)))
+      if x1 >= 0 and clean_lines.elided[y1][x1] == '(':
+        _, y2, x2 = CloseExpression(clean_lines, y1, x1)
+        if x2 >= 0:
+          extended_line = clean_lines.elided[y2][x2:]
+          if y2 < clean_lines.NumLines() - 1:
+            extended_line += clean_lines.elided[y2 + 1]
+          if Match(r'\s*(?:->|\[)', extended_line):
+            parenthesis_error = True
+
+    if parenthesis_error:
+      error(filename, linenum, 'readability/casting', 4,
+            ('Are you taking an address of something dereferenced '
+             'from a cast?  Wrapping the dereferenced expression in '
+             'parentheses will make the binding more obvious'))
+    else:
+      error(filename, linenum, 'runtime/casting', 4,
+            ('Are you taking an address of a cast?  '
+             'This is dangerous: could be a temp var.  '
+             'Take the address before doing the cast, rather than after'))
+
+
+def CheckCStyleCast(filename, clean_lines, linenum, cast_type, pattern, error):
+  """Checks for a C-style cast by looking for the pattern.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    cast_type: The string for the C++ cast to recommend.  This is either
+      reinterpret_cast, static_cast, or const_cast, depending.
+    pattern: The regular expression used to find C-style casts.
+    error: The function to call with any errors found.
+
+  Returns:
+    True if an error was emitted.
+    False otherwise.
+  """
+  line = clean_lines.elided[linenum]
+  match = Search(pattern, line)
+  if not match:
+    return False
+
+  # Exclude lines with keywords that tend to look like casts
+  context = line[0:match.start(1) - 1]
+  if Match(r'.*\b(?:sizeof|alignof|alignas|[_A-Z][_A-Z0-9]*)\s*$', context):
+    return False
+
+  # Try expanding current context to see if we one level of
+  # parentheses inside a macro.
+  if linenum > 0:
+    for i in xrange(linenum - 1, max(0, linenum - 5), -1):
+      context = clean_lines.elided[i] + context
+  if Match(r'.*\b[_A-Z][_A-Z0-9]*\s*\((?:\([^()]*\)|[^()])*$', context):
+    return False
+
+  # operator++(int) and operator--(int)
+  if context.endswith(' operator++') or context.endswith(' operator--'):
+    return False
+
+  # A single unnamed argument for a function tends to look like old style cast.
+  # If we see those, don't issue warnings for deprecated casts.
+  remainder = line[match.end(0):]
+  if Match(r'^\s*(?:;|const\b|throw\b|final\b|override\b|[=>{),]|->)',
+           remainder):
+    return False
+
+  # At this point, all that should be left is actual casts.
+  error(filename, linenum, 'readability/casting', 4,
+        'Using C-style cast.  Use %s<%s>(...) instead' %
+        (cast_type, match.group(1)))
+
+  return True
+
+
+def ExpectingFunctionArgs(clean_lines, linenum):
+  """Checks whether where function type arguments are expected.
+
+  Args:
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+
+  Returns:
+    True if the line at 'linenum' is inside something that expects arguments
+    of function types.
+  """
+  line = clean_lines.elided[linenum]
+  return (Match(r'^\s*MOCK_(CONST_)?METHOD\d+(_T)?\(', line) or
+          (linenum >= 2 and
+           (Match(r'^\s*MOCK_(?:CONST_)?METHOD\d+(?:_T)?\((?:\S+,)?\s*$',
+                  clean_lines.elided[linenum - 1]) or
+            Match(r'^\s*MOCK_(?:CONST_)?METHOD\d+(?:_T)?\(\s*$',
+                  clean_lines.elided[linenum - 2]) or
+            Search(r'\bstd::m?function\s*\<\s*$',
+                   clean_lines.elided[linenum - 1]))))
+
+
+_HEADERS_CONTAINING_TEMPLATES = (
+    ('<deque>', ('deque',)),
+    ('<functional>', ('unary_function', 'binary_function',
+                      'plus', 'minus', 'multiplies', 'divides', 'modulus',
+                      'negate',
+                      'equal_to', 'not_equal_to', 'greater', 'less',
+                      'greater_equal', 'less_equal',
+                      'logical_and', 'logical_or', 'logical_not',
+                      'unary_negate', 'not1', 'binary_negate', 'not2',
+                      'bind1st', 'bind2nd',
+                      'pointer_to_unary_function',
+                      'pointer_to_binary_function',
+                      'ptr_fun',
+                      'mem_fun_t', 'mem_fun', 'mem_fun1_t', 'mem_fun1_ref_t',
+                      'mem_fun_ref_t',
+                      'const_mem_fun_t', 'const_mem_fun1_t',
+                      'const_mem_fun_ref_t', 'const_mem_fun1_ref_t',
+                      'mem_fun_ref',
+                     )),
+    ('<limits>', ('numeric_limits',)),
+    ('<list>', ('list',)),
+    ('<map>', ('map', 'multimap',)),
+    ('<memory>', ('allocator', 'make_shared', 'make_unique', 'shared_ptr',
+                  'unique_ptr', 'weak_ptr')),
+    ('<queue>', ('queue', 'priority_queue',)),
+    ('<set>', ('set', 'multiset',)),
+    ('<stack>', ('stack',)),
+    ('<string>', ('char_traits', 'basic_string',)),
+    ('<tuple>', ('tuple',)),
+    ('<unordered_map>', ('unordered_map', 'unordered_multimap')),
+    ('<unordered_set>', ('unordered_set', 'unordered_multiset')),
+    ('<utility>', ('pair',)),
+    ('<vector>', ('vector',)),
+
+    # gcc extensions.
+    # Note: std::hash is their hash, ::hash is our hash
+    ('<hash_map>', ('hash_map', 'hash_multimap',)),
+    ('<hash_set>', ('hash_set', 'hash_multiset',)),
+    ('<slist>', ('slist',)),
+    )
+
+_HEADERS_MAYBE_TEMPLATES = (
+    ('<algorithm>', ('copy', 'max', 'min', 'min_element', 'sort',
+                     'transform',
+                    )),
+    ('<utility>', ('forward', 'make_pair', 'move', 'swap')),
+    )
+
+_RE_PATTERN_STRING = re.compile(r'\bstring\b')
+
+_re_pattern_headers_maybe_templates = []
+for _header, _templates in _HEADERS_MAYBE_TEMPLATES:
+  for _template in _templates:
+    # Match max<type>(..., ...), max(..., ...), but not foo->max, foo.max or
+    # type::max().
+    _re_pattern_headers_maybe_templates.append(
+        (re.compile(r'[^>.]\b' + _template + r'(<.*?>)?\([^\)]'),
+            _template,
+            _header))
+
+# Other scripts may reach in and modify this pattern.
+_re_pattern_templates = []
+for _header, _templates in _HEADERS_CONTAINING_TEMPLATES:
+  for _template in _templates:
+    _re_pattern_templates.append(
+        (re.compile(r'(\<|\b)' + _template + r'\s*\<'),
+         _template + '<>',
+         _header))
+
+
+def FilesBelongToSameModule(filename_cc, filename_h):
+  """Check if these two filenames belong to the same module.
+
+  The concept of a 'module' here is a as follows:
+  foo.h, foo-inl.h, foo.cc, foo_test.cc and foo_unittest.cc belong to the
+  same 'module' if they are in the same directory.
+  some/path/public/xyzzy and some/path/internal/xyzzy are also considered
+  to belong to the same module here.
+
+  If the filename_cc contains a longer path than the filename_h, for example,
+  '/absolute/path/to/base/sysinfo.cc', and this file would include
+  'base/sysinfo.h', this function also produces the prefix needed to open the
+  header. This is used by the caller of this function to more robustly open the
+  header file. We don't have access to the real include paths in this context,
+  so we need this guesswork here.
+
+  Known bugs: tools/base/bar.cc and base/bar.h belong to the same module
+  according to this implementation. Because of this, this function gives
+  some false positives. This should be sufficiently rare in practice.
+
+  Args:
+    filename_cc: is the path for the .cc file
+    filename_h: is the path for the header path
+
+  Returns:
+    Tuple with a bool and a string:
+    bool: True if filename_cc and filename_h belong to the same module.
+    string: the additional prefix needed to open the header file.
+  """
+
+  fileinfo = FileInfo(filename_cc)
+  if not fileinfo.IsSource():
+    return (False, '')
+  filename_cc = filename_cc[:-len(fileinfo.Extension())]
+  matched_test_suffix = Search(_TEST_FILE_SUFFIX, fileinfo.BaseName())
+  if matched_test_suffix:
+    filename_cc = filename_cc[:-len(matched_test_suffix.group(1))]
+  filename_cc = filename_cc.replace('/public/', '/')
+  filename_cc = filename_cc.replace('/internal/', '/')
+
+  if not filename_h.endswith('.h'):
+    return (False, '')
+  filename_h = filename_h[:-len('.h')]
+  if filename_h.endswith('-inl'):
+    filename_h = filename_h[:-len('-inl')]
+  filename_h = filename_h.replace('/public/', '/')
+  filename_h = filename_h.replace('/internal/', '/')
+
+  files_belong_to_same_module = filename_cc.endswith(filename_h)
+  common_path = ''
+  if files_belong_to_same_module:
+    common_path = filename_cc[:-len(filename_h)]
+  return files_belong_to_same_module, common_path
+
+
+def UpdateIncludeState(filename, include_dict, io=codecs):
+  """Fill up the include_dict with new includes found from the file.
+
+  Args:
+    filename: the name of the header to read.
+    include_dict: a dictionary in which the headers are inserted.
+    io: The io factory to use to read the file. Provided for testability.
+
+  Returns:
+    True if a header was successfully added. False otherwise.
+  """
+  headerfile = None
+  try:
+    headerfile = io.open(filename, 'r', 'utf8', 'replace')
+  except IOError:
+    return False
+  linenum = 0
+  for line in headerfile:
+    linenum += 1
+    clean_line = CleanseComments(line)
+    match = _RE_PATTERN_INCLUDE.search(clean_line)
+    if match:
+      include = match.group(2)
+      include_dict.setdefault(include, linenum)
+  return True
+
+
+def CheckForIncludeWhatYouUse(filename, clean_lines, include_state, error,
+                              io=codecs):
+  """Reports for missing stl includes.
+
+  This function will output warnings to make sure you are including the headers
+  necessary for the stl containers and functions that you use. We only give one
+  reason to include a header. For example, if you use both equal_to<> and
+  less<> in a .h file, only one (the latter in the file) of these will be
+  reported as a reason to include the <functional>.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    include_state: An _IncludeState instance.
+    error: The function to call with any errors found.
+    io: The IO factory to use to read the header file. Provided for unittest
+        injection.
+  """
+  required = {}  # A map of header name to linenumber and the template entity.
+                 # Example of required: { '<functional>': (1219, 'less<>') }
+
+  for linenum in xrange(clean_lines.NumLines()):
+    line = clean_lines.elided[linenum]
+    if not line or line[0] == '#':
+      continue
+
+    # String is special -- it is a non-templatized type in STL.
+    matched = _RE_PATTERN_STRING.search(line)
+    if matched:
+      # Don't warn about strings in non-STL namespaces:
+      # (We check only the first match per line; good enough.)
+      prefix = line[:matched.start()]
+      if prefix.endswith('std::') or not prefix.endswith('::'):
+        required['<string>'] = (linenum, 'string')
+
+    for pattern, template, header in _re_pattern_headers_maybe_templates:
+      if pattern.search(line):
+        required[header] = (linenum, template)
+
+    # The following function is just a speed up, no semantics are changed.
+    if not '<' in line:  # Reduces the cpu time usage by skipping lines.
+      continue
+
+    for pattern, template, header in _re_pattern_templates:
+      matched = pattern.search(line)
+      if matched:
+        # Don't warn about IWYU in non-STL namespaces:
+        # (We check only the first match per line; good enough.)
+        prefix = line[:matched.start()]
+        if prefix.endswith('std::') or not prefix.endswith('::'):
+          required[header] = (linenum, template)
+
+  # The policy is that if you #include something in foo.h you don't need to
+  # include it again in foo.cc. Here, we will look at possible includes.
+  # Let's flatten the include_state include_list and copy it into a dictionary.
+  include_dict = dict([item for sublist in include_state.include_list
+                       for item in sublist])
+
+  # Did we find the header for this file (if any) and successfully load it?
+  header_found = False
+
+  # Use the absolute path so that matching works properly.
+  abs_filename = FileInfo(filename).FullName()
+
+  # For Emacs's flymake.
+  # If cpplint is invoked from Emacs's flymake, a temporary file is generated
+  # by flymake and that file name might end with '_flymake.cc'. In that case,
+  # restore original file name here so that the corresponding header file can be
+  # found.
+  # e.g. If the file name is 'foo_flymake.cc', we should search for 'foo.h'
+  # instead of 'foo_flymake.h'
+  abs_filename = re.sub(r'_flymake\.cc$', '.cc', abs_filename)
+
+  # include_dict is modified during iteration, so we iterate over a copy of
+  # the keys.
+  header_keys = include_dict.keys()
+  for header in header_keys:
+    (same_module, common_path) = FilesBelongToSameModule(abs_filename, header)
+    fullpath = common_path + header
+    if same_module and UpdateIncludeState(fullpath, include_dict, io):
+      header_found = True
+
+  # If we can't find the header file for a .cc, assume it's because we don't
+  # know where to look. In that case we'll give up as we're not sure they
+  # didn't include it in the .h file.
+  # TODO(unknown): Do a better job of finding .h files so we are confident that
+  # not having the .h file means there isn't one.
+  if filename.endswith('.cc') and not header_found:
+    return
+
+  # All the lines have been processed, report the errors found.
+  for required_header_unstripped in required:
+    template = required[required_header_unstripped][1]
+    if required_header_unstripped.strip('<>"') not in include_dict:
+      error(filename, required[required_header_unstripped][0],
+            'build/include_what_you_use', 4,
+            'Add #include ' + required_header_unstripped + ' for ' + template)
+
+
+_RE_PATTERN_EXPLICIT_MAKEPAIR = re.compile(r'\bmake_pair\s*<')
+
+
+def CheckMakePairUsesDeduction(filename, clean_lines, linenum, error):
+  """Check that make_pair's template arguments are deduced.
+
+  G++ 4.6 in C++11 mode fails badly if make_pair's template arguments are
+  specified explicitly, and such use isn't intended in any case.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+  match = _RE_PATTERN_EXPLICIT_MAKEPAIR.search(line)
+  if match:
+    error(filename, linenum, 'build/explicit_make_pair',
+          4,  # 4 = high confidence
+          'For C++11-compatibility, omit template arguments from make_pair'
+          ' OR use pair directly OR if appropriate, construct a pair directly')
+
+
+def CheckRedundantVirtual(filename, clean_lines, linenum, error):
+  """Check if line contains a redundant "virtual" function-specifier.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  # Look for "virtual" on current line.
+  line = clean_lines.elided[linenum]
+  virtual = Match(r'^(.*)(\bvirtual\b)(.*)$', line)
+  if not virtual: return
+
+  # Ignore "virtual" keywords that are near access-specifiers.  These
+  # are only used in class base-specifier and do not apply to member
+  # functions.
+  if (Search(r'\b(public|protected|private)\s+$', virtual.group(1)) or
+      Match(r'^\s+(public|protected|private)\b', virtual.group(3))):
+    return
+
+  # Ignore the "virtual" keyword from virtual base classes.  Usually
+  # there is a column on the same line in these cases (virtual base
+  # classes are rare in google3 because multiple inheritance is rare).
+  if Match(r'^.*[^:]:[^:].*$', line): return
+
+  # Look for the next opening parenthesis.  This is the start of the
+  # parameter list (possibly on the next line shortly after virtual).
+  # TODO(unknown): doesn't work if there are virtual functions with
+  # decltype() or other things that use parentheses, but csearch suggests
+  # that this is rare.
+  end_col = -1
+  end_line = -1
+  start_col = len(virtual.group(2))
+  for start_line in xrange(linenum, min(linenum + 3, clean_lines.NumLines())):
+    line = clean_lines.elided[start_line][start_col:]
+    parameter_list = Match(r'^([^(]*)\(', line)
+    if parameter_list:
+      # Match parentheses to find the end of the parameter list
+      (_, end_line, end_col) = CloseExpression(
+          clean_lines, start_line, start_col + len(parameter_list.group(1)))
+      break
+    start_col = 0
+
+  if end_col < 0:
+    return  # Couldn't find end of parameter list, give up
+
+  # Look for "override" or "final" after the parameter list
+  # (possibly on the next few lines).
+  for i in xrange(end_line, min(end_line + 3, clean_lines.NumLines())):
+    line = clean_lines.elided[i][end_col:]
+    match = Search(r'\b(override|final)\b', line)
+    if match:
+      error(filename, linenum, 'readability/inheritance', 4,
+            ('"virtual" is redundant since function is '
+             'already declared as "%s"' % match.group(1)))
+
+    # Set end_col to check whole lines after we are done with the
+    # first line.
+    end_col = 0
+    if Search(r'[^\w]\s*$', line):
+      break
+
+
+def CheckRedundantOverrideOrFinal(filename, clean_lines, linenum, error):
+  """Check if line contains a redundant "override" or "final" virt-specifier.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  # Look for closing parenthesis nearby.  We need one to confirm where
+  # the declarator ends and where the virt-specifier starts to avoid
+  # false positives.
+  line = clean_lines.elided[linenum]
+  declarator_end = line.rfind(')')
+  if declarator_end >= 0:
+    fragment = line[declarator_end:]
+  else:
+    if linenum > 1 and clean_lines.elided[linenum - 1].rfind(')') >= 0:
+      fragment = line
+    else:
+      return
+
+  # Check that at most one of "override" or "final" is present, not both
+  if Search(r'\boverride\b', fragment) and Search(r'\bfinal\b', fragment):
+    error(filename, linenum, 'readability/inheritance', 4,
+          ('"override" is redundant since function is '
+           'already declared as "final"'))
+
+
+
+
+# Returns true if we are at a new block, and it is directly
+# inside of a namespace.
+def IsBlockInNameSpace(nesting_state, is_forward_declaration):
+  """Checks that the new block is directly in a namespace.
+
+  Args:
+    nesting_state: The _NestingState object that contains info about our state.
+    is_forward_declaration: If the class is a forward declared class.
+  Returns:
+    Whether or not the new block is directly in a namespace.
+  """
+  if is_forward_declaration:
+    if len(nesting_state.stack) >= 1 and (
+        isinstance(nesting_state.stack[-1], _NamespaceInfo)):
+      return True
+    else:
+      return False
+
+  return (len(nesting_state.stack) > 1 and
+          nesting_state.stack[-1].check_namespace_indentation and
+          isinstance(nesting_state.stack[-2], _NamespaceInfo))
+
+
+def ShouldCheckNamespaceIndentation(nesting_state, is_namespace_indent_item,
+                                    raw_lines_no_comments, linenum):
+  """This method determines if we should apply our namespace indentation check.
+
+  Args:
+    nesting_state: The current nesting state.
+    is_namespace_indent_item: If we just put a new class on the stack, True.
+      If the top of the stack is not a class, or we did not recently
+      add the class, False.
+    raw_lines_no_comments: The lines without the comments.
+    linenum: The current line number we are processing.
+
+  Returns:
+    True if we should apply our namespace indentation check. Currently, it
+    only works for classes and namespaces inside of a namespace.
+  """
+
+  is_forward_declaration = IsForwardClassDeclaration(raw_lines_no_comments,
+                                                     linenum)
+
+  if not (is_namespace_indent_item or is_forward_declaration):
+    return False
+
+  # If we are in a macro, we do not want to check the namespace indentation.
+  if IsMacroDefinition(raw_lines_no_comments, linenum):
+    return False
+
+  return IsBlockInNameSpace(nesting_state, is_forward_declaration)
+
+
+# Call this method if the line is directly inside of a namespace.
+# If the line above is blank (excluding comments) or the start of
+# an inner namespace, it cannot be indented.
+def CheckItemIndentationInNamespace(filename, raw_lines_no_comments, linenum,
+                                    error):
+  line = raw_lines_no_comments[linenum]
+  if Match(r'^\s+', line):
+    error(filename, linenum, 'runtime/indentation_namespace', 4,
+          'Do not indent within a namespace')
+
+
+def ProcessLine(filename, file_extension, clean_lines, line,
+                include_state, function_state, nesting_state, error,
+                extra_check_functions=[]):
+  """Processes a single line in the file.
+
+  Args:
+    filename: Filename of the file that is being processed.
+    file_extension: The extension (dot not included) of the file.
+    clean_lines: An array of strings, each representing a line of the file,
+                 with comments stripped.
+    line: Number of line being processed.
+    include_state: An _IncludeState instance in which the headers are inserted.
+    function_state: A _FunctionState instance which counts function lines, etc.
+    nesting_state: A NestingState instance which maintains information about
+                   the current stack of nested blocks being parsed.
+    error: A callable to which errors are reported, which takes 4 arguments:
+           filename, line number, error level, and message
+    extra_check_functions: An array of additional check functions that will be
+                           run on each source line. Each function takes 4
+                           arguments: filename, clean_lines, line, error
+  """
+  raw_lines = clean_lines.raw_lines
+  ParseNolintSuppressions(filename, raw_lines[line], line, error)
+  nesting_state.Update(filename, clean_lines, line, error)
+  CheckForNamespaceIndentation(filename, nesting_state, clean_lines, line,
+                               error)
+  if nesting_state.InAsmBlock(): return
+  CheckForFunctionLengths(filename, clean_lines, line, function_state, error)
+  CheckForMultilineCommentsAndStrings(filename, clean_lines, line, error)
+  CheckStyle(filename, clean_lines, line, file_extension, nesting_state, error)
+  CheckLanguage(filename, clean_lines, line, file_extension, include_state,
+                nesting_state, error)
+  CheckForNonConstReference(filename, clean_lines, line, nesting_state, error)
+  CheckForNonStandardConstructs(filename, clean_lines, line,
+                                nesting_state, error)
+  CheckVlogArguments(filename, clean_lines, line, error)
+  CheckPosixThreading(filename, clean_lines, line, error)
+  CheckInvalidIncrement(filename, clean_lines, line, error)
+  CheckMakePairUsesDeduction(filename, clean_lines, line, error)
+  CheckRedundantVirtual(filename, clean_lines, line, error)
+  CheckRedundantOverrideOrFinal(filename, clean_lines, line, error)
+  for check_fn in extra_check_functions:
+    check_fn(filename, clean_lines, line, error)
+
+def FlagCxx11Features(filename, clean_lines, linenum, error):
+  """Flag those c++11 features that we only allow in certain places.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+
+  include = Match(r'\s*#\s*include\s+[<"]([^<"]+)[">]', line)
+
+  # Flag unapproved C++ TR1 headers.
+  if include and include.group(1).startswith('tr1/'):
+    error(filename, linenum, 'build/c++tr1', 5,
+          ('C++ TR1 headers such as <%s> are unapproved.') % include.group(1))
+
+  # Flag unapproved C++11 headers.
+  if include and include.group(1) in ('cfenv',
+                                      'condition_variable',
+                                      'fenv.h',
+                                      'future',
+                                      'mutex',
+                                      'thread',
+                                      'chrono',
+                                      'ratio',
+                                      'regex',
+                                      'system_error',
+                                     ):
+    error(filename, linenum, 'build/c++11', 5,
+          ('<%s> is an unapproved C++11 header.') % include.group(1))
+
+  # The only place where we need to worry about C++11 keywords and library
+  # features in preprocessor directives is in macro definitions.
+  if Match(r'\s*#', line) and not Match(r'\s*#\s*define\b', line): return
+
+  # These are classes and free functions.  The classes are always
+  # mentioned as std::*, but we only catch the free functions if
+  # they're not found by ADL.  They're alphabetical by header.
+  for top_name in (
+      # type_traits
+      'alignment_of',
+      'aligned_union',
+      ):
+    if Search(r'\bstd::%s\b' % top_name, line):
+      error(filename, linenum, 'build/c++11', 5,
+            ('std::%s is an unapproved C++11 class or function.  Send c-style '
+             'an example of where it would make your code more readable, and '
+             'they may let you use it.') % top_name)
+
+
+def FlagCxx14Features(filename, clean_lines, linenum, error):
+  """Flag those C++14 features that we restrict.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    error: The function to call with any errors found.
+  """
+  line = clean_lines.elided[linenum]
+
+  include = Match(r'\s*#\s*include\s+[<"]([^<"]+)[">]', line)
+
+  # Flag unapproved C++14 headers.
+  if include and include.group(1) in ('scoped_allocator', 'shared_mutex'):
+    error(filename, linenum, 'build/c++14', 5,
+          ('<%s> is an unapproved C++14 header.') % include.group(1))
+
+
+def ProcessFileData(filename, file_extension, lines, error,
+                    extra_check_functions=[]):
+  """Performs lint checks and reports any errors to the given error function.
+
+  Args:
+    filename: Filename of the file that is being processed.
+    file_extension: The extension (dot not included) of the file.
+    lines: An array of strings, each representing a line of the file, with the
+           last element being empty if the file is terminated with a newline.
+    error: A callable to which errors are reported, which takes 4 arguments:
+           filename, line number, error level, and message
+    extra_check_functions: An array of additional check functions that will be
+                           run on each source line. Each function takes 4
+                           arguments: filename, clean_lines, line, error
+  """
+  lines = (['// marker so line numbers and indices both start at 1'] + lines +
+           ['// marker so line numbers end in a known way'])
+
+  include_state = _IncludeState()
+  function_state = _FunctionState()
+  nesting_state = NestingState()
+
+  ResetNolintSuppressions()
+
+  CheckForCopyright(filename, lines, error)
+  ProcessGlobalSuppresions(lines)
+  RemoveMultiLineComments(filename, lines, error)
+  clean_lines = CleansedLines(lines)
+
+  if IsHeaderExtension(file_extension):
+    CheckForHeaderGuard(filename, clean_lines, error)
+
+  for line in xrange(clean_lines.NumLines()):
+    ProcessLine(filename, file_extension, clean_lines, line,
+                include_state, function_state, nesting_state, error,
+                extra_check_functions)
+    FlagCxx11Features(filename, clean_lines, line, error)
+  nesting_state.CheckCompletedBlocks(filename, error)
+
+  CheckForIncludeWhatYouUse(filename, clean_lines, include_state, error)
+
+  # Check that the .cc file has included its header if it exists.
+  if _IsSourceExtension(file_extension):
+    CheckHeaderFileIncluded(filename, include_state, error)
+
+  # We check here rather than inside ProcessLine so that we see raw
+  # lines rather than "cleaned" lines.
+  CheckForBadCharacters(filename, lines, error)
+
+  CheckForNewlineAtEOF(filename, lines, error)
+
+def ProcessConfigOverrides(filename):
+  """ Loads the configuration files and processes the config overrides.
+
+  Args:
+    filename: The name of the file being processed by the linter.
+
+  Returns:
+    False if the current |filename| should not be processed further.
+  """
+
+  abs_filename = os.path.abspath(filename)
+  cfg_filters = []
+  keep_looking = True
+  while keep_looking:
+    abs_path, base_name = os.path.split(abs_filename)
+    if not base_name:
+      break  # Reached the root directory.
+
+    cfg_file = os.path.join(abs_path, "CPPLINT.cfg")
+    abs_filename = abs_path
+    if not os.path.isfile(cfg_file):
+      continue
+
+    try:
+      with open(cfg_file) as file_handle:
+        for line in file_handle:
+          line, _, _ = line.partition('#')  # Remove comments.
+          if not line.strip():
+            continue
+
+          name, _, val = line.partition('=')
+          name = name.strip()
+          val = val.strip()
+          if name == 'set noparent':
+            keep_looking = False
+          elif name == 'filter':
+            cfg_filters.append(val)
+          elif name == 'exclude_files':
+            # When matching exclude_files pattern, use the base_name of
+            # the current file name or the directory name we are processing.
+            # For example, if we are checking for lint errors in /foo/bar/baz.cc
+            # and we found the .cfg file at /foo/CPPLINT.cfg, then the config
+            # file's "exclude_files" filter is meant to be checked against "bar"
+            # and not "baz" nor "bar/baz.cc".
+            if base_name:
+              pattern = re.compile(val)
+              if pattern.match(base_name):
+                if _cpplint_state.quiet:
+                  # Suppress "Ignoring file" warning when using --quiet.
+                  return False
+                sys.stderr.write('Ignoring "%s": file excluded by "%s". '
+                                 'File path component "%s" matches '
+                                 'pattern "%s"\n' %
+                                 (filename, cfg_file, base_name, val))
+                return False
+          elif name == 'linelength':
+            global _line_length
+            try:
+                _line_length = int(val)
+            except ValueError:
+                sys.stderr.write('Line length must be numeric.')
+          elif name == 'root':
+            global _root
+            # root directories are specified relative to CPPLINT.cfg dir.
+            _root = os.path.join(os.path.dirname(cfg_file), val)
+          elif name == 'headers':
+            ProcessHppHeadersOption(val)
+          else:
+            sys.stderr.write(
+                'Invalid configuration option (%s) in file %s\n' %
+                (name, cfg_file))
+
+    except IOError:
+      sys.stderr.write(
+          "Skipping config file '%s': Can't open for reading\n" % cfg_file)
+      keep_looking = False
+
+  # Apply all the accumulated filters in reverse order (top-level directory
+  # config options having the least priority).
+  for filter in reversed(cfg_filters):
+     _AddFilters(filter)
+
+  return True
+
+
+def ProcessFile(filename, vlevel, extra_check_functions=[]):
+  """Does google-lint on a single file.
+
+  Args:
+    filename: The name of the file to parse.
+
+    vlevel: The level of errors to report.  Every error of confidence
+    >= verbose_level will be reported.  0 is a good default.
+
+    extra_check_functions: An array of additional check functions that will be
+                           run on each source line. Each function takes 4
+                           arguments: filename, clean_lines, line, error
+  """
+
+  _SetVerboseLevel(vlevel)
+  _BackupFilters()
+  old_errors = _cpplint_state.error_count
+
+  if not ProcessConfigOverrides(filename):
+    _RestoreFilters()
+    return
+
+  lf_lines = []
+  crlf_lines = []
+  try:
+    # Support the UNIX convention of using "-" for stdin.  Note that
+    # we are not opening the file with universal newline support
+    # (which codecs doesn't support anyway), so the resulting lines do
+    # contain trailing '\r' characters if we are reading a file that
+    # has CRLF endings.
+    # If after the split a trailing '\r' is present, it is removed
+    # below.
+    if filename == '-':
+      lines = codecs.StreamReaderWriter(sys.stdin,
+                                        codecs.getreader('utf8'),
+                                        codecs.getwriter('utf8'),
+                                        'replace').read().split('\n')
+    else:
+      lines = codecs.open(filename, 'r', 'utf8', 'replace').read().split('\n')
+
+    # Remove trailing '\r'.
+    # The -1 accounts for the extra trailing blank line we get from split()
+    for linenum in range(len(lines) - 1):
+      if lines[linenum].endswith('\r'):
+        lines[linenum] = lines[linenum].rstrip('\r')
+        crlf_lines.append(linenum + 1)
+      else:
+        lf_lines.append(linenum + 1)
+
+  except IOError:
+    sys.stderr.write(
+        "Skipping input '%s': Can't open for reading\n" % filename)
+    _RestoreFilters()
+    return
+
+  # Note, if no dot is found, this will give the entire filename as the ext.
+  file_extension = filename[filename.rfind('.') + 1:]
+
+  # When reading from stdin, the extension is unknown, so no cpplint tests
+  # should rely on the extension.
+  if filename != '-' and file_extension not in _valid_extensions:
+    sys.stderr.write('Ignoring %s; not a valid file name '
+                     '(%s)\n' % (filename, ', '.join(_valid_extensions)))
+  else:
+    ProcessFileData(filename, file_extension, lines, Error,
+                    extra_check_functions)
+
+    # If end-of-line sequences are a mix of LF and CR-LF, issue
+    # warnings on the lines with CR.
+    #
+    # Don't issue any warnings if all lines are uniformly LF or CR-LF,
+    # since critique can handle these just fine, and the style guide
+    # doesn't dictate a particular end of line sequence.
+    #
+    # We can't depend on os.linesep to determine what the desired
+    # end-of-line sequence should be, since that will return the
+    # server-side end-of-line sequence.
+    if lf_lines and crlf_lines:
+      # Warn on every line with CR.  An alternative approach might be to
+      # check whether the file is mostly CRLF or just LF, and warn on the
+      # minority, we bias toward LF here since most tools prefer LF.
+      for linenum in crlf_lines:
+        Error(filename, linenum, 'whitespace/newline', 1,
+              'Unexpected \\r (^M) found; better to use only \\n')
+
+  # Suppress printing anything if --quiet was passed unless the error
+  # count has increased after processing this file.
+  if not _cpplint_state.quiet or old_errors != _cpplint_state.error_count:
+    sys.stdout.write('Done processing %s\n' % filename)
+  _RestoreFilters()
+
+
+def PrintUsage(message):
+  """Prints a brief usage string and exits, optionally with an error message.
+
+  Args:
+    message: The optional error message.
+  """
+  sys.stderr.write(_USAGE)
+  if message:
+    sys.exit('\nFATAL ERROR: ' + message)
+  else:
+    sys.exit(1)
+
+
+def PrintCategories():
+  """Prints a list of all the error-categories used by error messages.
+
+  These are the categories used to filter messages via --filter.
+  """
+  sys.stderr.write(''.join('  %s\n' % cat for cat in _ERROR_CATEGORIES))
+  sys.exit(0)
+
+
+def ParseArguments(args):
+  """Parses the command line arguments.
+
+  This may set the output format and verbosity level as side-effects.
+
+  Args:
+    args: The command line arguments:
+
+  Returns:
+    The list of filenames to lint.
+  """
+  try:
+    (opts, filenames) = getopt.getopt(args, '', ['help', 'output=', 'verbose=',
+                                                 'counting=',
+                                                 'filter=',
+                                                 'root=',
+                                                 'linelength=',
+                                                 'extensions=',
+                                                 'headers=',
+                                                 'quiet'])
+  except getopt.GetoptError:
+    PrintUsage('Invalid arguments.')
+
+  verbosity = _VerboseLevel()
+  output_format = _OutputFormat()
+  filters = ''
+  quiet = _Quiet()
+  counting_style = ''
+
+  for (opt, val) in opts:
+    if opt == '--help':
+      PrintUsage(None)
+    elif opt == '--output':
+      if val not in ('emacs', 'vs7', 'eclipse'):
+        PrintUsage('The only allowed output formats are emacs, vs7 and eclipse.')
+      output_format = val
+    elif opt == '--quiet':
+      quiet = True
+    elif opt == '--verbose':
+      verbosity = int(val)
+    elif opt == '--filter':
+      filters = val
+      if not filters:
+        PrintCategories()
+    elif opt == '--counting':
+      if val not in ('total', 'toplevel', 'detailed'):
+        PrintUsage('Valid counting options are total, toplevel, and detailed')
+      counting_style = val
+    elif opt == '--root':
+      global _root
+      _root = val
+    elif opt == '--linelength':
+      global _line_length
+      try:
+          _line_length = int(val)
+      except ValueError:
+          PrintUsage('Line length must be digits.')
+    elif opt == '--extensions':
+      global _valid_extensions
+      try:
+          _valid_extensions = set(val.split(','))
+      except ValueError:
+          PrintUsage('Extensions must be comma separated list.')
+    elif opt == '--headers':
+      ProcessHppHeadersOption(val)
+
+  if not filenames:
+    PrintUsage('No files were specified.')
+
+  _SetOutputFormat(output_format)
+  _SetQuiet(quiet)
+  _SetVerboseLevel(verbosity)
+  _SetFilters(filters)
+  _SetCountingStyle(counting_style)
+
+  return filenames
+
+
+def main():
+  filenames = ParseArguments(sys.argv[1:])
+
+  # Change stderr to write with replacement characters so we don't die
+  # if we try to print something containing non-ASCII characters.
+  sys.stderr = codecs.StreamReaderWriter(sys.stderr,
+                                         codecs.getreader('utf8'),
+                                         codecs.getwriter('utf8'),
+                                         'replace')
+
+  _cpplint_state.ResetErrorCounts()
+  for filename in filenames:
+    ProcessFile(filename, _cpplint_state.verbose_level)
+  # If --quiet is passed, suppress printing error count unless there are errors.
+  if not _cpplint_state.quiet or _cpplint_state.error_count > 0:
+    _cpplint_state.PrintErrorCounts()
+
+  sys.exit(_cpplint_state.error_count > 0)
+
+
+if __name__ == '__main__':
+  main()
